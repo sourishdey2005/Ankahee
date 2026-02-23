@@ -4,8 +4,9 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare, Clock } from 'lucide-react'
 import Countdown from './Countdown'
-import { moodColors } from '@/lib/mood-tags'
+import { MoodTag, moodColors } from '@/lib/mood-tags'
 import LikeButton from './LikeButton'
+import { cn } from '@/lib/utils'
 
 type PostWithCounts = Tables<'posts'> & {
   comments: Array<{ count: number }>
@@ -13,15 +14,23 @@ type PostWithCounts = Tables<'posts'> & {
 };
 
 export default function ConfessionCard({ post }: { post: PostWithCounts }) {
-  const moodColor = post.mood ? moodColors[post.mood] || 'bg-secondary' : 'bg-secondary';
+  const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
   const commentCount = post.comments?.[0]?.count ?? 0;
+
+  const expires = new Date(post.expires_at);
+  const now = new Date();
+  const timeLeft = expires.getTime() - now.getTime();
+  const isExpiringSoon = timeLeft > 0 && timeLeft < (60 * 60 * 1000); // Less than 1 hour
 
   return (
     <Link href={`/confession/${post.id}`} className="block">
-      <Card className="hover:border-primary/50 transition-colors duration-300 bg-card/50 backdrop-blur-sm">
+      <Card className={cn(
+        "hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-sm",
+        isExpiringSoon && "opacity-70 hover:opacity-100"
+      )}>
         <CardHeader>
           {post.mood && (
-            <Badge variant="outline" className={`self-start ${moodColor}`}>
+            <Badge variant="outline" className={`${moodColor}`}>
               {post.mood}
             </Badge>
           )}

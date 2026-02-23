@@ -15,3 +15,12 @@ export function isEditable(createdAt: string | Date): boolean {
   const diffInMinutes = diffInMs / (1000 * 60);
   return diffInMinutes < EDIT_WINDOW_MINUTES;
 }
+
+export function generateHslColorFromString(str: string, s: number, l: number): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = hash % 360;
+  return `hsl(${h}, ${s}%, ${l}%)`;
+}

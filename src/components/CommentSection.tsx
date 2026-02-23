@@ -8,6 +8,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { Tables } from '@/lib/supabase/types'
 import { Session } from '@supabase/supabase-js'
+import { generateHslColorFromString } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -81,6 +82,8 @@ export default function CommentSection({
     })
   }
 
+  const userColor = generateHslColorFromString(session.user.id, 50, 60);
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-headline font-bold flex items-center gap-3">
@@ -92,7 +95,7 @@ export default function CommentSection({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-4">
           <Avatar className="h-10 w-10 mt-1">
-            <AvatarFallback>{'A'}</AvatarFallback>
+             <AvatarFallback style={{ backgroundColor: userColor }} />
           </Avatar>
           <div className="flex-1">
             <FormField

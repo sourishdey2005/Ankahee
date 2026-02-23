@@ -7,7 +7,7 @@ import * as z from 'zod'
 import { formatDistanceToNow } from 'date-fns'
 import { Tables } from '@/lib/supabase/types'
 import { User } from '@supabase/supabase-js'
-import { isEditable } from '@/lib/utils'
+import { isEditable, generateHslColorFromString } from '@/lib/utils'
 import { updateComment } from '@/actions'
 
 import { Button } from '@/components/ui/button'
@@ -29,6 +29,7 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
   const { toast } = useToast()
 
   const canEdit = user.id === comment.user_id && isEditable(comment.created_at)
+  const commenterColor = generateHslColorFromString(comment.user_id, 50, 60);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,7 +53,7 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
     return (
         <div className="flex items-start gap-4 w-full">
             <Avatar className="h-10 w-10">
-                <AvatarFallback>A</AvatarFallback>
+                <AvatarFallback style={{ backgroundColor: commenterColor }} />
             </Avatar>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 flex-1">
@@ -86,11 +87,11 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
   return (
     <div key={comment.id} className="flex items-start gap-4 group">
       <Avatar className="h-10 w-10">
-        <AvatarFallback>A</AvatarFallback>
+        <AvatarFallback style={{ backgroundColor: commenterColor }} />
       </Avatar>
       <div className="flex-1">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-semibold text-primary">Anonymous</span>
+          <span className="font-semibold" style={{ color: commenterColor }}>Commenter</span>
           <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground">
             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}

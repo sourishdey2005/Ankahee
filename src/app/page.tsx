@@ -6,6 +6,8 @@ import {
   Lock,
   MessagesSquare,
   PenSquare,
+  Sparkles,
+  SearchX,
   Tags,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -98,20 +100,33 @@ export default function Home() {
       <section className="relative z-10 w-full py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-headline font-bold text-center mb-12">
-            Features for Your Peace of Mind
+            A Different Kind of Social
           </h2>
           <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-x-12 gap-y-10">
             <div className="flex items-start space-x-4">
               <div className="mt-1">
-                <Tags className="w-8 h-8 text-primary" />
+                <Sparkles className="w-8 h-8 text-primary" />
               </div>
               <div>
                 <h3 className="text-xl font-headline font-semibold">
-                  Mood Tagging
+                  AI-Powered Moods
                 </h3>
                 <p className="text-muted-foreground">
-                  Categorize your confessions with moods like 'Sad', 'Love', or
-                  'Secret' to find and share similar feelings.
+                  Our AI automatically suggests a mood for your confession,
+                  making it easier to categorize and find related thoughts.
+                </p>
+              </div>
+            </div>
+             <div className="flex items-start space-x-4">
+              <div className="mt-1">
+                <SearchX className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-headline font-semibold">
+                  No Permanent Footprint
+                </h3>
+                <p className="text-muted-foreground">
+                  With no profiles and no search, your moments are truly your own. Nothing is permanent, nothing is searchable.
                 </p>
               </div>
             </div>
@@ -121,25 +136,10 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="text-xl font-headline font-semibold">
-                  Anonymous Comments
+                  Truly Anonymous Comments
                 </h3>
                 <p className="text-muted-foreground">
-                  Engage in conversations without revealing your identity. A
-                  truly judgment-free zone.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="mt-1">
-                <Lock className="w-8 h-8 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-xl font-headline font-semibold">
-                  Secure & Private
-                </h3>
-                <p className="text-muted-foreground">
-                  We use secure authentication, and your data is deleted after 24
-                  hours. Your privacy is our priority.
+                  Engage in conversations with a unique identity in each thread, ensuring total privacy. A truly judgment-free zone.
                 </p>
               </div>
             </div>
