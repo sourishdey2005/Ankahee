@@ -13,9 +13,10 @@ import { Feather } from 'lucide-react'
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
-      <div className="absolute inset-0 bg-grid-purple-500/10 bg-[size:30px_30px] [mask-image:linear-gradient(to_bottom,white_0%,white_75%,transparent_100%)]"></div>
-      <div className="relative z-10">
+    <div className="relative flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 overflow-hidden">
+      <div className="absolute inset-0 z-0 bg-gradient-to-r from-background via-purple-950/20 to-background bg-[length:200%_auto] animate-background-pan"></div>
+      
+      <div className="relative z-10 flex flex-col items-center animate-in fade-in-0 zoom-in-95 duration-500">
         <div className="flex items-center justify-center space-x-4 mb-8">
             <Feather className="w-12 h-12 text-primary" />
             <h1 className="text-5xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
@@ -28,7 +29,7 @@ export default function LoginPage() {
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="login">
-            <Card>
+            <Card className="bg-card/70 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Login</CardTitle>
                 <CardDescription>
@@ -41,7 +42,7 @@ export default function LoginPage() {
             </Card>
           </TabsContent>
           <TabsContent value="signup">
-            <Card>
+            <Card className="bg-card/70 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Sign Up</CardTitle>
                 <CardDescription>

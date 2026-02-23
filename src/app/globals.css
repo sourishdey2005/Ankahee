@@ -97,3 +97,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes background-pan {
+    from {
+      background-position: 0% center;
+    }
+    to {
+      background-position: -200% center;
+    }
+  }
+  .animate-background-pan {
+    animation: background-pan 10s linear infinite;
+  }
+}
