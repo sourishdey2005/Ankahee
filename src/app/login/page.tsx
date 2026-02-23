@@ -19,7 +19,7 @@ export default function LoginPage() {
       <div className="relative z-10 flex flex-col items-center animate-in fade-in-0 zoom-in-95 duration-500 w-full">
         <div className="flex items-center justify-center space-x-4 mb-8">
             <Feather className="w-12 h-12 text-primary" />
-            <h1 className="text-5xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
+            <h1 className="text-4xl sm:text-5xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
                 Ankahee
             </h1>
         </div>

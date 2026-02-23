@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
-import { Skeleton } from '@/components/ui/skeleton'
 
 type Post = Tables<'posts'> & {
   comments: Array<{ count: number }>
@@ -13,12 +12,10 @@ type Post = Tables<'posts'> & {
 
 export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }) {
   const [posts, setPosts] = useState<Post[]>(serverPosts)
-  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     setPosts(serverPosts)
-    setLoading(false)
   }, [serverPosts])
 
   useEffect(() => {
@@ -41,24 +38,6 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
     }
   }, [supabase])
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="p-6 border rounded-lg space-y-4 bg-card/50">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="flex justify-between items-center pt-4">
-              <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-6 w-24" />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  
   if (posts.length === 0) {
     return (
         <div className="text-center py-20">

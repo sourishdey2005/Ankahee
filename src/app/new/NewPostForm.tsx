@@ -114,7 +114,7 @@ export default function NewPostForm({ userId }: { userId: string }) {
               <FormControl>
                 <Textarea
                   placeholder="Pour your heart out..."
-                  className="min-h-[200px] text-base md:text-lg"
+                  className="min-h-[150px] sm:min-h-[200px] text-lg"
                   {...field}
                 />
               </FormControl>
