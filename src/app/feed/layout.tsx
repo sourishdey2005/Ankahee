@@ -26,12 +26,23 @@ export default async function FeedLayout({
   let { data: { session }} = await supabase.auth.getSession()
 
   if (!session) {
-    const { data: newSessionData, error } = await supabase.auth.signInAnonymously()
-    if (error) {
+    try {
+      const { data: newSessionData, error } = await supabase.auth.signInAnonymously()
+      if (error) {
+        throw error;
+      }
+      if (!newSessionData.session) {
+        throw new Error("Anonymous sign-in did not return a session.");
+      }
+      session = newSessionData.session
+    } catch (error: any) {
       console.error("Error signing in anonymously:", error)
+      if (error.message && error.message.includes('Anonymous sign-ins are disabled')) {
+        redirect('/?error=anon_disabled')
+      }
+      // For any other auth error, just go to home.
       redirect('/')
     }
-    session = newSessionData.session
   }
 
   const { data: userProfile } = await supabase
