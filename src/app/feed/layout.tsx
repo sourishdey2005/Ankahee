@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import SignOutButton from '@/components/SignOutButton'
+import DeleteAccountButton from '@/components/DeleteAccountButton'
 
 export default async function FeedLayout({
   children,
@@ -58,6 +59,8 @@ export default async function FeedLayout({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <SignOutButton />
+                <DropdownMenuSeparator />
+                <DeleteAccountButton />
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
