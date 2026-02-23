@@ -161,8 +161,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* Philosophy Section */}
       <section className="relative z-10 w-full py-20 bg-background/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-headline font-bold mb-6">Our Philosophy</h2>
+          <div className="max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground">
+              In a world of digital permanence, we believe in the power of the fleeting moment. Ankahee is a sanctuary for thoughts that are too raw, too real, or too personal for platforms that never forget. It's not about building a following; it's about finding a voice. We champion authenticity through anonymity and privacy through impermanence.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="relative z-10 w-full py-20">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-headline font-bold mb-4">
             Ready to Share?
@@ -183,7 +195,7 @@ export default function Home() {
       </section>
 
       <footer className="relative z-10 text-center py-4 text-sm text-muted-foreground">
-        Built with ❤️ for the unspoken.
+        Made By <a href="https://sourishdeyportfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">Sourish Dey</a>
       </footer>
     </div>
   )
