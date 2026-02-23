@@ -13,16 +13,17 @@ export const revalidate = 0
 
 type PostWithCounts = Tables<'posts'> & {
   comments: Array<{ count: number }>
+  likes: Array<{ count: number }>
 }
 
 export default async function FeedPage({
   searchParams,
 }: {
-  searchParams: { mood?: string }
+  searchParams: { mood?: string; sort?: string }
 }) {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
-  const { mood } = searchParams
+  const { mood, sort } = searchParams
 
   const { data: { session }} = await supabase.auth.getSession()
 
@@ -37,12 +38,17 @@ export default async function FeedPage({
 
   let query = supabase
     .from('posts')
-    .select('*, comments(count)')
+    .select('*, comments(count), likes(count)')
     .gt('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false })
   
   if (mood && (MoodTags as readonly string[]).includes(mood)) {
     query = query.eq('mood', mood)
+  }
+
+  if (sort === 'popular') {
+    query = query.order('count', { foreignTable: 'likes', ascending: false })
+  } else {
+    query = query.order('created_at', { ascending: false })
   }
 
   const { data: posts, error } = await query
@@ -55,11 +61,30 @@ export default async function FeedPage({
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
-       <div className="mb-8">
-        <h1 className="text-3xl font-headline font-bold mb-4">The Void</h1>
+       <div className="mb-8 space-y-4">
+        <h1 className="text-3xl font-headline font-bold">The Void</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground mr-2">Sort by:</span>
+          <Link href={{ pathname: '/feed', query: { mood } }}>
+            <Badge
+              variant={!sort ? 'default' : 'secondary'}
+              className="cursor-pointer transition-colors"
+            >
+              Newest
+            </Badge>
+          </Link>
+          <Link href={{ pathname: '/feed', query: { mood, sort: 'popular' } }}>
+             <Badge
+              variant={sort === 'popular' ? 'default' : 'secondary'}
+              className="cursor-pointer transition-colors"
+            >
+              Popular
+            </Badge>
+          </Link>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground mr-2">Filter by mood:</span>
-          <Link href="/feed">
+          <Link href={{ pathname: '/feed', query: { sort } }}>
             <Badge
               variant={!mood ? 'default' : 'secondary'}
               className="cursor-pointer transition-colors"
@@ -68,7 +93,7 @@ export default async function FeedPage({
             </Badge>
           </Link>
           {MoodTags.map((tag) => (
-            <Link href={`/feed?mood=${encodeURIComponent(tag)}`} key={tag}>
+            <Link href={{ pathname: '/feed', query: { sort, mood: tag } }} key={tag}>
               <Badge
                 variant="outline"
                 className={cn(

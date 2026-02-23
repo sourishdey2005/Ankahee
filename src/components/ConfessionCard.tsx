@@ -9,6 +9,7 @@ import LikeButton from './LikeButton'
 
 type PostWithCounts = Tables<'posts'> & {
   comments: Array<{ count: number }>
+  likes: Array<{ count: number }>
 };
 
 export default function ConfessionCard({ post }: { post: PostWithCounts }) {

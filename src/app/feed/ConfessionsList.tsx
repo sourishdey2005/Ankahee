@@ -6,7 +6,10 @@ import type { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
 import { Skeleton } from '@/components/ui/skeleton'
 
-type Post = Tables<'posts'>
+type Post = Tables<'posts'> & {
+  comments: Array<{ count: number }>
+  likes: Array<{ count: number }>
+}
 
 export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }) {
   const [posts, setPosts] = useState(serverPosts)
@@ -25,6 +28,9 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
+          // This only adds new posts, sorting doesn't re-trigger a full list refresh
+          // for realtime, which is fine for now. A full re-fetch on any change
+          // might be too much.
           setPosts((prevPosts) => [payload.new as Post, ...prevPosts])
         }
       )
