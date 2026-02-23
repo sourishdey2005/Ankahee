@@ -12,8 +12,8 @@ type Post = Tables<'posts'> & {
 }
 
 export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }) {
-  const [posts, setPosts] = useState(serverPosts)
-  const [loading, setLoading] = useState(serverPosts.length === 0)
+  const [posts, setPosts] = useState<Post[]>(serverPosts)
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {

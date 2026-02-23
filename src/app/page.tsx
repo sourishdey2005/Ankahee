@@ -52,11 +52,11 @@ export default function Home() {
       {/* How it works Section */}
       <section className="relative z-10 w-full py-20 bg-background/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-headline font-bold text-center mb-12">
+          <h2 className="text-4xl font-headline font-bold text-center mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             How It Works
           </h2>
           <div className="grid md:grid-cols-3 gap-12 text-center">
-            <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-4">
                 <PenSquare className="w-10 h-10" />
               </div>
@@ -68,7 +68,7 @@ export default function Home() {
                 pure, unadulterated expression.
               </p>
             </div>
-            <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-400">
               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-4">
                 <Hourglass className="w-10 h-10" />
               </div>
@@ -80,7 +80,7 @@ export default function Home() {
                 forever, ensuring your privacy.
               </p>
             </div>
-            <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-600">
               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-4">
                 <HeartHandshake className="w-10 h-10" />
               </div>
@@ -99,11 +99,11 @@ export default function Home() {
       {/* Features Section */}
       <section className="relative z-10 w-full py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-headline font-bold text-center mb-12">
+          <h2 className="text-4xl font-headline font-bold text-center mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             A Different Kind of Social
           </h2>
           <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-x-12 gap-y-10">
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
               <div className="mt-1">
                 <Sparkles className="w-8 h-8 text-primary" />
               </div>
@@ -117,7 +117,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-             <div className="flex items-start space-x-4">
+             <div className="flex items-start space-x-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
               <div className="mt-1">
                 <SearchX className="w-8 h-8 text-primary" />
               </div>
@@ -130,7 +130,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-400">
               <div className="mt-1">
                 <MessagesSquare className="w-8 h-8 text-primary" />
               </div>
@@ -143,7 +143,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
               <div className="mt-1">
                 <Feather className="w-8 h-8 text-primary" />
               </div>
@@ -163,7 +163,7 @@ export default function Home() {
 
       {/* Philosophy Section */}
       <section className="relative z-10 w-full py-20 bg-background/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <h2 className="text-4xl font-headline font-bold mb-6">Our Philosophy</h2>
           <div className="max-w-3xl mx-auto">
             <p className="text-lg text-muted-foreground">
@@ -175,7 +175,7 @@ export default function Home() {
 
       {/* Final CTA */}
       <section className="relative z-10 w-full py-20">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <h2 className="text-4xl font-headline font-bold mb-4">
             Ready to Share?
           </h2>

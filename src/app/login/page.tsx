@@ -16,14 +16,14 @@ export default function LoginPage() {
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 overflow-hidden">
       <div className="absolute inset-0 z-0 bg-gradient-to-r from-background via-purple-950/20 to-background bg-[length:200%_auto] animate-background-pan"></div>
       
-      <div className="relative z-10 flex flex-col items-center animate-in fade-in-0 zoom-in-95 duration-500">
+      <div className="relative z-10 flex flex-col items-center animate-in fade-in-0 zoom-in-95 duration-500 w-full">
         <div className="flex items-center justify-center space-x-4 mb-8">
             <Feather className="w-12 h-12 text-primary" />
             <h1 className="text-5xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
                 Ankahee
             </h1>
         </div>
-        <Tabs defaultValue="login" className="w-[400px]">
+        <Tabs defaultValue="login" className="w-full max-w-md">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
