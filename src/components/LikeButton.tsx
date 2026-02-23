@@ -55,7 +55,7 @@ export default function LikeButton({ postId }: { postId: string }) {
         if (error) {
           setIsLiked(true)
           setLikes(l => l + 1)
-          toast({ title: 'Error', description: 'Could not unlike post.', variant: 'destructive'})
+          toast({ title: 'Error', description: error.message || 'Could not unlike post.', variant: 'destructive'})
         }
       } else {
         setIsLiked(true)
@@ -64,7 +64,7 @@ export default function LikeButton({ postId }: { postId: string }) {
         if (error) {
           setIsLiked(false)
           setLikes(l => l - 1)
-           toast({ title: 'Error', description: 'Could not like post.', variant: 'destructive'})
+           toast({ title: 'Error', description: error.message || 'Could not like post.', variant: 'destructive'})
         }
       }
     })
