@@ -18,6 +18,7 @@ import Countdown from '@/components/Countdown'
 import { useToast } from '@/hooks/use-toast'
 import { Clock, Pencil, Loader2 } from 'lucide-react'
 import { moodColors } from '@/lib/mood-tags'
+import LikeButton from './LikeButton'
 
 type Post = Tables<'posts'>
 
@@ -93,9 +94,12 @@ export default function EditPost({ post, user }: { post: Post; user: User }) {
         )}
       </CardContent>
       <CardFooter className="flex justify-between items-center text-muted-foreground">
-        <div className="flex items-center space-x-2 text-sm">
-          <Clock className="h-4 w-4" />
-          <Countdown expiresAt={post.expires_at} />
+        <div className="flex items-center space-x-4">
+            <LikeButton postId={post.id} />
+             <div className="flex items-center space-x-2 text-sm">
+                <Clock className="h-4 w-4" />
+                <Countdown expiresAt={post.expires_at} />
+            </div>
         </div>
         {canEdit && !isEditing && (
           <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>

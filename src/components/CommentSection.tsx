@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -36,26 +37,24 @@ export default function CommentSection({
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
   const supabase = createClient()
+  const router = useRouter()
   const form = useForm<z.infer<typeof commentSchema>>({
     resolver: zodResolver(commentSchema),
     defaultValues: { content: '' },
   })
 
   useEffect(() => {
+    setComments(initialComments)
+  }, [initialComments])
+
+  useEffect(() => {
     const channel = supabase
       .channel(`comments:${postId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'comments', filter: `post_id=eq.${postId}` },
-        (payload) => {
-          setComments((prev) => [...prev, payload.new as Comment])
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'comments', filter: `post_id=eq.${postId}` },
-        (payload) => {
-           setComments((prev) => prev.map(c => c.id === payload.new.id ? { ...c, ...payload.new } as Comment : c))
+        { event: '*', schema: 'public', table: 'comments', filter: `post_id=eq.${postId}` },
+        () => {
+          router.refresh()
         }
       )
       .subscribe()
@@ -63,7 +62,7 @@ export default function CommentSection({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, postId])
+  }, [supabase, postId, router])
 
   const onSubmit = (values: z.infer<typeof commentSchema>) => {
     startTransition(async () => {

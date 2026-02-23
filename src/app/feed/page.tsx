@@ -11,6 +11,10 @@ import { cn } from '@/lib/utils'
 
 export const revalidate = 0
 
+type PostWithCounts = Tables<'posts'> & {
+  comments: Array<{ count: number }>
+}
+
 export default async function FeedPage({
   searchParams,
 }: {
@@ -33,7 +37,7 @@ export default async function FeedPage({
 
   let query = supabase
     .from('posts')
-    .select('*')
+    .select('*, comments(count)')
     .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
   
@@ -47,7 +51,7 @@ export default async function FeedPage({
     console.error('Error fetching posts:', error)
   }
   
-  const initialPosts: Tables<'posts'>[] = posts || [];
+  const initialPosts: PostWithCounts[] = (posts as any) || [];
 
   return (
     <div className="container mx-auto max-w-2xl py-8">

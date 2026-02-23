@@ -5,14 +5,15 @@ import { Badge } from '@/components/ui/badge'
 import { MessageSquare, Clock } from 'lucide-react'
 import Countdown from './Countdown'
 import { moodColors } from '@/lib/mood-tags'
+import LikeButton from './LikeButton'
 
-type PostWithCommentCount = Tables<'posts'> & {
-    // In a real app, you'd probably join this in the query
-    comment_count?: number 
+type PostWithCounts = Tables<'posts'> & {
+  comments: Array<{ count: number }>
 };
 
-export default function ConfessionCard({ post }: { post: PostWithCommentCount }) {
+export default function ConfessionCard({ post }: { post: PostWithCounts }) {
   const moodColor = post.mood ? moodColors[post.mood] || 'bg-secondary' : 'bg-secondary';
+  const commentCount = post.comments?.[0]?.count ?? 0;
 
   return (
     <Link href={`/confession/${post.id}`} className="block">
@@ -28,14 +29,16 @@ export default function ConfessionCard({ post }: { post: PostWithCommentCount })
           <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
         </CardContent>
         <CardFooter className="flex justify-between items-center text-muted-foreground">
+          <div className="flex items-center space-x-4">
+            <LikeButton postId={post.id} />
+            <div className="flex items-center space-x-2 text-sm">
+              <MessageSquare className="h-4 w-4" />
+              <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
+            </div>
+          </div>
           <div className="flex items-center space-x-2 text-sm">
             <Clock className="h-4 w-4" />
             <Countdown expiresAt={post.expires_at} />
-          </div>
-          <div className="flex items-center space-x-2 text-sm">
-            <MessageSquare className="h-4 w-4" />
-            {/* Real comment count would come from DB */}
-            <span>{post.comment_count || 0} comments</span>
           </div>
         </CardFooter>
       </Card>
