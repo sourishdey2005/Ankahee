@@ -2,16 +2,12 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Clock } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import Countdown from '@/components/Countdown'
 import CommentSection from '@/components/CommentSection'
 import { Tables } from '@/lib/supabase/types'
-import { moodColors } from '@/lib/mood-tags'
+import EditPost from '@/components/EditPost'
 
-type Post = Tables<'posts'>
 type Comment = Tables<'comments'>
 
 export default async function ConfessionPage({ params }: { params: { id: string } }) {
@@ -39,7 +35,6 @@ export default async function ConfessionPage({ params }: { params: { id: string 
     .eq('post_id', params.id)
     .order('created_at', { ascending: true })
 
-  const moodColor = post.mood ? moodColors[post.mood] || 'bg-secondary' : 'bg-secondary';
   const initialComments: Comment[] = comments || [];
 
   return (
@@ -51,24 +46,7 @@ export default async function ConfessionPage({ params }: { params: { id: string 
         </Button>
       </Link>
       
-      <Card className="bg-card/50 backdrop-blur-sm mb-8">
-        <CardHeader>
-          {post.mood && (
-            <Badge variant="outline" className={`self-start ${moodColor}`}>
-              {post.mood}
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg text-foreground/90 whitespace-pre-wrap">{post.content}</p>
-        </CardContent>
-        <CardFooter className="flex justify-between items-center text-muted-foreground">
-          <div className="flex items-center space-x-2 text-sm">
-            <Clock className="h-4 w-4" />
-            <Countdown expiresAt={post.expires_at} />
-          </div>
-        </CardFooter>
-      </Card>
+      <EditPost post={post} user={session.user} />
       
       <CommentSection postId={post.id} initialComments={initialComments} session={session} />
     </div>

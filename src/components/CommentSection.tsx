@@ -4,7 +4,6 @@ import { useState, useEffect, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { formatDistanceToNow } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { Tables } from '@/lib/supabase/types'
 import { Session } from '@supabase/supabase-js'
@@ -16,6 +15,7 @@ import { Separator } from '@/components/ui/separator'
 import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Avatar, AvatarFallback } from './ui/avatar'
+import EditComment from './EditComment'
 
 type Comment = Tables<'comments'>
 
@@ -49,6 +49,13 @@ export default function CommentSection({
         { event: 'INSERT', schema: 'public', table: 'comments', filter: `post_id=eq.${postId}` },
         (payload) => {
           setComments((prev) => [...prev, payload.new as Comment])
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'comments', filter: `post_id=eq.${postId}` },
+        (payload) => {
+           setComments((prev) => prev.map(c => c.id === payload.new.id ? { ...c, ...payload.new } as Comment : c))
         }
       )
       .subscribe()
@@ -112,21 +119,7 @@ export default function CommentSection({
       <div className="space-y-6">
         {comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment.id} className="flex items-start gap-4">
-               <Avatar className="h-10 w-10">
-                <AvatarFallback>A</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-semibold text-primary">Anonymous</span>
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-muted-foreground">
-                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                  </span>
-                </div>
-                <p className="text-foreground/90 mt-1">{comment.content}</p>
-              </div>
-            </div>
+            <EditComment key={comment.id} comment={comment} user={session.user} />
           ))
         ) : (
           <p className="text-muted-foreground text-center py-8">No comments yet. Be the first to reply.</p>
