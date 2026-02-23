@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -23,33 +22,11 @@ export default async function FeedLayout({
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
-  let { data: { session }} = await supabase.auth.getSession()
+  const { data: { session }} = await supabase.auth.getSession()
 
   if (!session) {
-    try {
-      const { data: newSessionData, error } = await supabase.auth.signInAnonymously()
-      if (error) {
-        throw error;
-      }
-      if (!newSessionData.session) {
-        throw new Error("Anonymous sign-in did not return a session.");
-      }
-      session = newSessionData.session
-    } catch (error: any) {
-      console.error("Error signing in anonymously:", error)
-      if (error.message && error.message.includes('Anonymous sign-ins are disabled')) {
-        redirect('/?error=anon_disabled')
-      }
-      // For any other auth error, just go to home.
-      redirect('/')
-    }
+    redirect('/login')
   }
-
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('username')
-    .eq('id', session?.user.id ?? '')
-    .single()
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -64,7 +41,7 @@ export default async function FeedLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>{userProfile?.username?.charAt(0).toUpperCase() ?? 'A'}</AvatarFallback>
+                    <AvatarFallback>A</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -72,10 +49,10 @@ export default async function FeedLayout({
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {userProfile?.username ?? 'Anonymous'}
+                      Anonymous
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      You are anonymous
+                      Your identity is hidden
                     </p>
                   </div>
                 </DropdownMenuLabel>

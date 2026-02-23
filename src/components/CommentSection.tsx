@@ -60,13 +60,11 @@ export default function CommentSection({
 
   const onSubmit = (values: z.infer<typeof commentSchema>) => {
     startTransition(async () => {
-      const { data: userProfile } = await supabase.from('users').select('username').eq('id', session.user.id).single();
-
       const { error } = await supabase.from('comments').insert({
         post_id: postId,
         content: values.content,
         user_id: session.user.id,
-        username: userProfile?.username || 'Anonymous',
+        username: 'Anonymous',
       })
 
       if (error) {
@@ -116,11 +114,11 @@ export default function CommentSection({
           comments.map((comment) => (
             <div key={comment.id} className="flex items-start gap-4">
                <Avatar className="h-10 w-10">
-                <AvatarFallback>{comment.username?.[0].toUpperCase() ?? 'A'}</AvatarFallback>
+                <AvatarFallback>A</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-semibold text-primary">{comment.username}</span>
+                  <span className="font-semibold text-primary">Anonymous</span>
                   <span className="text-muted-foreground">·</span>
                   <span className="text-muted-foreground">
                     {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
