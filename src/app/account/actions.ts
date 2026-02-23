@@ -19,7 +19,17 @@ export async function deleteAccount() {
 
   const { user } = session
 
-  // 1. Delete user's comments
+  // 1. Delete user's likes
+  const { error: likesError } = await supabase
+    .from('likes')
+    .delete()
+    .eq('user_id', user.id)
+
+  if (likesError) {
+    return { error: `Failed to delete your likes: ${likesError.message}` }
+  }
+
+  // 2. Delete user's comments
   const { error: commentsError } = await supabase
     .from('comments')
     .delete()
@@ -29,7 +39,7 @@ export async function deleteAccount() {
     return { error: `Failed to delete your comments: ${commentsError.message}` }
   }
 
-  // 2. Delete user's posts
+  // 3. Delete user's posts
   const { error: postsError } = await supabase
     .from('posts')
     .delete()
@@ -39,7 +49,7 @@ export async function deleteAccount() {
     return { error: `Failed to delete your posts: ${postsError.message}` }
   }
 
-  // 3. Delete user's record from public.users table.
+  // 4. Delete user's record from public.users table.
   // This is best-effort as RLS might prevent it, but the user's content is gone.
   const { error: userTableError } = await supabase
     .from('users')
@@ -50,7 +60,7 @@ export async function deleteAccount() {
     console.error('Could not delete from users table:', userTableError.message)
   }
 
-  // 4. Sign the user out
+  // 5. Sign the user out
   await supabase.auth.signOut()
 
   revalidatePath('/', 'layout')

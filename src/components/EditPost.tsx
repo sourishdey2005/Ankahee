@@ -74,7 +74,10 @@ export default function EditPost({ post, user }: { post: Post; user: User }) {
                     <FormControl>
                       <Textarea {...field} className="min-h-[150px] text-lg" />
                     </FormControl>
-                    <FormMessage />
+                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                        <FormMessage />
+                        <span>{field.value.length} / 500</span>
+                    </div>
                   </FormItem>
                 )}
               />

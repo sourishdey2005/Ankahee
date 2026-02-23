@@ -23,12 +23,15 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
       .channel('realtime posts')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'posts' },
+        { event: '*', schema: 'public', table: 'posts' },
         (payload) => {
-          // This only adds new posts, sorting doesn't re-trigger a full list refresh
-          // for realtime, which is fine for now. A full re-fetch on any change
-          // might be too much.
-          setPosts((prevPosts) => [payload.new as Post, ...prevPosts])
+          if (payload.eventType === 'INSERT') {
+            const newPost = payload.new as Tables<'posts'>
+            const postWithCounts: Post = { ...newPost, comments: [], likes: [] }
+            setPosts((prevPosts) => [postWithCounts, ...prevPosts])
+          } else if (payload.eventType === 'DELETE') {
+            setPosts((prevPosts) => prevPosts.filter((p) => p.id !== (payload.old as Post).id))
+          }
         }
       )
       .subscribe()

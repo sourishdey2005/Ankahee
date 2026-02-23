@@ -65,7 +65,10 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
                             <FormControl>
                             <Input {...field} />
                             </FormControl>
-                            <FormMessage />
+                            <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                <FormMessage />
+                                <span>{field.value.length} / 280</span>
+                            </div>
                         </FormItem>
                         )}
                     />
