@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createPost } from '@/actions'
 import { suggestMoodTagForConfession } from '@/ai/flows/suggest-mood-tag-flow'
+import { MoodTags } from '@/lib/mood-tags'
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -20,8 +21,6 @@ import {
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Sparkles } from 'lucide-react'
-
-const MoodTags = ['❤️ Sad', '😡 Angry', '😍 Love', '😰 Anxiety', '🤫 Secret'] as const
 
 const formSchema = z.object({
   content: z.string().min(10, 'Must be at least 10 characters.').max(500, 'Cannot exceed 500 characters.'),

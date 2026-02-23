@@ -11,14 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-
-const MoodTags = [
-  '❤️ Sad',
-  '😡 Angry',
-  '😍 Love',
-  '😰 Anxiety',
-  '🤫 Secret'
-] as const;
+import { MoodTags } from '@/lib/mood-tags';
 
 const SuggestMoodTagInputSchema = z.object({
   confessionText: z.string().describe('The text of the user\'s confession.'),

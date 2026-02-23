@@ -9,15 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import Countdown from '@/components/Countdown'
 import CommentSection from '@/components/CommentSection'
 import { Tables } from '@/lib/supabase/types'
-
-const moodColors: { [key: string]: string } = {
-  '❤️ Sad': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  '😡 Angry': 'bg-red-500/20 text-red-300 border-red-500/30',
-  '😍 Love': 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-  '😰 Anxiety': 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  '🤫 Secret': 'bg-gray-500/20 text-gray-300 border-gray-500/30',
-};
-
+import { moodColors } from '@/lib/mood-tags'
 
 type Post = Tables<'posts'>
 type Comment = Tables<'comments'>

@@ -4,18 +4,11 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare, Clock } from 'lucide-react'
 import Countdown from './Countdown'
+import { moodColors } from '@/lib/mood-tags'
 
 type PostWithCommentCount = Tables<'posts'> & {
     // In a real app, you'd probably join this in the query
     comment_count?: number 
-};
-
-const moodColors: { [key: string]: string } = {
-  '❤️ Sad': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  '😡 Angry': 'bg-red-500/20 text-red-300 border-red-500/30',
-  '😍 Love': 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-  '😰 Anxiety': 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  '🤫 Secret': 'bg-gray-500/20 text-gray-300 border-gray-500/30',
 };
 
 export default function ConfessionCard({ post }: { post: PostWithCommentCount }) {
