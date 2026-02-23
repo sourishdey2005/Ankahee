@@ -17,12 +17,9 @@ export default function Home() {
 
       {/* Hero Section */}
       <main className="relative z-10 flex flex-col items-center justify-center text-center space-y-8 py-20 md:py-32 px-4">
-        <div className="flex items-center space-x-4 animate-in fade-in-0 slide-in-from-top-12 duration-1000">
-          <Feather className="w-16 h-16 text-primary" />
-          <h1 className="text-6xl md:text-7xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
-            Ankahee
-          </h1>
-        </div>
+        <h1 className="text-6xl md:text-7xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 animate-in fade-in-0 slide-in-from-top-12 duration-1000">
+          Ankahee
+        </h1>
         <div className="animate-in fade-in-0 slide-in-from-top-16 duration-1000 delay-200">
           <p className="text-xl md:text-2xl text-muted-foreground font-medium">
             Speak Freely. Stay Unknown.
