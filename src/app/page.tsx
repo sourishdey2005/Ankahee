@@ -3,14 +3,13 @@ import {
   Feather,
   HeartHandshake,
   Hourglass,
-  Lock,
   MessagesSquare,
   PenSquare,
   Sparkles,
   SearchX,
-  Tags,
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Home() {
   return (
@@ -18,8 +17,16 @@ export default function Home() {
       <div className="absolute inset-0 bg-grid-purple-500/10 bg-[size:30px_30px] [mask-image:linear-gradient(to_bottom,white_0%,white_75%,transparent_100%)]"></div>
 
       {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center text-center space-y-8 py-20 md:py-32 px-4">
-        <h1 className="text-6xl md:text-7xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 animate-in fade-in-0 slide-in-from-top-12 duration-1000">
+      <main className="relative z-10 flex flex-col items-center justify-center text-center space-y-6 py-16 md:py-24 px-4">
+        <Image
+          src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png"
+          alt="Ankahee Logo"
+          width={120}
+          height={120}
+          className="animate-in fade-in-0 zoom-in-95 duration-1000"
+          priority
+        />
+        <h1 className="text-6xl md:text-7xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 animate-in fade-in-0 slide-in-from-top-12 duration-1000 delay-100">
           Ankahee
         </h1>
         <div className="animate-in fade-in-0 slide-in-from-top-16 duration-1000 delay-200">
