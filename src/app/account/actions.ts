@@ -19,14 +19,14 @@ export async function deleteAccount() {
 
   const { user } = session
 
-  // 1. Delete user's likes
-  const { error: likesError } = await supabase
-    .from('likes')
+  // 1. Delete user's reactions
+  const { error: reactionsError } = await supabase
+    .from('reactions')
     .delete()
     .eq('user_id', user.id)
 
-  if (likesError) {
-    return { error: `Failed to delete your likes: ${likesError.message}` }
+  if (reactionsError) {
+    return { error: `Failed to delete your reactions: ${reactionsError.message}` }
   }
 
   // 2. Delete user's comments

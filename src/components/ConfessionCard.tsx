@@ -5,12 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { MessageSquare, Clock } from 'lucide-react'
 import Countdown from './Countdown'
 import { MoodTag, moodColors } from '@/lib/mood-tags'
-import LikeButton from './LikeButton'
+import Echoes from './Echoes'
 import { cn } from '@/lib/utils'
 
 type PostWithCounts = Tables<'posts'> & {
   comments: Array<{ count: number }>
-  likes: Array<{ count: number }>
+  reactions: Array<Tables<'reactions'>>
 };
 
 export default function ConfessionCard({ post }: { post: PostWithCounts }) {
@@ -40,7 +40,7 @@ export default function ConfessionCard({ post }: { post: PostWithCounts }) {
         </CardContent>
         <CardFooter className="flex justify-between items-center text-muted-foreground">
           <div className="flex items-center space-x-4">
-            <LikeButton postId={post.id} />
+            <Echoes post={post} />
             <div className="flex items-center space-x-2 text-sm">
               <MessageSquare className="h-4 w-4" />
               <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>

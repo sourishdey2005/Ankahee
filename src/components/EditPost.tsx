@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -8,6 +8,7 @@ import { Tables } from '@/lib/supabase/types'
 import { User } from '@supabase/supabase-js'
 import { isEditable } from '@/lib/utils'
 import { updatePost } from '@/actions'
+import { createClient } from '@/lib/supabase/client'
 
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,21 +19,49 @@ import Countdown from '@/components/Countdown'
 import { useToast } from '@/hooks/use-toast'
 import { Clock, Pencil, Loader2 } from 'lucide-react'
 import { moodColors } from '@/lib/mood-tags'
-import LikeButton from './LikeButton'
+import Echoes from './Echoes'
 
 type Post = Tables<'posts'>
+type PostWithReactions = Post & { reactions: Tables<'reactions'>[] }
 
 const formSchema = z.object({
   content: z.string().min(10, 'Must be at least 10 characters.').max(500, 'Cannot exceed 500 characters.'),
 })
 
-export default function EditPost({ post, user }: { post: Post; user: User }) {
+export default function EditPost({ post: initialPost, user }: { post: Post; user: User }) {
+  const [post, setPost] = useState<PostWithReactions>({ ...initialPost, reactions: [] });
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
+  const supabase = createClient()
   
   const canEdit = user.id === post.user_id && isEditable(post.created_at)
-  const moodColor = post.mood ? moodColors[post.mood] || 'bg-secondary' : 'bg-secondary';
+  const moodColor = post.mood ? moodColors[post.mood as keyof typeof moodColors] || 'bg-secondary' : 'bg-secondary';
+
+  useEffect(() => {
+    const fetchReactions = async () => {
+      const { data, error } = await supabase.from('reactions').select('*').eq('post_id', initialPost.id);
+      if (data) {
+        setPost({ ...initialPost, reactions: data });
+      }
+    };
+    fetchReactions();
+
+    const channel = supabase.channel(`reactions:${initialPost.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'reactions',
+        filter: `post_id=eq.${initialPost.id}`
+      }, (payload) => {
+        fetchReactions(); // Refetch all reactions on any change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [initialPost, supabase]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,6 +77,8 @@ export default function EditPost({ post, user }: { post: Post; user: User }) {
         toast({ title: 'Error', description: result.error.message, variant: 'destructive' })
       } else {
         toast({ title: 'Success', description: 'Your confession has been updated.' })
+        // Optimistically update content
+        setPost(p => ({ ...p, content: values.content }));
         setIsEditing(false)
       }
     })
@@ -98,7 +129,7 @@ export default function EditPost({ post, user }: { post: Post; user: User }) {
       </CardContent>
       <CardFooter className="flex justify-between items-center text-muted-foreground">
         <div className="flex items-center space-x-4">
-            <LikeButton postId={post.id} />
+            <Echoes post={post} />
              <div className="flex items-center space-x-2 text-sm">
                 <Clock className="h-4 w-4" />
                 <Countdown expiresAt={post.expires_at} />

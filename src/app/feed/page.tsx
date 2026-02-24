@@ -13,7 +13,7 @@ export const revalidate = 0
 
 type PostWithCounts = Tables<'posts'> & {
   comments: Array<{ count: number }>
-  likes: Array<{ count: number }>
+  reactions: Array<Tables<'reactions'>>
 }
 
 export default async function FeedPage({
@@ -38,7 +38,7 @@ export default async function FeedPage({
 
   let query = supabase
     .from('posts')
-    .select('*, comments(count), likes(count)')
+    .select('*, comments(count), reactions(*)')
     .gt('expires_at', new Date().toISOString())
   
   if (mood && (MoodTags as readonly string[]).includes(mood)) {
@@ -46,7 +46,10 @@ export default async function FeedPage({
   }
 
   if (sort === 'popular') {
-    query = query.order('count', { foreignTable: 'likes', ascending: false })
+    // We can't directly sort by reaction count on the server with this setup.
+    // We will fetch all and sort on the client in ConfessionsList.
+    // For more complex scenarios, a database function/view would be better.
+     query = query.order('created_at', { ascending: false })
   } else {
     query = query.order('created_at', { ascending: false })
   }
@@ -109,7 +112,7 @@ export default async function FeedPage({
           ))}
         </div>
       </div>
-      <ConfessionsList serverPosts={initialPosts} />
+      <ConfessionsList serverPosts={initialPosts} sort={sort} />
       <Link href="/new">
         <Button
           aria-label="New Confession"

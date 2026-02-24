@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
 
 type Post = Tables<'posts'> & {
   comments: Array<{ count: number }>
-  likes: Array<{ count: number }>
+  reactions: Array<Tables<'reactions'>>
 }
 
-export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }) {
+export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Post[], sort?: string }) {
   const [posts, setPosts] = useState<Post[]>(serverPosts)
   const supabase = createClient()
 
@@ -18,16 +18,26 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
     setPosts(serverPosts)
   }, [serverPosts])
 
+  const sortedPosts = useMemo(() => {
+    const postsCopy = [...posts];
+    if (sort === 'popular') {
+      return postsCopy.sort((a, b) => b.reactions.length - a.reactions.length);
+    }
+    return postsCopy;
+  }, [posts, sort]);
+
   const handlePostUpdate = useCallback(async (postId: string) => {
     const { data: updatedPostData, error } = await supabase
       .from('posts')
-      .select('*, comments(count), likes(count)')
+      .select('*, comments(count), reactions(*)')
       .eq('id', postId)
       .single()
 
     if (error) {
-      if (error.code !== 'PGRST116') {
+      if (error.code !== 'PGRST116') { // Post might have been deleted
         console.error('Error refetching post:', error)
+      } else {
+        setPosts(currentPosts => currentPosts.filter(p => p.id !== postId));
       }
       return
     }
@@ -46,7 +56,7 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
         { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
             const newPost = payload.new as Tables<'posts'>
-            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], likes: [{count: 0}] }
+            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [] }
             setPosts((prevPosts) => [postWithCounts, ...prevPosts])
         }
       )
@@ -58,11 +68,11 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
         }
       ).subscribe()
 
-    const likesChannel = supabase
-      .channel('realtime-likes-feed')
+    const reactionsChannel = supabase
+      .channel('realtime-reactions-feed')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'likes' },
+        { event: '*', schema: 'public', table: 'reactions' },
         (payload: any) => {
           const postId = payload.new?.post_id || payload.old?.post_id
           if (postId) {
@@ -88,12 +98,12 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
 
     return () => {
       supabase.removeChannel(postsChannel)
-      supabase.removeChannel(likesChannel)
+      supabase.removeChannel(reactionsChannel)
       supabase.removeChannel(commentsChannel)
     }
   }, [supabase, handlePostUpdate])
 
-  if (posts.length === 0) {
+  if (sortedPosts.length === 0) {
     return (
         <div className="text-center py-20">
             <h2 className="text-2xl font-headline mb-2">The Void is Quiet</h2>
@@ -104,7 +114,7 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
+      {sortedPosts.map((post) => (
         <ConfessionCard key={post.id} post={post} />
       ))}
     </div>
