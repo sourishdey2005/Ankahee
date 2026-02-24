@@ -28,10 +28,10 @@ const processPostsForWordCloud = (posts: PostWithCounts[]) => {
   }
 
   const allText = posts.map(p => p.content).join(' ');
-  
+
   const words = allText
     .toLowerCase()
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"") // remove punctuation
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // remove punctuation
     .split(/\s+/); // split into words
 
   const wordFrequencies: { [key: string]: number } = {};
@@ -52,13 +52,12 @@ const processPostsForWordCloud = (posts: PostWithCounts[]) => {
 export default async function FeedPage({
   searchParams,
 }: {
-  searchParams: { mood?: string; sort?: string }
+  searchParams: Promise<{ mood?: string; sort?: string }>
 }) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
-  const { mood, sort } = searchParams
+  const { mood, sort } = await searchParams
+  const supabase = await createClient()
 
-  const { data: { session }} = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
     return (
@@ -72,7 +71,7 @@ export default async function FeedPage({
     .from('posts')
     .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
     .gt('expires_at', new Date().toISOString())
-  
+
   if (mood && (MoodTags as readonly string[]).includes(mood)) {
     query = query.eq('mood', mood)
   }
@@ -80,7 +79,7 @@ export default async function FeedPage({
   if (sort === 'popular' || sort === 'loved') {
     // We will fetch all and sort on the client in ConfessionsList.
     // For more complex scenarios, a database function/view would be better.
-     query = query.order('created_at', { ascending: false })
+    query = query.order('created_at', { ascending: false })
   } else {
     query = query.order('created_at', { ascending: false })
   }
@@ -90,7 +89,7 @@ export default async function FeedPage({
   if (error) {
     console.error('Error fetching posts:', error)
   }
-  
+
   const initialPosts: PostWithCounts[] = (posts as any) || [];
   const wordCloudData = processPostsForWordCloud(initialPosts);
 
@@ -105,7 +104,7 @@ export default async function FeedPage({
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
-       <div className="mb-8 space-y-4">
+      <div className="mb-8 space-y-4">
         <h1 className="text-3xl font-headline font-bold">The Void</h1>
 
         {wordCloudData.length > 0 && (
@@ -137,15 +136,15 @@ export default async function FeedPage({
             </Badge>
           </Link>
           <Link href={{ pathname: '/feed', query: { mood, sort: 'popular' } }}>
-             <Badge
+            <Badge
               variant={sort === 'popular' ? 'default' : 'secondary'}
               className="cursor-pointer transition-colors"
             >
               Popular
             </Badge>
           </Link>
-           <Link href={{ pathname: '/feed', query: { mood, sort: 'loved' } }}>
-             <Badge
+          <Link href={{ pathname: '/feed', query: { mood, sort: 'loved' } }}>
+            <Badge
               variant={sort === 'loved' ? 'default' : 'secondary'}
               className="cursor-pointer transition-colors inline-flex items-center gap-1"
             >
