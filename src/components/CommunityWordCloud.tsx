@@ -39,7 +39,7 @@ export default function CommunityWordCloud({ data }: { data: WordCloudData[] }) 
     fontStyle: 'normal',
     fontWeight: 'bold',
     padding: 1,
-    rotations: 2,
+    rotations: 0,
     rotationAngles: [-10, 10],
     scale: 'sqrt',
     spiral: 'archimedean',
