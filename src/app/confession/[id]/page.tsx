@@ -32,7 +32,7 @@ export default async function ConfessionPage({ params }: { params: Promise<{ id:
   // 1. Fetch the main post
   const { data: post, error: postError } = await supabase
     .from('posts')
-    .select('*, polls(*, poll_votes(*)), void_answers(*)')
+    .select('*, reactions(*), polls(*, poll_votes(*)), void_answers(*)')
     .eq('id', id)
     .single()
 

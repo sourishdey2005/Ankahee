@@ -1,3 +1,5 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import {
   Feather,
@@ -12,192 +14,334 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import React from 'react'
+import React, { useRef, useState, useEffect } from 'react'
+import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion'
 
 export default function Home() {
+  const targetRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start start", "end start"]
+  })
+
+  // Hero parallax and fade effects
+  const opacity = useTransform(scrollYProgress, [0, 0.4], [1, 0])
+  const scale = useTransform(scrollYProgress, [0, 0.4], [1, 0.85])
+  const y = useTransform(scrollYProgress, [0, 0.4], [0, -80])
+
+  // Multi-layered stars parallax
+  const starsY1 = useTransform(scrollYProgress, [0, 1], [0, -150])
+  const starsY2 = useTransform(scrollYProgress, [0, 1], [0, -300])
+  const starsY3 = useTransform(scrollYProgress, [0, 1], [0, -450])
+
+  const springScale = useSpring(scale, { stiffness: 100, damping: 30 })
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#050510] text-[#E0E0E0] overflow-hidden selection:bg-primary/30">
-      {/* Dynamic Background Effects */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(124,58,237,0.1),transparent_70%)]"></div>
+    <div ref={targetRef} className="flex flex-col min-h-screen bg-[#050510] text-[#E0E0E0] overflow-x-hidden selection:bg-primary/30 scroll-smooth">
+      {/* Dynamic Animated Background */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(124,58,237,0.06),transparent_70%)]"></div>
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
 
-        {/* Animated Particles/Stars effect using CSS */}
-        <div className="absolute inset-0 opacity-30 select-none pointer-events-none">
-          <div className="absolute top-[10%] left-[20%] w-1 h-1 bg-white rounded-full animate-pulse"></div>
-          <div className="absolute top-[30%] left-[80%] w-1 h-1 bg-white rounded-full animate-pulse delay-75"></div>
-          <div className="absolute top-[70%] left-[40%] w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse delay-150"></div>
-          <div className="absolute top-[50%] left-[10%] w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-300"></div>
-          <div className="absolute top-[85%] left-[90%] w-1 h-1 bg-white rounded-full animate-pulse delay-500"></div>
-        </div>
+        {/* Parallax Star Layers */}
+        <motion.div style={{ y: starsY1 }} className="absolute inset-0">
+          <StarLayer count={60} size="w-0.5 h-0.5" opacity="opacity-15" color="bg-white" />
+        </motion.div>
+        <motion.div style={{ y: starsY2 }} className="absolute inset-0">
+          <StarLayer count={40} size="w-1 h-1" opacity="opacity-25" color="bg-primary/20" />
+        </motion.div>
+        <motion.div style={{ y: starsY3 }} className="absolute inset-10">
+          <StarLayer count={20} size="w-1.5 h-1.5" opacity="opacity-30" color="bg-purple-500/20" />
+        </motion.div>
+
+        {/* Floating Atmospheric Nebula */}
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.4, 0.2],
+            rotate: [0, 5, 0]
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-[20%] -left-[10%] w-[80%] h-[80%] bg-primary/5 blur-[100px] rounded-full"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.1, 0.3, 0.1],
+            rotate: [0, -5, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-[20%] -right-[10%] w-[70%] h-[70%] bg-purple-900/10 blur-[130px] rounded-full"
+        />
       </div>
 
-      {/* Navigation */}
-      <nav className="relative z-50 container mx-auto px-6 py-6 flex justify-between items-center bg-transparent">
-        <div className="flex items-center space-x-2 group">
-          <div className="p-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md group-hover:border-primary/50 transition-colors">
+      {/* Persistent Navigation */}
+      <nav className="relative z-50 container mx-auto px-6 py-6 flex justify-between items-center">
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="flex items-center space-x-2 group shrink-0 cursor-pointer"
+        >
+          <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-500">
             <Feather className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
           </div>
-          <span className="font-headline font-bold text-xl tracking-tight">Ankahee</span>
-        </div>
-        <Link href="/login">
-          <Button variant="ghost" className="text-muted-foreground hover:text-white transition-colors">
-            Login
-          </Button>
-        </Link>
+          <span className="font-headline font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">Ankahee</span>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <Link href="/login">
+            <Button variant="ghost" className="text-muted-foreground hover:text-white hover:bg-white/5 px-6 font-medium transition-all">
+              Login
+            </Button>
+          </Link>
+        </motion.div>
       </nav>
 
-      {/* Hero Section */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-24 max-w-5xl mx-auto">
-        <div className="relative mb-12 animate-in fade-in zoom-in-95 duration-1000">
-          <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
+      {/* High-Fidelity Hero Section */}
+      <motion.main
+        style={{ opacity, scale: springScale, y }}
+        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-24 max-w-5xl mx-auto"
+      >
+        <motion.div
+          className="relative mb-14"
+          initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 20,
+            delay: 0.2
+          }}
+        >
+          <motion.div
+            animate={{
+              scale: [1, 1.4, 1],
+              opacity: [0.1, 0.4, 0.1],
+              rotate: [0, 180, 360]
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full scale-125"
+          ></motion.div>
           <Image
             src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png"
             alt="Ankahee Logo"
-            width={160}
-            height={160}
-            className="relative drop-shadow-[0_0_15px_rgba(124,58,237,0.5)]"
+            width={180}
+            height={180}
+            className="relative drop-shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:scale-105 transition-transform duration-700"
             priority
           />
-        </div>
+        </motion.div>
 
-        <h1 className="text-6xl md:text-8xl font-headline font-bold mb-6 tracking-tight animate-in fade-in slide-in-from-top-12 duration-1000 delay-100 italic">
-          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">Ankahee</span>
-        </h1>
+        <motion.h1
+          className="text-7xl md:text-9xl font-headline font-bold mb-8 tracking-tighter italic"
+          initial={{ opacity: 0, filter: "blur(20px)", y: 40 }}
+          animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+          transition={{ duration: 1.2, delay: 0.4 }}
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/30 drop-shadow-sm">Ankahee</span>
+        </motion.h1>
 
-        <div className="animate-in fade-in slide-in-from-top-16 duration-1000 delay-200">
-          <p className="text-2xl md:text-3xl text-primary font-medium mb-8 tracking-wide font-headline">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.6 }}
+          className="space-y-10"
+        >
+          <p className="text-2xl md:text-4xl text-primary font-semibold tracking-widest font-headline uppercase">
             Speak Freely. Stay Unknown.
           </p>
-          <div className="max-w-2xl mx-auto space-y-6">
-            <p className="text-xl text-white/90 font-light leading-relaxed">
-              “Every heart has an <span className="text-primary italic font-semibold underline decoration-primary/30 underline-offset-4">untold story</span>.”
+          <div className="max-w-2xl mx-auto space-y-8">
+            <p className="text-2xl text-white/90 font-light leading-relaxed font-headline italic">
+              “Every heart has an <span className="text-primary not-italic font-bold underline decoration-primary/50 underline-offset-8">untold story</span>.”
             </p>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto leading-relaxed border-l-2 border-primary/20 pl-4">
+            <p className="text-muted-foreground text-xl max-w-xl mx-auto leading-relaxed border-l-2 border-primary/40 pl-8 text-left py-2 font-light">
               A refined sanctuary to release your deepest secrets without a trace.
               Our ephemeral architecture ensures your voice is heard, then forgotten.
             </p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="mt-12 flex flex-col sm:flex-row gap-4 animate-in fade-in zoom-in-95 duration-1000 delay-400">
+        <motion.div
+          className="mt-16 flex flex-col sm:flex-row gap-6"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.8 }}
+        >
           <Link href="/feed">
             <Button
               size="lg"
-              className="px-8 py-7 font-bold text-xl bg-white text-black hover:bg-white/90 transition-all duration-500 rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.15)] group"
+              className="px-10 py-8 font-bold text-2xl bg-white text-black hover:bg-[#F0F0F0] transition-all duration-500 rounded-3xl shadow-[0_20px_60px_rgba(255,255,255,0.1)] group overflow-hidden relative"
             >
-              Enter the Void
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <span className="relative z-10 flex items-center">
+                Enter the Void
+                <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-500" />
+              </span>
+              <motion.div
+                className="absolute inset-0 bg-primary/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-700"
+              />
             </Button>
           </Link>
           <Button
             asChild
             size="lg"
             variant="outline"
-            className="px-8 py-7 font-bold text-xl border-white/10 bg-white/5 backdrop-blur-xl hover:bg-white/10 transition-all duration-500 rounded-2xl cursor-pointer"
+            className="px-10 py-8 font-bold text-2xl border-white/10 bg-white/5 backdrop-blur-2xl hover:bg-white/10 transition-all duration-500 rounded-3xl cursor-pointer group"
           >
-            <a href="#how-it-works">How It Works</a>
+            <a href="#how-it-works">
+              How It Works
+              <ChevronDown className="ml-2 h-5 w-5 opacity-50 group-hover:translate-y-1 group-hover:opacity-100 transition-all" />
+            </a>
           </Button>
-        </div>
+        </motion.div>
 
-        <a
+        <motion.a
           href="#how-it-works"
-          className="mt-20 animate-bounce cursor-pointer opacity-50 hover:opacity-100 transition-opacity flex items-center justify-center w-full"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 0.4, y: 0 }}
+          transition={{
+            delay: 1.8,
+            duration: 1,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          whileHover={{ opacity: 1, scale: 1.1 }}
+          className="mt-28 cursor-pointer flex items-center justify-center w-full group"
         >
-          <ChevronDown className="h-8 w-8 text-white/50" />
-        </a>
-      </main>
+          <ChevronDown className="h-10 w-10 text-white/40 group-hover:text-primary transition-colors" />
+        </motion.a>
+      </motion.main>
 
-      {/* How it works Section */}
-      <section id="how-it-works" className="relative z-10 w-full py-32 bg-[#08081A]/80 backdrop-blur-3xl border-y border-white/5">
+      {/* Interactive Feature Grid Section */}
+      <SectionWrapper id="how-it-works" className="py-40 bg-black/40 backdrop-blur-3xl border-y border-white/5">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-24">
-            <h2 className="text-4xl md:text-5xl font-headline font-bold text-white mb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1 }}
+            className="text-center mb-32"
+          >
+            <h2 className="text-5xl md:text-7xl font-headline font-bold text-white mb-6 tracking-tight">
               The Architecture of Anonymity
             </h2>
-            <div className="h-1 w-20 bg-primary mx-auto rounded-full"></div>
-          </div>
+            <div className="h-1.5 w-24 bg-primary mx-auto rounded-full shadow-[0_0_20px_rgba(124,58,237,0.5)]"></div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-10 lg:gap-16">
             <FeatureCard
-              icon={<PenSquare className="w-8 h-8" />}
+              icon={<PenSquare className="w-9 h-9" />}
               title="Share Anonymously"
-              description="No accounts required to browse. Your expression is detached from your identity, allowing for absolute honesty."
+              description="No accounts required to browse. Your expression is detached from your identity, allowing for absolute honesty and unfiltered truth."
               index={0}
             />
             <FeatureCard
-              icon={<Hourglass className="w-8 h-8" />}
+              icon={<Hourglass className="w-9 h-9" />}
               title="Gone in 24 Hours"
-              description="Digital impermanence is our core. Every post and interaction dissolves into the void after one day."
+              description="Digital impermanence is our heart. Every post and interaction dissolves back into the void precisely 24 hours after birth."
               index={1}
             />
             <FeatureCard
-              icon={<HeartHandshake className="w-8 h-8" />}
+              icon={<HeartHandshake className="w-9 h-9" />}
               title="Listen and Exist"
-              description="Discover the raw, unfiltered pulse of the human condition. Find connection without judgment."
+              description="Discover the raw, authentic pulse of the human condition. Find connection in the shared silence without the weight of judgment."
               index={2}
             />
           </div>
         </div>
-      </section>
+      </SectionWrapper>
 
-      {/* Features Detail Section */}
-      <section className="relative z-10 w-full py-32 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.05),transparent_50%)]"></div>
+      {/* Advanced Animated Feature Showcase */}
+      <SectionWrapper className="py-40 overflow-hidden">
         <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto space-y-32">
+          <div className="max-w-5xl mx-auto space-y-48">
             <FeatureRow
               reversed={false}
-              icon={<Sparkles className="w-12 h-12 text-primary" />}
+              icon={<Sparkles className="w-14 h-14 text-primary" />}
               title="AI-Powered Mood Analysis"
-              description="Our specialized AI flows listen to the subtext of your confession, automatically suggesting the perfect mood tag to help your story resonate with the right frequency."
+              description="Our specialized neural flows analyze the subtext and emotional frequency of your confession, automatically weaving the perfect mood tags to ensure your story reaches the right minds."
             />
             <FeatureRow
               reversed={true}
-              icon={<MessagesSquare className="w-12 h-12 text-primary" />}
+              icon={<MessagesSquare className="w-14 h-14 text-primary" />}
               title="Identity-Shifting Dialogue"
-              description="Engage in deep conversations through our unique commenting system. Your identity shifts in every thread, ensuring your past interactions never define your current presence."
+              description="Engage in profound conversations through our fluid commenting architecture. Your identity transforms in every thread, ensuring your past never anchors your present."
             />
             <FeatureRow
               reversed={false}
-              icon={<SearchX className="w-12 h-12 text-primary" />}
+              icon={<SearchX className="w-14 h-14 text-primary" />}
               title="Forbidden Indexing"
-              description="Ankahee is invisible to search engines and permanent web crawlers. What is shared here, stays here—until the clock runs out."
+              description="Ankahee exists beyond the reach of search engines and web crawlers. What is shared in the sanctuary remains within its walls—until the clock reaches zero."
             />
           </div>
         </div>
-      </section>
+      </SectionWrapper>
 
-      {/* Philosophy Section */}
-      <section className="relative z-10 w-full py-40 border-t border-white/5 bg-gradient-to-b from-transparent to-black/40">
-        <div className="container mx-auto px-6 text-center max-w-4xl">
-          <h2 className="text-4xl md:text-5xl font-headline font-bold mb-12 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40 italic">
-            "In permanence, we hide. In transience, we find freedom."
-          </h2>
-          <div className="space-y-6 text-xl text-muted-foreground font-light leading-relaxed">
-            <p>
+      {/* Immersive Philosophy Section */}
+      <SectionWrapper className="py-52 border-t border-white/5 bg-gradient-to-b from-transparent to-black/60 relative overflow-hidden">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] aspect-square bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.03),transparent_70%)] pointer-events-none"
+        />
+        <div className="container mx-auto px-6 text-center max-w-4xl relative z-10">
+          <motion.h2
+            initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+            whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.5 }}
+            className="text-5xl md:text-7xl font-headline font-bold mb-16 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40 italic leading-tight"
+          >
+            "In permanence, we hide.<br />In transience, we find freedom."
+          </motion.h2>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="space-y-10 text-2xl text-muted-foreground font-extralight leading-relaxed"
+          >
+            <p className="hover:text-white transition-colors duration-700">
               Ankahee is a response to the digital panopticon. We believe that some truths are too heavy to carry on a permanent profile, but too important to be kept silent forever.
             </p>
-            <p>
+            <p className="hover:text-white transition-colors duration-700">
               Our sanctuary is built for the raw, the real, and the deep. It is not for vanity or visibility—it is for the quiet relief of being heard without the weight of being watched.
             </p>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </SectionWrapper>
 
-      {/* Footer */}
-      <footer className="relative z-10 bg-black py-16 border-t border-white/5">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center space-x-2">
-            <Feather className="h-5 w-5 text-primary" />
-            <span className="font-headline font-bold text-lg">Ankahee</span>
-          </div>
-          <div className="text-muted-foreground text-sm">
+      {/* Professional Footer */}
+      <footer className="relative z-10 bg-black py-24 border-t border-white/5 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="flex items-center space-x-3 cursor-pointer"
+          >
+            <div className="p-2 rounded-xl bg-white/5 border border-white/10">
+              <Feather className="h-6 w-6 text-primary" />
+            </div>
+            <span className="font-headline font-bold text-2xl">Ankahee</span>
+          </motion.div>
+          <div className="text-muted-foreground text-sm tracking-widest uppercase font-light opacity-50 hover:opacity-100 transition-opacity duration-700">
             &copy; {new Date().getFullYear()} Ankahee Sanctuary. All paths lead to the void.
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-xs text-white/30 tracking-widest uppercase">Designed & Built by</span>
-            <a href="https://sourishdeyportfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="font-medium text-white hover:text-primary transition-colors">Sourish Dey</a>
+          <div className="flex items-center space-x-6">
+            <span className="text-xs text-white/20 tracking-[.3em] uppercase hidden sm:block">Architect</span>
+            <motion.a
+              href="https://sourishdeyportfolio.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ x: 5, color: "#7C3AED" }}
+              className="font-medium text-lg text-white/80 transition-all flex items-center group"
+            >
+              Sourish Dey
+              <ArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-all" />
+            </motion.a>
           </div>
         </div>
       </footer>
@@ -205,49 +349,134 @@ export default function Home() {
   )
 }
 
+function StarLayer({ count, size, opacity, color }: { count: number, size: string, opacity: string, color: string }) {
+  const [stars, setStars] = useState<{ top: string, left: string }[]>([])
+
+  useEffect(() => {
+    const generatedStars = [...Array(count)].map(() => ({
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+    }))
+    setStars(generatedStars)
+  }, [count])
+
+  if (stars.length === 0) return null
+
+  return (
+    <div className="absolute inset-0">
+      {stars.map((star, i) => (
+        <div
+          key={i}
+          className={`absolute rounded-full ${size} ${color} ${opacity}`}
+          style={{
+            top: star.top,
+            left: star.left,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function SectionWrapper({ id, children, className }: { id?: string, children: React.ReactNode, className?: string }) {
+  return (
+    <section id={id} className={`relative z-10 w-full ${className}`}>
+      {children}
+    </section>
+  )
+}
+
 function FeatureCard({ icon, title, description, index }: { icon: React.ReactNode, title: string, description: string, index: number }) {
   return (
-    <div className={`p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl hover:border-primary/50 transition-all duration-500 group relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-${(index + 1) * 200}`}>
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.8, delay: index * 0.15 }}
+      whileHover={{
+        y: -15,
+        scale: 1.02,
+        transition: { type: "spring", stiffness: 300, damping: 20 }
+      }}
+      className="p-10 rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl hover:border-primary/40 transition-all duration-700 group relative overflow-hidden"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
       <div className="relative z-10">
-        <div className="w-16 h-16 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center text-primary mb-6 group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-500 shadow-2xl">
+        <div className="w-20 h-20 rounded-[1.5rem] bg-black/60 border border-white/5 flex items-center justify-center text-primary mb-10 group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-700 shadow-3xl">
           {icon}
         </div>
-        <h3 className="text-2xl font-headline font-bold text-white mb-4 group-hover:text-primary transition-colors">
+        <h3 className="text-3xl font-headline font-bold text-white mb-6 group-hover:text-primary transition-colors duration-500">
           {title}
         </h3>
-        <p className="text-muted-foreground leading-relaxed">
+        <p className="text-muted-foreground text-lg leading-relaxed font-light group-hover:text-white/80 transition-colors duration-500">
           {description}
         </p>
       </div>
-    </div>
+      <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full translate-x-1/2 translate-y-1/2 group-hover:bg-primary/20 transition-all duration-1000" />
+    </motion.div>
   );
 }
 
 function FeatureRow({ icon, title, description, reversed }: { icon: React.ReactNode, title: string, description: string, reversed: boolean }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: "-20%" })
+
   return (
-    <div className={`flex flex-col ${reversed ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-16 group`}>
-      <div className="flex-1 space-y-6">
-        <div className="inline-block p-4 rounded-3xl bg-primary/5 border border-primary/20 backdrop-blur-3xl group-hover:scale-110 transition-transform duration-700 shadow-[0_0_30px_rgba(124,58,237,0.15)]">
+    <div ref={ref} className={`flex flex-col ${reversed ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-20 lg:gap-32 group`}>
+      <motion.div
+        initial={{ opacity: 0, x: reversed ? 60 : -60 }}
+        animate={isInView ? { opacity: 1, x: 0 } : {}}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        className="flex-1 space-y-8"
+      >
+        <motion.div
+          whileHover={{ rotate: 360, scale: 1.1 }}
+          transition={{ duration: 1 }}
+          className="inline-block p-5 rounded-[2rem] bg-primary/5 border border-primary/20 backdrop-blur-3xl shadow-[0_0_50px_rgba(124,58,237,0.1)] cursor-none"
+        >
           {icon}
-        </div>
-        <h3 className="text-3xl font-headline font-bold text-white tracking-tight group-hover:text-primary transition-colors duration-500">
+        </motion.div>
+        <h3 className="text-4xl lg:text-5xl font-headline font-bold text-white tracking-tight group-hover:text-primary transition-colors duration-700 leading-tight">
           {title}
         </h3>
-        <p className="text-xl text-muted-foreground leading-relaxed font-light">
+        <p className="text-2xl text-muted-foreground leading-relaxed font-extralight italic">
           {description}
         </p>
-      </div>
-      <div className="flex-1 w-full aspect-square md:aspect-video rounded-[3rem] bg-gradient-to-tr from-primary/20 via-white/5 to-transparent border border-white/10 p-1">
-        <div className="w-full h-full rounded-[2.8rem] bg-[#0A0A1F] flex items-center justify-center relative overflow-hidden group-hover:shadow-[0_0_50px_rgba(124,58,237,0.1)] transition-shadow duration-700">
-          <div className="w-3/4 h-3/4 border border-white/5 rounded-full animate-[spin_20s_linear_infinite] opacity-20"></div>
-          <div className="absolute w-1/2 h-1/2 border border-primary/20 rounded-full animate-[spin_10s_linear_infinite_reverse] opacity-40"></div>
-          <div className="absolute w-1/4 h-1/4 bg-primary/20 blur-3xl rounded-full"></div>
-          <div className="text-white/40 font-headline font-bold text-xs tracking-[0.5em] uppercase animate-pulse">Scanning The Void</div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, rotateY: reversed ? -20 : 20 }}
+        animate={isInView ? { opacity: 1, scale: 1, rotateY: 0 } : {}}
+        transition={{ duration: 1.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        className="flex-1 w-full aspect-square md:aspect-video rounded-[4rem] bg-gradient-to-tr from-primary/30 via-white/5 to-transparent border border-white/10 p-1.5 shadow-2xl relative"
+      >
+        <div className="w-full h-full rounded-[3.8rem] bg-[#0A0A1F] flex items-center justify-center relative overflow-hidden group-hover:shadow-[0_0_80px_rgba(124,58,237,0.15)] transition-shadow duration-1000">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="w-4/5 h-4/5 border border-white/10 rounded-full opacity-20 border-dashed"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="absolute w-3/5 h-3/5 border border-primary/30 rounded-full opacity-40 border-double"
+          />
+          <div className="absolute w-1/3 h-1/3 bg-primary/20 blur-[100px] rounded-full" />
+          <motion.div
+            animate={{ opacity: [0.2, 0.7, 0.2] }}
+            transition={{ duration: 4, repeat: Infinity }}
+            className="text-white/60 font-headline font-bold text-sm tracking-[0.8em] uppercase text-center px-4"
+          >
+            Scanning The Void
+          </motion.div>
+          {/* Subtle Scanning Line Effect */}
+          <motion.div
+            animate={{ y: ["100%", "-100%"] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent z-20 pointer-events-none"
+          />
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
-
-

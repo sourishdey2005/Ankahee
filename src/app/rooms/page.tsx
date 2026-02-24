@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tables } from '@/lib/supabase/types'
@@ -14,6 +15,14 @@ type RoomWithMembers = Tables<'rooms'> & {
 export default async function RoomsPage() {
   const supabase = await createClient()
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    redirect('/login')
+  }
+
   const { data: rooms, error } = await supabase
     .from('rooms')
     .select('*, room_members(count)')
@@ -21,7 +30,7 @@ export default async function RoomsPage() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching rooms:', error)
+    console.error('Error fetching rooms:', JSON.stringify(error, null, 2))
   }
 
   return (

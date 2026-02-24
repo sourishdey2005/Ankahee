@@ -365,7 +365,7 @@ export async function postRoomMessage(input: z.infer<typeof RoomMessageSchema>) 
     content: input.content,
   })
 
-  if (error) return { error: { message: 'Failed to send message.' } }
+  if (error) return { error: { message: error.message } }
 
   // No revalidation needed, client will handle real-time update
   return { data: { message: 'Message sent.' } }

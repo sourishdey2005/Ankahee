@@ -20,7 +20,7 @@ type PostWithReactions = Tables<'posts'> & {
 }
 
 export default function Echoes({ post }: { post: PostWithReactions }) {
-  const [reactions, setReactions] = useState(post.reactions)
+  const [reactions, setReactions] = useState(post.reactions || [])
   const [userReaction, setUserReaction] = useState<ReactionType | null>(null)
   const [userId, setUserId] = useState<string | undefined>()
   const [isPending, startTransition] = useTransition()
@@ -28,7 +28,7 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
   const { toast } = useToast()
 
   useEffect(() => {
-    setReactions(post.reactions)
+    setReactions(post.reactions || [])
   }, [post.reactions])
 
   useEffect(() => {
@@ -49,6 +49,8 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
 
   const reactionCounts = useMemo(() => {
     const counts: { [key in ReactionType]?: number } = {}
+    if (!Array.isArray(reactions)) return counts
+
     for (const reaction of reactions) {
       const type = reaction.reaction as ReactionType
       if (ReactionTypes.includes(type)) {
