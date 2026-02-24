@@ -67,6 +67,40 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
   return { data }
 }
 
+const LetterSchema = z.object({
+  content: z.string().min(20, 'Must be at least 20 characters.').max(5000, 'Cannot exceed 5000 characters.'),
+})
+
+export async function createLetter(input: z.infer<typeof LetterSchema>) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    return { error: { message: 'Unauthorized' } }
+  }
+
+  const parsed = LetterSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: { message: 'Invalid input' } }
+  }
+
+  const expires_at = add(new Date(), { days: 3 }).toISOString()
+
+  const { data, error } = await supabase.from('letters').insert({
+    content: parsed.data.content,
+    user_id: session.user.id,
+    expires_at,
+  }).select().single()
+
+  if (error) {
+    return { error }
+  }
+
+  revalidatePath('/letters');
+  return { data }
+}
+
 const UpdatePostSchema = z.object({
   postId: z.string().uuid(),
   content: z.string().min(10).max(500),

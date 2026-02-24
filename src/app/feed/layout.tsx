@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Feather, Archive, MessagesSquare } from 'lucide-react'
+import { Feather, Archive, MessagesSquare, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -39,6 +39,12 @@ export default async function FeedLayout({
             <span className="font-bold font-headline text-lg">Ankahee</span>
           </Link>
           <div className="flex items-center space-x-4">
+             <Link href="/letters">
+              <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
+                  <Mail className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Letters</span>
+              </Button>
+            </Link>
              <Link href="/rooms">
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
                   <MessagesSquare className="h-4 w-4" />
