@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { reflectionPrompts } from '@/lib/prompts'
 import { Card, CardContent } from '@/components/ui/card'
+import { stopwords } from '@/lib/stopwords'
+import CommunityWordCloud from '@/components/CommunityWordCloud'
 
 export const revalidate = 0
 
@@ -18,6 +20,33 @@ type PostWithCounts = Tables<'posts'> & {
   reactions: Array<Tables<'reactions'>>
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
 }
+
+const processPostsForWordCloud = (posts: PostWithCounts[]) => {
+  if (!posts || posts.length === 0) {
+    return [];
+  }
+
+  const allText = posts.map(p => p.content).join(' ');
+  
+  const words = allText
+    .toLowerCase()
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"") // remove punctuation
+    .split(/\s+/); // split into words
+
+  const wordFrequencies: { [key: string]: number } = {};
+
+  for (const word of words) {
+    if (word && word.length > 2 && !stopwords.includes(word)) {
+      wordFrequencies[word] = (wordFrequencies[word] || 0) + 1;
+    }
+  }
+
+  return Object.entries(wordFrequencies)
+    .map(([text, value]) => ({ text, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 50); // Take top 50 words
+}
+
 
 export default async function FeedPage({
   searchParams,
@@ -62,6 +91,7 @@ export default async function FeedPage({
   }
   
   const initialPosts: PostWithCounts[] = (posts as any) || [];
+  const wordCloudData = processPostsForWordCloud(initialPosts);
 
   const getDayOfYear = (date: Date) => {
     const start = new Date(date.getFullYear(), 0, 0);
@@ -76,6 +106,12 @@ export default async function FeedPage({
     <div className="container mx-auto max-w-2xl py-8">
        <div className="mb-8 space-y-4">
         <h1 className="text-3xl font-headline font-bold">The Void</h1>
+
+        {wordCloudData.length > 0 && (
+          <div className="pt-4">
+            <CommunityWordCloud data={wordCloudData} />
+          </div>
+        )}
 
         <Link href={`/new?prompt=${encodeURIComponent(dailyPrompt)}`} className="block">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer bg-card/50 backdrop-blur-sm">
