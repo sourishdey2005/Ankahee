@@ -18,6 +18,7 @@ const PostSchema = z.object({
   mood: z.string().optional(),
   userId: z.string().uuid(),
   poll: PollSchema,
+  parentId: z.string().uuid().optional(),
 })
 
 export async function createPost(input: z.infer<typeof PostSchema>) {
@@ -44,6 +45,7 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
     mood: parsed.data.mood,
     user_id: parsed.data.userId,
     expires_at,
+    parent_post_id: parsed.data.parentId,
   }).select().single()
 
   if (error) {
@@ -64,6 +66,9 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
   }
 
   revalidatePath('/feed');
+  if (parsed.data.parentId) {
+      revalidatePath(`/confession/${parsed.data.parentId}`)
+  }
   return { data }
 }
 

@@ -162,6 +162,7 @@ export type Database = {
           id: string
           mood: string | null
           user_id: string
+          parent_post_id: string | null
         }
         Insert: {
           content: string
@@ -170,6 +171,7 @@ export type Database = {
           id?: string
           mood?: string | null
           user_id: string
+          parent_post_id?: string | null
         }
         Update: {
           content?: string
@@ -178,6 +180,7 @@ export type Database = {
           id?: string
           mood?: string | null
           user_id?: string
+          parent_post_id?: string | null
         }
         Relationships: [
           {
@@ -185,6 +188,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_parent_post_id_fkey"
+            columns: ["parent_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           }
         ]

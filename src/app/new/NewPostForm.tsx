@@ -53,7 +53,7 @@ const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) =
     })
 }
 
-export default function NewPostForm({ userId, promptText }: { userId: string, promptText?: string }) {
+export default function NewPostForm({ userId, promptText, parentId }: { userId: string, promptText?: string, parentId?: string }) {
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -64,7 +64,7 @@ export default function NewPostForm({ userId, promptText }: { userId: string, pr
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      content: promptText || '',
+      content: parentId ? '' : promptText || '',
       mood: undefined,
       pollOptionOne: '',
       pollOptionTwo: '',
@@ -100,7 +100,7 @@ export default function NewPostForm({ userId, promptText }: { userId: string, pr
 
 
   const onSubmit = (values: FormValues) => {
-    const postData: any = { content: values.content, userId };
+    const postData: any = { content: values.content, userId, parentId };
     if (values.mood) {
       postData.mood = values.mood;
     }
@@ -124,7 +124,7 @@ export default function NewPostForm({ userId, promptText }: { userId: string, pr
           title: 'Success',
           description: 'Your confession has been shared.',
         })
-        router.push('/feed')
+        router.push(parentId ? `/confession/${parentId}` : '/feed')
       }
     })
   }
@@ -132,6 +132,11 @@ export default function NewPostForm({ userId, promptText }: { userId: string, pr
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {parentId && (
+            <div className="p-4 border rounded-lg bg-card/50 text-sm text-muted-foreground">
+                You are replying to another confession. Your post will be added to the chain.
+            </div>
+        )}
         <FormField
           control={form.control}
           name="content"
