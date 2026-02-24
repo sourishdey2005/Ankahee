@@ -39,6 +39,12 @@ export default async function FeedLayout({
             <span className="font-bold font-headline text-lg">Ankahee</span>
           </Link>
           <div className="flex items-center space-x-4">
+             <Link href="/rooms">
+              <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
+                  <MessagesSquare className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Rooms</span>
+              </Button>
+            </Link>
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -63,12 +69,6 @@ export default async function FeedLayout({
                   <DropdownMenuItem className="cursor-pointer">
                     <Archive className="mr-2 h-4 w-4" />
                     <span>My Archive</span>
-                  </DropdownMenuItem>
-                </Link>
-                 <Link href="/rooms">
-                  <DropdownMenuItem className="cursor-pointer">
-                    <MessagesSquare className="mr-2 h-4 w-4" />
-                    <span>Chat Rooms</span>
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
