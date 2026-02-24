@@ -4,15 +4,24 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
+import { User } from '@supabase/supabase-js'
 
 type Post = Tables<'posts'> & {
   comments: Array<{ count: number }>
   reactions: Array<Tables<'reactions'>>
+  polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
 }
 
 export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Post[], sort?: string }) {
   const [posts, setPosts] = useState<Post[]>(serverPosts)
+  const [user, setUser] = useState<User | null>(null)
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+  }, [supabase.auth])
 
   useEffect(() => {
     setPosts(serverPosts)
@@ -29,7 +38,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
   const handlePostUpdate = useCallback(async (postId: string) => {
     const { data: updatedPostData, error } = await supabase
       .from('posts')
-      .select('*, comments(count), reactions(*)')
+      .select('*, comments(count), reactions(*), polls(*, poll_votes(*))')
       .eq('id', postId)
       .single()
 
@@ -56,7 +65,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
         { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
             const newPost = payload.new as Tables<'posts'>
-            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [] }
+            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [] }
             setPosts((prevPosts) => [postWithCounts, ...prevPosts])
         }
       )
@@ -96,10 +105,25 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
       )
       .subscribe()
 
+    const pollsChannel = supabase
+      .channel('realtime-polls-feed')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'polls' },
+        (payload: any) => {
+           const postId = payload.new?.post_id
+          if (postId) {
+            handlePostUpdate(postId)
+          }
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(postsChannel)
       supabase.removeChannel(reactionsChannel)
       supabase.removeChannel(commentsChannel)
+      supabase.removeChannel(pollsChannel)
     }
   }, [supabase, handlePostUpdate])
 
@@ -115,7 +139,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
   return (
     <div className="space-y-4">
       {sortedPosts.map((post) => (
-        <ConfessionCard key={post.id} post={post} />
+        <ConfessionCard key={post.id} post={post} user={user} />
       ))}
     </div>
   )

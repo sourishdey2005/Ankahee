@@ -21,16 +21,20 @@ import { Clock, Pencil, Loader2 } from 'lucide-react'
 import { moodColors } from '@/lib/mood-tags'
 import Echoes from './Echoes'
 import BurnButton from './BurnButton'
+import Poll from './Poll'
 
 type Post = Tables<'posts'>
-type PostWithReactions = Post & { reactions: Tables<'reactions'>[] }
+type PollVote = Tables<'poll_votes'>
+type PollWithVotes = Tables<'polls'> & { poll_votes: PollVote[] }
+type PostWithDetails = Post & { reactions: Tables<'reactions'>[], polls: PollWithVotes[] }
+
 
 const formSchema = z.object({
   content: z.string().min(10, 'Must be at least 10 characters.').max(500, 'Cannot exceed 500 characters.'),
 })
 
-export default function EditPost({ post: initialPost, user }: { post: Post; user: User }) {
-  const [post, setPost] = useState<PostWithReactions>({ ...initialPost, reactions: [] });
+export default function EditPost({ post: initialPost, user }: { post: PostWithDetails; user: User }) {
+  const [post, setPost] = useState(initialPost);
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
@@ -38,31 +42,47 @@ export default function EditPost({ post: initialPost, user }: { post: Post; user
   
   const canEdit = user.id === post.user_id
   const moodColor = post.mood ? moodColors[post.mood as keyof typeof moodColors] || 'bg-secondary' : 'bg-secondary';
+  const poll = post.polls?.[0];
 
   useEffect(() => {
-    const fetchReactions = async () => {
-      const { data, error } = await supabase.from('reactions').select('*').eq('post_id', initialPost.id);
+    setPost(initialPost);
+  }, [initialPost]);
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, reactions(*), polls(*, poll_votes(*))')
+        .eq('id', initialPost.id)
+        .single();
+
       if (data) {
-        setPost({ ...initialPost, reactions: data });
+        setPost(data as PostWithDetails);
       }
     };
-    fetchReactions();
 
-    const channel = supabase.channel(`reactions:${initialPost.id}`)
+    const channel = supabase.channel(`details:${initialPost.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'reactions',
         filter: `post_id=eq.${initialPost.id}`
+      }, (payload) => fetchDetails())
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'poll_votes'
+        // This is tricky to filter, so we just refetch on any vote change.
+        // For a high-traffic app, we'd want a more specific subscription.
       }, (payload) => {
-        fetchReactions(); // Refetch all reactions on any change
+        fetchDetails()
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [initialPost, supabase]);
+  }, [initialPost.id, supabase]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -132,6 +152,7 @@ export default function EditPost({ post: initialPost, user }: { post: Post; user
         ) : (
           <p className="text-lg text-foreground/90 whitespace-pre-wrap">{post.content}</p>
         )}
+        {poll && <Poll poll={poll} user={user} />}
       </CardContent>
       <CardFooter className="flex justify-between items-center text-muted-foreground">
         <div className="flex items-center space-x-4">

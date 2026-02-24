@@ -51,41 +51,73 @@ export type Database = {
           }
         ]
       }
-      reactions: {
+      poll_votes: {
         Row: {
-          id: string
           created_at: string
-          post_id: string
+          id: string
+          poll_id: string
+          selected_option: number
           user_id: string
-          reaction: string
         }
         Insert: {
-          id?: string
           created_at?: string
-          post_id: string
+          id?: string
+          poll_id: string
+          selected_option: number
           user_id: string
-          reaction: string
         }
         Update: {
-          id?: string
           created_at?: string
-          post_id?: string
+          id?: string
+          poll_id?: string
+          selected_option?: number
           user_id?: string
-          reaction?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reactions_post_id_fkey"
-            columns: ["post_id"]
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
             isOneToOne: false
-            referencedRelation: "posts"
+            referencedRelation: "polls"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reactions_user_id_fkey"
+            foreignKeyName: "poll_votes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      polls: {
+        Row: {
+          created_at: string
+          id: string
+          option_one_text: string
+          option_two_text: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_one_text: string
+          option_two_text: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_one_text?: string
+          option_two_text?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polls_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: true
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           }
         ]
@@ -118,6 +150,45 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      reactions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reaction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reaction: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reaction?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"

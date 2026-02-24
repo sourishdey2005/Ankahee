@@ -20,12 +20,24 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Sparkles, PlusCircle, X } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 const formSchema = z.object({
   content: z.string().min(10, 'Must be at least 10 characters.').max(500, 'Cannot exceed 500 characters.'),
   mood: z.enum(MoodTags).optional(),
+  pollOptionOne: z.string().max(80, 'Option cannot exceed 80 characters.').optional(),
+  pollOptionTwo: z.string().max(80, 'Option cannot exceed 80 characters.').optional(),
 })
+.refine(data => {
+    if (data.pollOptionOne || data.pollOptionTwo) {
+        return !!data.pollOptionOne && !!data.pollOptionTwo && data.pollOptionOne.length > 0 && data.pollOptionTwo.length > 0;
+    }
+    return true;
+}, {
+    message: "Both poll options are required if you add a poll.",
+    path: ["pollOptionTwo"],
+});
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -47,12 +59,15 @@ export default function NewPostForm({ userId, promptText }: { userId: string, pr
   const [isPending, startTransition] = useTransition()
   const [suggestedMood, setSuggestedMood] = useState<string | null>(null)
   const [isSuggesting, setIsSuggesting] = useState(false)
+  const [showPoll, setShowPoll] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       content: promptText || '',
       mood: undefined,
+      pollOptionOne: '',
+      pollOptionTwo: '',
     },
   })
 
@@ -85,8 +100,19 @@ export default function NewPostForm({ userId, promptText }: { userId: string, pr
 
 
   const onSubmit = (values: FormValues) => {
+    const postData: any = { content: values.content, userId };
+    if (values.mood) {
+      postData.mood = values.mood;
+    }
+    if (showPoll && values.pollOptionOne && values.pollOptionTwo) {
+      postData.poll = {
+        optionOne: values.pollOptionOne,
+        optionTwo: values.pollOptionTwo,
+      }
+    }
+
     startTransition(async () => {
-      const result = await createPost({ ...values, userId })
+      const result = await createPost(postData)
       if (result.error) {
         toast({
           title: 'Error',
@@ -163,6 +189,54 @@ export default function NewPostForm({ userId, promptText }: { userId: string, pr
             </FormItem>
           )}
         />
+
+        <div className="space-y-4">
+            {!showPoll ? (
+                <Button variant="outline" onClick={() => setShowPoll(true)} className="w-full">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Poll
+                </Button>
+            ) : (
+                <div className="p-4 border rounded-lg space-y-4 bg-card/50">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-semibold">Add a Poll</h3>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                            setShowPoll(false)
+                            form.setValue('pollOptionOne', '')
+                            form.setValue('pollOptionTwo', '')
+                        }}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <FormField
+                        control={form.control}
+                        name="pollOptionOne"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Option 1</FormLabel>
+                            <FormControl>
+                                <Input placeholder="E.g., Yes" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="pollOptionTwo"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Option 2</FormLabel>
+                            <FormControl>
+                                <Input placeholder="E.g., No" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+            )}
+        </div>
 
         <Button
           type="submit"

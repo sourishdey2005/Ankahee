@@ -7,10 +7,16 @@ import { add } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { isEditable } from '@/lib/utils'
 
+const PollSchema = z.object({
+  optionOne: z.string().min(1).max(80),
+  optionTwo: z.string().min(1).max(80),
+}).optional()
+
 const PostSchema = z.object({
   content: z.string().min(10).max(500),
   mood: z.string().optional(),
   userId: z.string().uuid(),
+  poll: PollSchema,
 })
 
 export async function createPost(input: z.infer<typeof PostSchema>) {
@@ -41,6 +47,19 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
 
   if (error) {
     return { error }
+  }
+
+  if (parsed.data.poll) {
+    const { error: pollError } = await supabase.from('polls').insert({
+      post_id: data.id,
+      option_one_text: parsed.data.poll.optionOne,
+      option_two_text: parsed.data.poll.optionTwo,
+    })
+
+    if (pollError) {
+        console.error("Poll creation failed:", pollError)
+        return { error: { message: "Your confession was posted, but the poll could not be created." } }
+    }
   }
 
   revalidatePath('/feed');
@@ -181,4 +200,49 @@ export async function deletePost(input: z.infer<typeof DeletePostSchema>) {
     revalidatePath(`/confession/${postId}`)
 
     return { data: { message: 'Post deleted successfully.' } }
+}
+
+const VoteSchema = z.object({
+    pollId: z.string().uuid(),
+    option: z.union([z.literal(1), z.literal(2)]),
+})
+
+export async function castVote(input: z.infer<typeof VoteSchema>) {
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+        return { error: { message: 'Unauthorized' } }
+    }
+
+    const parsed = VoteSchema.safeParse(input)
+    if (!parsed.success) {
+        return { error: { message: 'Invalid input' } }
+    }
+
+    const { pollId, option } = parsed.data
+
+    const { error } = await supabase.from('poll_votes').insert({
+        poll_id: pollId,
+        user_id: session.user.id,
+        selected_option: option,
+    })
+
+    if (error) {
+        if (error.code === '23505') { // unique_violation
+            return { error: { message: 'You have already voted on this poll.' } }
+        }
+        return { error: { message: 'Failed to cast vote.' } }
+    }
+    
+    // Revalidate paths to show updated poll results
+    const { data: pollData } = await supabase.from('polls').select('post_id').eq('id', pollId).single()
+    if (pollData) {
+        revalidatePath(`/confession/${pollData.post_id}`)
+        revalidatePath('/feed')
+    }
+
+    return { data: { message: 'Vote cast successfully.' } }
 }

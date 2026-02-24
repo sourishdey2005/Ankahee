@@ -9,6 +9,12 @@ import { Tables } from '@/lib/supabase/types'
 import EditPost from '@/components/EditPost'
 
 type Comment = Tables<'comments'>
+type PollVote = Tables<'poll_votes'>
+type Poll = Tables<'polls'> & { poll_votes: PollVote[] }
+type PostWithDetails = Tables<'posts'> & {
+  reactions: Tables<'reactions'>[]
+  polls: Poll[]
+}
 
 export default async function ConfessionPage({ params }: { params: { id: string } }) {
   const cookieStore = cookies()
@@ -21,7 +27,7 @@ export default async function ConfessionPage({ params }: { params: { id: string 
 
   const { data: post, error: postError } = await supabase
     .from('posts')
-    .select('*')
+    .select('*, polls(*, poll_votes(*))')
     .eq('id', params.id)
     .single()
 
@@ -46,7 +52,7 @@ export default async function ConfessionPage({ params }: { params: { id: string 
         </Button>
       </Link>
       
-      <EditPost post={post} user={session.user} />
+      <EditPost post={post as any} user={session.user} />
       
       <CommentSection postId={post.id} initialComments={initialComments} session={session} />
     </div>

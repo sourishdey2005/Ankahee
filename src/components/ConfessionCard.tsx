@@ -7,13 +7,16 @@ import Countdown from './Countdown'
 import { MoodTag, moodColors } from '@/lib/mood-tags'
 import Echoes from './Echoes'
 import { cn } from '@/lib/utils'
+import Poll from './Poll'
+import { User } from '@supabase/supabase-js'
 
-type PostWithCounts = Tables<'posts'> & {
+type PostWithDetails = Tables<'posts'> & {
   comments: Array<{ count: number }>
   reactions: Array<Tables<'reactions'>>
+  polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
 };
 
-export default function ConfessionCard({ post }: { post: PostWithCounts }) {
+export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: User | null }) {
   const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
   const commentCount = post.comments?.[0]?.count ?? 0;
 
@@ -21,6 +24,8 @@ export default function ConfessionCard({ post }: { post: PostWithCounts }) {
   const now = new Date();
   const timeLeft = expires.getTime() - now.getTime();
   const isExpiringSoon = timeLeft > 0 && timeLeft < (60 * 60 * 1000); // Less than 1 hour
+
+  const poll = post.polls?.[0];
 
   return (
     <Link href={`/confession/${post.id}`} className="block">
@@ -37,6 +42,11 @@ export default function ConfessionCard({ post }: { post: PostWithCounts }) {
         </CardHeader>
         <CardContent>
           <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
+          {poll && user && (
+            <div onClick={(e) => e.preventDefault()}>
+                <Poll poll={poll} user={user} />
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex justify-between items-center text-muted-foreground">
           <div className="flex items-center space-x-4">

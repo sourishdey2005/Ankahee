@@ -16,6 +16,7 @@ export const revalidate = 0
 type PostWithCounts = Tables<'posts'> & {
   comments: Array<{ count: number }>
   reactions: Array<Tables<'reactions'>>
+  polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
 }
 
 export default async function FeedPage({
@@ -39,7 +40,7 @@ export default async function FeedPage({
 
   let query = supabase
     .from('posts')
-    .select('*, comments(count), reactions(*)')
+    .select('*, comments(count), reactions(*), polls(*, poll_votes(*))')
     .gt('expires_at', new Date().toISOString())
   
   if (mood && (MoodTags as readonly string[]).includes(mood)) {
