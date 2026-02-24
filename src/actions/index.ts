@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { Database } from '@/lib/supabase/types'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { add } from 'date-fns'
 import { revalidatePath } from 'next/cache'
@@ -22,7 +24,7 @@ const PostSchema = z.object({
 })
 
 export async function createPost(input: z.infer<typeof PostSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const {
     data: { session },
@@ -77,7 +79,7 @@ const LetterSchema = z.object({
 })
 
 export async function createLetter(input: z.infer<typeof LetterSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -111,7 +113,7 @@ const UpdatePostSchema = z.object({
 })
 
 export async function updatePost(input: z.infer<typeof UpdatePostSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -157,7 +159,7 @@ const UpdateCommentSchema = z.object({
 })
 
 export async function updateComment(input: z.infer<typeof UpdateCommentSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -201,7 +203,7 @@ const DeletePostSchema = z.object({
 })
 
 export async function deletePost(input: z.infer<typeof DeletePostSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -244,7 +246,7 @@ const VoteSchema = z.object({
 })
 
 export async function castVote(input: z.infer<typeof VoteSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -286,7 +288,7 @@ const RoomSchema = z.object({
 })
 
 export async function createRoom(input: z.infer<typeof RoomSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -317,7 +319,7 @@ export async function createRoom(input: z.infer<typeof RoomSchema>) {
 const RoomIdSchema = z.object({ roomId: z.string().uuid() })
 
 export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -333,7 +335,7 @@ export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {
 }
 
 export async function leaveRoom(input: z.infer<typeof RoomIdSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -353,7 +355,7 @@ const RoomMessageSchema = z.object({
 })
 
 export async function postRoomMessage(input: z.infer<typeof RoomMessageSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -376,7 +378,7 @@ const StorySegmentSchema = z.object({
 })
 
 export async function addStorySegment(input: z.infer<typeof StorySegmentSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -417,7 +419,7 @@ const VoidAnswerSchema = z.object({
 })
 
 export async function addVoidAnswer(input: z.infer<typeof VoidAnswerSchema>) {
-  const supabase = await createClient()
+  const supabase: SupabaseClient<Database> = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 

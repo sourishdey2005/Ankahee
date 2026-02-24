@@ -206,7 +206,7 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
                 Add Poll
               </Button>
               <Button variant="outline" onClick={() => setCreationMode('void')} className="w-full">
-                <CloudQuestion className="mr-2 h-4 w-4" />
+                <HelpCircle className="mr-2 h-4 w-4" />
                 Ask the Void
               </Button>
             </div>

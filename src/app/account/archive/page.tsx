@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -15,8 +14,7 @@ type ArchivedPost = Tables<'posts'> & {
 }
 
 export default async function ArchivePage() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -44,13 +42,13 @@ export default async function ArchivePage() {
           Back to Feed
         </Button>
       </Link>
-      
+
       <div className="space-y-6">
         <div className="space-y-2">
-            <h1 className="text-3xl font-headline font-bold">My Archive</h1>
-            <p className="text-muted-foreground">A private record of your past confessions. Only you can see this.</p>
+          <h1 className="text-3xl font-headline font-bold">My Archive</h1>
+          <p className="text-muted-foreground">A private record of your past confessions. Only you can see this.</p>
         </div>
-        
+
         {archivedPosts.length > 0 ? (
           <div className="space-y-4">
             {archivedPosts.map(post => (
