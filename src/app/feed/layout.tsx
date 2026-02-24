@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Feather } from 'lucide-react'
+import { Feather, Archive } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import SignOutButton from '@/components/SignOutButton'
@@ -57,6 +58,13 @@ export default async function FeedLayout({
                     </p>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                 <Link href="/account/archive">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Archive className="mr-2 h-4 w-4" />
+                    <span>My Archive</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <SignOutButton />
                 <DropdownMenuSeparator />
