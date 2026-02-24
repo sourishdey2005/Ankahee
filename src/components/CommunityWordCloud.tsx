@@ -14,9 +14,14 @@ type WordCloudData = {
 
 export default function CommunityWordCloud({ data }: { data: WordCloudData[] }) {
   const [isMounted, setIsMounted] = useState(false);
+  const [isFontLoaded, setIsFontLoaded] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+    // Ensure the font is loaded before rendering the word cloud to prevent measurement errors.
+    document.fonts.load('bold 1rem "Space Grotesk"').then(() => {
+        setIsFontLoaded(true);
+    });
   }, []);
 
   const colors = useMemo(() => [
@@ -40,7 +45,7 @@ export default function CommunityWordCloud({ data }: { data: WordCloudData[] }) 
     fontWeight: 'bold',
     padding: 1,
     rotations: 0,
-    rotationAngles: [-10, 10],
+    rotationAngles: [0, 0],
     scale: 'sqrt',
     spiral: 'archimedean',
     transitionDuration: 1000,
@@ -56,7 +61,7 @@ export default function CommunityWordCloud({ data }: { data: WordCloudData[] }) 
       </CardHeader>
       <CardContent>
         <div className="h-64 w-full">
-            {isMounted ? (
+            {isMounted && isFontLoaded ? (
                 <WordCloud
                     words={data}
                     options={options}

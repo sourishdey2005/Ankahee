@@ -32,9 +32,14 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
     const { toast } = useToast();
     const supabase = createClient();
     const [isMounted, setIsMounted] = useState(false);
+    const [isFontLoaded, setIsFontLoaded] = useState(false);
 
     useEffect(() => {
       setIsMounted(true);
+      // Ensure the font is loaded before rendering the word cloud to prevent measurement errors.
+      document.fonts.load('bold 1rem "Space Grotesk"').then(() => {
+        setIsFontLoaded(true);
+      });
     }, []);
 
     useEffect(() => {
@@ -105,7 +110,7 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
         <div className="my-4 pt-4 border-t space-y-4">
             {wordCloudData.length > 0 ? (
                 <div className="h-48 w-full">
-                    {isMounted ? <WordCloud words={wordCloudData} options={options} /> : <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>}
+                    {isMounted && isFontLoaded ? <WordCloud words={wordCloudData} options={options} /> : <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>}
                 </div>
             ) : (
                 <div className="h-48 flex items-center justify-center text-muted-foreground">
