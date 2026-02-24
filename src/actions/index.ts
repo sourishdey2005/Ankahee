@@ -372,3 +372,46 @@ export async function postRoomMessage(input: z.infer<typeof RoomMessageSchema>) 
     // No revalidation needed, client will handle real-time update
     return { data: { message: 'Message sent.' } }
 }
+
+const StorySegmentSchema = z.object({
+  storyId: z.string(),
+  content: z.string().min(1, 'Sentence cannot be empty.').max(280, 'Sentence too long.'),
+  order: z.number().int().positive(),
+})
+
+export async function addStorySegment(input: z.infer<typeof StorySegmentSchema>) {
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { error: { message: 'Unauthorized' } }
+
+    // Basic check to prevent user from posting twice in a row
+    const { data: lastSegment, error: lastSegmentError } = await supabase
+        .from('story_segments')
+        .select('user_id')
+        .eq('story_id', input.storyId)
+        .order('order', { ascending: false })
+        .limit(1)
+        .single()
+    
+    if (lastSegment && lastSegment.user_id === session.user.id) {
+        return { error: { message: 'Please wait for someone else to contribute.' } }
+    }
+
+    const { error } = await supabase.from('story_segments').insert({
+        story_id: input.storyId,
+        user_id: session.user.id,
+        content: input.content,
+        order: input.order,
+    })
+
+    if (error) {
+        if (error.code === '23505') { // unique_violation on (story_id, order)
+            return { error: { message: 'Someone just added a sentence. Please try again.' } }
+        }
+        return { error: { message: 'Failed to add to story.' } }
+    }
+
+    revalidatePath('/story')
+    return { data: { message: 'Segment added.' } }
+}
