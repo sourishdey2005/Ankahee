@@ -10,7 +10,7 @@ type RoomWithMembers = Tables<'rooms'> & {
 }
 
 export default function RoomCard({ room }: { room: RoomWithMembers }) {
-  const memberCount = room.room_members[0]?.count ?? 0;
+  const memberCount = room.room_members?.[0]?.count ?? 0;
 
   return (
     <Link href={`/rooms/${room.id}`} className="block">
