@@ -9,11 +9,13 @@ import Echoes from './Echoes'
 import { cn } from '@/lib/utils'
 import Poll from './Poll'
 import { User } from '@supabase/supabase-js'
+import VoidQuestion from './VoidQuestion'
 
 type PostWithDetails = Tables<'posts'> & {
   comments: Array<{ count: number }>
   reactions: Array<Tables<'reactions'>>
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
+  void_answers: Tables<'void_answers'>[]
 };
 
 export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: User | null }) {
@@ -26,6 +28,7 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
   const isExpiringSoon = timeLeft > 0 && timeLeft < (60 * 60 * 1000); // Less than 1 hour
 
   const poll = post.polls?.[0];
+  const isVoidQuestion = post.is_void_question;
 
   return (
     <Link href={`/confession/${post.id}`} className="block">
@@ -42,9 +45,14 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
         </CardHeader>
         <CardContent>
           <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
-          {poll && user && (
+          {poll && !isVoidQuestion && user && (
             <div onClick={(e) => e.preventDefault()}>
                 <Poll poll={poll} user={user} />
+            </div>
+          )}
+          {isVoidQuestion && user && (
+            <div onClick={(e) => e.preventDefault()}>
+                <VoidQuestion postId={post.id} initialAnswers={post.void_answers || []} user={user} />
             </div>
           )}
         </CardContent>

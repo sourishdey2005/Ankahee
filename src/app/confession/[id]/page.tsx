@@ -17,6 +17,7 @@ type PostWithDetails = Tables<'posts'> & {
   reactions: Tables<'reactions'>[]
   polls: Poll[]
   comments: Array<{ count: number }>
+  void_answers: Tables<'void_answers'>[]
 }
 
 export default async function ConfessionPage({ params }: { params: { id: string } }) {
@@ -31,7 +32,7 @@ export default async function ConfessionPage({ params }: { params: { id: string 
   // 1. Fetch the main post
   const { data: post, error: postError } = await supabase
     .from('posts')
-    .select('*, polls(*, poll_votes(*))')
+    .select('*, polls(*, poll_votes(*)), void_answers(*)')
     .eq('id', params.id)
     .single()
 
@@ -44,7 +45,7 @@ export default async function ConfessionPage({ params }: { params: { id: string 
   if (post.parent_post_id) {
       const { data, error } = await supabase
         .from('posts')
-        .select('*, comments(count), reactions(*), polls(*, poll_votes(*))')
+        .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
         .eq('id', post.parent_post_id)
         .single()
       if (data) {
@@ -55,7 +56,7 @@ export default async function ConfessionPage({ params }: { params: { id: string 
   // 3. Fetch child posts
   const { data: childPostsData, error: childPostsError } = await supabase
     .from('posts')
-    .select('*, comments(count), reactions(*), polls(*, poll_votes(*))')
+    .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
     .eq('parent_post_id', params.id)
     .order('created_at', { ascending: true })
   

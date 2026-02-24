@@ -10,6 +10,7 @@ type Post = Tables<'posts'> & {
   comments: Array<{ count: number }>
   reactions: Array<Tables<'reactions'>>
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
+  void_answers: Tables<'void_answers'>[]
 }
 
 export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Post[], sort?: string }) {
@@ -42,7 +43,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
   const handlePostUpdate = useCallback(async (postId: string) => {
     const { data: updatedPostData, error } = await supabase
       .from('posts')
-      .select('*, comments(count), reactions(*), polls(*, poll_votes(*))')
+      .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
       .eq('id', postId)
       .single()
 
@@ -69,7 +70,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
         { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
             const newPost = payload.new as Tables<'posts'>
-            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [] }
+            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [], void_answers: [] }
             setPosts((prevPosts) => [postWithCounts, ...prevPosts])
         }
       )
@@ -123,11 +124,26 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
       )
       .subscribe()
 
+    const voidAnswersChannel = supabase
+      .channel('realtime-void-answers-feed')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'void_answers' },
+        (payload: any) => {
+            const postId = payload.new?.post_id
+            if (postId) {
+            handlePostUpdate(postId)
+            }
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(postsChannel)
       supabase.removeChannel(reactionsChannel)
       supabase.removeChannel(commentsChannel)
       supabase.removeChannel(pollsChannel)
+      supabase.removeChannel(voidAnswersChannel)
     }
   }, [supabase, handlePostUpdate])
 

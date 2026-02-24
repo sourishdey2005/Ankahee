@@ -161,8 +161,9 @@ export type Database = {
           expires_at: string
           id: string
           mood: string | null
-          user_id: string
           parent_post_id: string | null
+          user_id: string
+          is_void_question: boolean | null
         }
         Insert: {
           content: string
@@ -170,8 +171,9 @@ export type Database = {
           expires_at: string
           id?: string
           mood?: string | null
-          user_id: string
           parent_post_id?: string | null
+          user_id: string
+          is_void_question?: boolean | null
         }
         Update: {
           content?: string
@@ -179,22 +181,23 @@ export type Database = {
           expires_at?: string
           id?: string
           mood?: string | null
-          user_id?: string
           parent_post_id?: string | null
+          user_id?: string
+          is_void_question?: boolean | null
         }
         Relationships: [
-          {
-            foreignKeyName: "posts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "posts_parent_post_id_fkey"
             columns: ["parent_post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           }
         ]
@@ -401,6 +404,45 @@ export type Database = {
             foreignKeyName: "users_id_fkey"
             columns: ["id"]
             isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      void_answers: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+          word: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+          word: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+          word?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "void_answers_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "void_answers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           }

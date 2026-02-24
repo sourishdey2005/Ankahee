@@ -22,11 +22,12 @@ import { moodColors } from '@/lib/mood-tags'
 import Echoes from './Echoes'
 import BurnButton from './BurnButton'
 import Poll from './Poll'
+import VoidQuestion from './VoidQuestion'
 
 type Post = Tables<'posts'>
 type PollVote = Tables<'poll_votes'>
 type PollWithVotes = Tables<'polls'> & { poll_votes: PollVote[] }
-type PostWithDetails = Post & { reactions: Tables<'reactions'>[], polls: PollWithVotes[] }
+type PostWithDetails = Post & { reactions: Tables<'reactions'>[], polls: PollWithVotes[], void_answers: Tables<'void_answers'>[] }
 
 
 const formSchema = z.object({
@@ -43,6 +44,7 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
   const canEdit = user.id === post.user_id
   const moodColor = post.mood ? moodColors[post.mood as keyof typeof moodColors] || 'bg-secondary' : 'bg-secondary';
   const poll = post.polls?.[0];
+  const isVoidQuestion = post.is_void_question;
 
   useEffect(() => {
     setPost(initialPost);
@@ -52,7 +54,7 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
     const fetchDetails = async () => {
       const { data, error } = await supabase
         .from('posts')
-        .select('*, reactions(*), polls(*, poll_votes(*))')
+        .select('*, reactions(*), polls(*, poll_votes(*)), void_answers(*)')
         .eq('id', initialPost.id)
         .single();
 
@@ -77,6 +79,12 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
       }, (payload) => {
         fetchDetails()
       })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'void_answers',
+        filter: `post_id=eq.${initialPost.id}`
+      }, (payload) => fetchDetails())
       .subscribe();
 
     return () => {
@@ -152,7 +160,8 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
         ) : (
           <p className="text-lg text-foreground/90 whitespace-pre-wrap">{post.content}</p>
         )}
-        {poll && <Poll poll={poll} user={user} />}
+        {poll && !isVoidQuestion && <Poll poll={poll} user={user} />}
+        {isVoidQuestion && <VoidQuestion postId={post.id} initialAnswers={post.void_answers || []} user={user} />}
       </CardContent>
       <CardFooter className="flex justify-between items-center text-muted-foreground">
         <div className="flex items-center space-x-4">

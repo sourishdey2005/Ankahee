@@ -19,6 +19,7 @@ type PostWithCounts = Tables<'posts'> & {
   comments: Array<{ count: number }>
   reactions: Array<Tables<'reactions'>>
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
+  void_answers: Tables<'void_answers'>[]
 }
 
 const processPostsForWordCloud = (posts: PostWithCounts[]) => {
@@ -69,7 +70,7 @@ export default async function FeedPage({
 
   let query = supabase
     .from('posts')
-    .select('*, comments(count), reactions(*), polls(*, poll_votes(*))')
+    .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
     .gt('expires_at', new Date().toISOString())
   
   if (mood && (MoodTags as readonly string[]).includes(mood)) {

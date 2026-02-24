@@ -19,6 +19,7 @@ const PostSchema = z.object({
   userId: z.string().uuid(),
   poll: PollSchema,
   parentId: z.string().uuid().optional(),
+  is_void_question: z.boolean().optional(),
 })
 
 export async function createPost(input: z.infer<typeof PostSchema>) {
@@ -46,6 +47,7 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
     user_id: parsed.data.userId,
     expires_at,
     parent_post_id: parsed.data.parentId,
+    is_void_question: parsed.data.is_void_question,
   }).select().single()
 
   if (error) {
@@ -419,4 +421,43 @@ export async function addStorySegment(input: z.infer<typeof StorySegmentSchema>)
 
     revalidatePath('/story')
     return { data: { message: 'Segment added.' } }
+}
+
+const VoidAnswerSchema = z.object({
+    postId: z.string().uuid(),
+    word: z.string().trim().min(1).max(30),
+})
+
+export async function addVoidAnswer(input: z.infer<typeof VoidAnswerSchema>) {
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { error: { message: 'Unauthorized' } }
+
+    const parsed = VoidAnswerSchema.safeParse(input)
+    if (!parsed.success) {
+        return { error: { message: 'Invalid input' } }
+    }
+
+    if (parsed.data.word.includes(' ')) {
+        return { error: { message: 'Only a single word is allowed.' } }
+    }
+
+    const { error } = await supabase.from('void_answers').insert({
+        post_id: parsed.data.postId,
+        user_id: session.user.id,
+        word: parsed.data.word.toLowerCase(),
+    })
+
+    if (error) {
+        if (error.code === '23505') { // unique_violation for user already answering
+            return { error: { message: 'You have already answered.' } }
+        }
+        return { error: { message: 'Failed to submit answer.' } }
+    }
+    
+    revalidatePath(`/confession/${parsed.data.postId}`)
+    revalidatePath('/feed')
+
+    return { data: { message: 'Answer submitted.' } }
 }

@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Sparkles, PlusCircle, X } from 'lucide-react'
+import { Loader2, Sparkles, PlusCircle, X, CloudQuestion } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 const formSchema = z.object({
@@ -59,7 +59,7 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
   const [isPending, startTransition] = useTransition()
   const [suggestedMood, setSuggestedMood] = useState<string | null>(null)
   const [isSuggesting, setIsSuggesting] = useState(false)
-  const [showPoll, setShowPoll] = useState(false)
+  const [creationMode, setCreationMode] = useState<null | 'poll' | 'void'>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -104,11 +104,14 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
     if (values.mood) {
       postData.mood = values.mood;
     }
-    if (showPoll && values.pollOptionOne && values.pollOptionTwo) {
+    if (creationMode === 'poll' && values.pollOptionOne && values.pollOptionTwo) {
       postData.poll = {
         optionOne: values.pollOptionOne,
         optionTwo: values.pollOptionTwo,
       }
+    }
+    if (creationMode === 'void') {
+      postData.is_void_question = true;
     }
 
     startTransition(async () => {
@@ -142,10 +145,10 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
           name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Your Confession</FormLabel>
+              <FormLabel>{creationMode === 'void' ? 'Your Question' : 'Your Confession'}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Pour your heart out..."
+                  placeholder={creationMode === 'void' ? "Ask the void a question..." : "Pour your heart out..."}
                   className="min-h-[150px] sm:min-h-[200px] text-lg"
                   {...field}
                 />
@@ -196,52 +199,73 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
         />
 
         <div className="space-y-4">
-            {!showPoll ? (
-                <Button variant="outline" onClick={() => setShowPoll(true)} className="w-full">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Poll
-                </Button>
-            ) : (
-                <div className="p-4 border rounded-lg space-y-4 bg-card/50">
-                    <div className="flex justify-between items-center">
-                        <h3 className="font-semibold">Add a Poll</h3>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                            setShowPoll(false)
-                            form.setValue('pollOptionOne', '')
-                            form.setValue('pollOptionTwo', '')
-                        }}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <FormField
-                        control={form.control}
-                        name="pollOptionOne"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Option 1</FormLabel>
-                            <FormControl>
-                                <Input placeholder="E.g., Yes" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="pollOptionTwo"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Option 2</FormLabel>
-                            <FormControl>
-                                <Input placeholder="E.g., No" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
+          {creationMode === null && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button variant="outline" onClick={() => setCreationMode('poll')} className="w-full">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Poll
+              </Button>
+              <Button variant="outline" onClick={() => setCreationMode('void')} className="w-full">
+                  <CloudQuestion className="mr-2 h-4 w-4" />
+                  Ask the Void
+              </Button>
+            </div>
+          )}
+
+          {creationMode === 'poll' && (
+            <div className="p-4 border rounded-lg space-y-4 bg-card/50">
+                <div className="flex justify-between items-center">
+                    <h3 className="font-semibold">Add a Poll</h3>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                        setCreationMode(null)
+                        form.setValue('pollOptionOne', '')
+                        form.setValue('pollOptionTwo', '')
+                    }}>
+                        <X className="h-4 w-4" />
+                    </Button>
                 </div>
-            )}
+                <FormField
+                    control={form.control}
+                    name="pollOptionOne"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Option 1</FormLabel>
+                        <FormControl>
+                            <Input placeholder="E.g., Yes" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="pollOptionTwo"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Option 2</FormLabel>
+                        <FormControl>
+                            <Input placeholder="E.g., No" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+          )}
+
+          {creationMode === 'void' && (
+            <div className="p-4 border rounded-lg space-y-2 bg-card/50">
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold flex items-center gap-2"><CloudQuestion className="h-4 w-4" /> Ask the Void</h3>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCreationMode(null)}>
+                    <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">Your confession will become a question. Others can only respond with a single word, which will form a word cloud.</p>
+            </div>
+          )}
         </div>
+
 
         <Button
           type="submit"
