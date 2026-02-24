@@ -32,6 +32,10 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
     if (sort === 'popular') {
       return postsCopy.sort((a, b) => b.reactions.length - a.reactions.length);
     }
+    if (sort === 'loved') {
+        const countHearts = (reactions: Tables<'reactions'>[]) => reactions.filter(r => r.reaction === 'Heart').length;
+        return postsCopy.sort((a, b) => countHearts(b.reactions) - countHearts(a.reactions));
+    }
     return postsCopy;
   }, [posts, sort]);
 

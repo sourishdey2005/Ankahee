@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Tables } from '@/lib/supabase/types'
 import { Button } from '@/components/ui/button'
-import { Lightbulb, Plus } from 'lucide-react'
+import { Lightbulb, Plus, Heart } from 'lucide-react'
 import Link from 'next/link'
 import ConfessionsList from './ConfessionsList'
 import { MoodTag, MoodTags, moodColors } from '@/lib/mood-tags'
@@ -47,8 +47,7 @@ export default async function FeedPage({
     query = query.eq('mood', mood)
   }
 
-  if (sort === 'popular') {
-    // We can't directly sort by reaction count on the server with this setup.
+  if (sort === 'popular' || sort === 'loved') {
     // We will fetch all and sort on the client in ConfessionsList.
     // For more complex scenarios, a database function/view would be better.
      query = query.order('created_at', { ascending: false })
@@ -106,6 +105,15 @@ export default async function FeedPage({
               className="cursor-pointer transition-colors"
             >
               Popular
+            </Badge>
+          </Link>
+           <Link href={{ pathname: '/feed', query: { mood, sort: 'loved' } }}>
+             <Badge
+              variant={sort === 'loved' ? 'default' : 'secondary'}
+              className="cursor-pointer transition-colors inline-flex items-center gap-1"
+            >
+              <Heart className="h-3 w-3" />
+              Most Loved
             </Badge>
           </Link>
         </div>
