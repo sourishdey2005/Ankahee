@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Clock, Pencil, Loader2 } from 'lucide-react'
 import { moodColors } from '@/lib/mood-tags'
 import Echoes from './Echoes'
+import BurnButton from './BurnButton'
 
 type Post = Tables<'posts'>
 type PostWithReactions = Post & { reactions: Tables<'reactions'>[] }
@@ -35,7 +36,7 @@ export default function EditPost({ post: initialPost, user }: { post: Post; user
   const { toast } = useToast()
   const supabase = createClient()
   
-  const canEdit = user.id === post.user_id && isEditable(post.created_at)
+  const canEdit = user.id === post.user_id
   const moodColor = post.mood ? moodColors[post.mood as keyof typeof moodColors] || 'bg-secondary' : 'bg-secondary';
 
   useEffect(() => {
@@ -72,6 +73,11 @@ export default function EditPost({ post: initialPost, user }: { post: Post; user
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     startTransition(async () => {
+      if (!isEditable(post.created_at)) {
+        toast({ title: 'Error', description: 'Edit window has expired.', variant: 'destructive' })
+        setIsEditing(false);
+        return;
+      }
       const result = await updatePost({ postId: post.id, content: values.content })
       if (result.error) {
         toast({ title: 'Error', description: result.error.message, variant: 'destructive' })
@@ -136,10 +142,15 @@ export default function EditPost({ post: initialPost, user }: { post: Post; user
             </div>
         </div>
         {canEdit && !isEditing && (
-          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
+            <div className="flex items-center gap-2">
+                {isEditable(post.created_at) && (
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                    </Button>
+                )}
+                <BurnButton postId={post.id} />
+            </div>
         )}
       </CardFooter>
     </Card>

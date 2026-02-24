@@ -139,3 +139,46 @@ export async function updateComment(input: z.infer<typeof UpdateCommentSchema>) 
     revalidatePath(`/confession/${comment.post_id}`)
     return { data: { message: 'Comment updated successfully.' } }
 }
+
+const DeletePostSchema = z.object({
+    postId: z.string().uuid(),
+})
+
+export async function deletePost(input: z.infer<typeof DeletePostSchema>) {
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+        return { error: { message: 'Unauthorized' } }
+    }
+
+    const parsed = DeletePostSchema.safeParse(input)
+    if (!parsed.success) {
+        return { error: { message: 'Invalid input' } }
+    }
+
+    const { postId } = parsed.data
+
+    const { data: post, error: fetchError } = await supabase.from('posts').select('user_id').eq('id', postId).single()
+
+    if (fetchError || !post) {
+        return { error: { message: 'Post not found.' } }
+    }
+
+    if (post.user_id !== session.user.id) {
+        return { error: { message: 'You are not the owner of this post.' } }
+    }
+
+    const { error: deleteError } = await supabase.from('posts').delete().eq('id', postId)
+
+    if (deleteError) {
+        return { error: deleteError }
+    }
+
+    revalidatePath('/feed')
+    revalidatePath(`/confession/${postId}`)
+
+    return { data: { message: 'Post deleted successfully.' } }
+}
