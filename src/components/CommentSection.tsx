@@ -7,6 +7,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { Tables } from '@/lib/supabase/types'
 import { Session } from '@supabase/supabase-js'
+import { v4 as uuidv4 } from 'uuid'
 import { generateHslColorFromString } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
@@ -54,7 +55,10 @@ export default function CommentSection({
         { event: '*', schema: 'public', table: 'comments', filter: `post_id=eq.${postId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setComments((prevComments) => [...prevComments, payload.new as Comment])
+            setComments((prevComments) => {
+              if (prevComments.some(c => c.id === payload.new.id)) return prevComments
+              return [...prevComments, payload.new as Comment]
+            })
           } else if (payload.eventType === 'UPDATE') {
             setComments((prevComments) =>
               prevComments.map((comment) =>
@@ -63,7 +67,7 @@ export default function CommentSection({
             )
           } else if (payload.eventType === 'DELETE') {
             setComments((prevComments) =>
-              prevComments.filter((comment) => comment.id !== (payload.old as Comment).id)
+              prevComments.filter((comment) => comment.id !== (payload.old as { id: string }).id)
             )
           }
         }
@@ -76,8 +80,22 @@ export default function CommentSection({
   }, [supabase, postId])
 
   const onSubmit = (values: z.infer<typeof commentSchema>) => {
+    const tempId = uuidv4()
+    const newComment: Comment = {
+      id: tempId,
+      content: values.content,
+      post_id: postId,
+      user_id: session.user.id,
+      created_at: new Date().toISOString(),
+      username: 'Anonymous',
+    }
+
+    setComments(prev => [...prev, newComment])
+    form.reset()
+
     startTransition(async () => {
       const { error } = await supabase.from('comments').insert({
+        id: tempId,
         post_id: postId,
         content: values.content,
         user_id: session.user.id,
@@ -86,8 +104,7 @@ export default function CommentSection({
 
       if (error) {
         toast({ title: 'Error posting comment', description: error.message, variant: 'destructive' })
-      } else {
-        form.reset()
+        setComments(prev => prev.filter(c => c.id !== tempId))
       }
     })
   }

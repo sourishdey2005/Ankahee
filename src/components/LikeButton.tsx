@@ -15,7 +15,7 @@ export default function LikeButton({ postId }: { postId: string }) {
   const { toast } = useToast()
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       const currentUserId = session?.user?.id
       setUserId(currentUserId)
@@ -27,17 +27,43 @@ export default function LikeButton({ postId }: { postId: string }) {
 
       if (error) {
         console.error('Error fetching likes:', error)
-      } else {
-        setLikes(count ?? 0)
-        if (currentUserId) {
-          setIsLiked(likesData.some(like => like.user_id === currentUserId))
-        }
+        return;
+      } 
+      
+      setLikes(count ?? 0)
+      if (currentUserId && likesData) {
+        setIsLiked(likesData.some(like => like.user_id === currentUserId))
       }
     }
-    fetchData()
+
+    fetchInitialData()
+
+    const channel = supabase
+      .channel(`realtime-likes-${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes',
+          filter: `post_id=eq.${postId}`,
+        },
+        async (payload) => {
+          const { count } = await supabase
+            .from('likes')
+            .select('*', { count: 'exact', head: true })
+            .eq('post_id', postId)
+          setLikes(count ?? 0)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [postId, supabase])
 
-  const handleLike = async () => {
+  const handleLike = () => {
     if (!userId) {
       toast({
         title: 'Authentication required',
@@ -47,24 +73,23 @@ export default function LikeButton({ postId }: { postId: string }) {
       return
     }
 
+    const wasLiked = isLiked;
+
+    setIsLiked(!wasLiked)
+    setLikes(l => wasLiked ? l - 1 : l + 1)
+    
     startTransition(async () => {
-      if (isLiked) {
-        setIsLiked(false)
-        setLikes(l => l - 1)
+      if (wasLiked) {
         const { error } = await supabase.from('likes').delete().match({ post_id: postId, user_id: userId })
         if (error) {
-          setIsLiked(true)
-          setLikes(l => l + 1)
           toast({ title: 'Error', description: error.message || 'Could not unlike post.', variant: 'destructive'})
+          setIsLiked(true)
         }
       } else {
-        setIsLiked(true)
-        setLikes(l => l + 1)
         const { error } = await supabase.from('likes').insert({ post_id: postId, user_id: userId })
         if (error) {
+          toast({ title: 'Error', description: error.message || 'Could not like post.', variant: 'destructive'})
           setIsLiked(false)
-          setLikes(l => l - 1)
-           toast({ title: 'Error', description: error.message || 'Could not like post.', variant: 'destructive'})
         }
       }
     })

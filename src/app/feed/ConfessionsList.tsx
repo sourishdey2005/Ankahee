@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
@@ -18,28 +18,80 @@ export default function ConfessionsList({ serverPosts }: { serverPosts: Post[] }
     setPosts(serverPosts)
   }, [serverPosts])
 
+  const handlePostUpdate = useCallback(async (postId: string) => {
+    const { data: updatedPostData, error } = await supabase
+      .from('posts')
+      .select('*, comments(count), likes(count)')
+      .eq('id', postId)
+      .single()
+
+    if (error) {
+      if (error.code !== 'PGRST116') {
+        console.error('Error refetching post:', error)
+      }
+      return
+    }
+
+    const updatedPost = updatedPostData as Post;
+    setPosts(currentPosts => 
+      currentPosts.map(p => (p.id === postId ? updatedPost : p))
+    );
+  }, [supabase])
+
   useEffect(() => {
-    const channel = supabase
-      .channel('realtime posts')
+    const postsChannel = supabase
+      .channel('realtime-posts-feed')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'posts' },
+        { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
-          if (payload.eventType === 'INSERT') {
             const newPost = payload.new as Tables<'posts'>
-            const postWithCounts: Post = { ...newPost, comments: [], likes: [] }
+            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], likes: [{count: 0}] }
             setPosts((prevPosts) => [postWithCounts, ...prevPosts])
-          } else if (payload.eventType === 'DELETE') {
-            setPosts((prevPosts) => prevPosts.filter((p) => p.id !== (payload.old as Post).id))
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'posts' },
+        (payload) => {
+          setPosts((prevPosts) => prevPosts.filter((p) => p.id !== (payload.old as Post).id))
+        }
+      ).subscribe()
+
+    const likesChannel = supabase
+      .channel('realtime-likes-feed')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'likes' },
+        (payload: any) => {
+          const postId = payload.new?.post_id || payload.old?.post_id
+          if (postId) {
+            handlePostUpdate(postId)
+          }
+        }
+      )
+      .subscribe()
+
+    const commentsChannel = supabase
+      .channel('realtime-comments-feed')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'comments' },
+        (payload: any) => {
+           const postId = payload.new?.post_id || payload.old?.post_id
+          if (postId) {
+            handlePostUpdate(postId)
           }
         }
       )
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(postsChannel)
+      supabase.removeChannel(likesChannel)
+      supabase.removeChannel(commentsChannel)
     }
-  }, [supabase])
+  }, [supabase, handlePostUpdate])
 
   if (posts.length === 0) {
     return (
