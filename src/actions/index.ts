@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { add } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { isEditable } from '@/lib/utils'
+import { redirect } from 'next/navigation'
 
 const PollSchema = z.object({
   optionOne: z.string().min(1).max(80),
@@ -237,7 +238,6 @@ export async function castVote(input: z.infer<typeof VoteSchema>) {
         return { error: { message: 'Failed to cast vote.' } }
     }
     
-    // Revalidate paths to show updated poll results
     const { data: pollData } = await supabase.from('polls').select('post_id').eq('id', pollId).single()
     if (pollData) {
         revalidatePath(`/confession/${pollData.post_id}`)
@@ -245,4 +245,96 @@ export async function castVote(input: z.infer<typeof VoteSchema>) {
     }
 
     return { data: { message: 'Vote cast successfully.' } }
+}
+
+const RoomSchema = z.object({
+  name: z.string().min(3, 'Must be at least 3 characters.').max(50, 'Cannot exceed 50 characters.'),
+})
+
+export async function createRoom(input: z.infer<typeof RoomSchema>) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    return { error: { message: 'Unauthorized' } }
+  }
+
+  const parsed = RoomSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: { message: 'Invalid input' } }
+  }
+
+  const expires_at = add(new Date(), { hours: 24 }).toISOString()
+
+  const { data: room, error } = await supabase.from('rooms').insert({
+    name: parsed.data.name,
+    created_by: session.user.id,
+    expires_at,
+  }).select().single()
+
+  if (error) {
+    return { error: { message: 'Failed to create room.', details: error.message } }
+  }
+
+  revalidatePath('/rooms')
+  return { data: room }
+}
+
+const RoomIdSchema = z.object({ roomId: z.string().uuid() })
+
+export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { error: { message: 'Unauthorized' } }
+
+  const { error } = await supabase.from('room_members').insert({
+    room_id: input.roomId,
+    user_id: session.user.id,
+  })
+
+  if (error) return { error: { message: 'Failed to join room.' } }
+  
+  revalidatePath(`/rooms/${input.roomId}`)
+  return { data: { message: 'Joined room.' } }
+}
+
+export async function leaveRoom(input: z.infer<typeof RoomIdSchema>) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { error: { message: 'Unauthorized' } }
+
+  const { error } = await supabase.from('room_members').delete()
+    .eq('room_id', input.roomId)
+    .eq('user_id', session.user.id)
+
+  if (error) return { error: { message: 'Failed to leave room.' } }
+  
+  revalidatePath(`/rooms/${input.roomId}`)
+  return { data: { message: 'Left room.' } }
+}
+
+const RoomMessageSchema = z.object({
+  roomId: z.string().uuid(),
+  content: z.string().min(1, 'Message cannot be empty.').max(1000, 'Message too long.'),
+})
+
+export async function postRoomMessage(input: z.infer<typeof RoomMessageSchema>) {
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { error: { message: 'Unauthorized' } }
+
+    const { error } = await supabase.from('room_messages').insert({
+        room_id: input.roomId,
+        user_id: session.user.id,
+        content: input.content,
+    })
+
+    if (error) return { error: { message: 'Failed to send message.' } }
+
+    // No revalidation needed, client will handle real-time update
+    return { data: { message: 'Message sent.' } }
 }
