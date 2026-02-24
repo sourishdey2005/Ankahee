@@ -160,30 +160,30 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          is_void_question: boolean
           mood: string | null
           parent_post_id: string | null
           user_id: string
-          is_void_question: boolean | null
         }
         Insert: {
           content: string
           created_at?: string
           expires_at: string
           id?: string
+          is_void_question?: boolean
           mood?: string | null
           parent_post_id?: string | null
           user_id: string
-          is_void_question?: boolean | null
         }
         Update: {
           content?: string
           created_at?: string
           expires_at?: string
           id?: string
+          is_void_question?: boolean
           mood?: string | null
           parent_post_id?: string | null
           user_id?: string
-          is_void_question?: boolean | null
         }
         Relationships: [
           {
@@ -543,3 +543,5 @@ export type Enums<
   : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
   ? Database["public"]["Enums"][PublicEnumNameOrOptions]
   : never
+
+    
