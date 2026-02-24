@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Tables } from '@/lib/supabase/types'
 import { Session } from '@supabase/supabase-js'
 import { v4 as uuidv4 } from 'uuid'
-import { generateHslColorFromString } from '@/lib/utils'
+import { generateHslColorFromString, generateAvatarDataUri } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Separator } from '@/components/ui/separator'
 import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { Avatar, AvatarFallback } from './ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import EditComment from './EditComment'
 
 type Comment = Tables<'comments'>
@@ -109,7 +109,7 @@ export default function CommentSection({
     })
   }
 
-  const userColor = generateHslColorFromString(session.user.id, 50, 60);
+  const userAvatarUri = generateAvatarDataUri(session.user.id);
 
   return (
     <div className="space-y-6">
@@ -122,7 +122,8 @@ export default function CommentSection({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-4">
           <Avatar className="h-10 w-10 mt-1">
-             <AvatarFallback style={{ backgroundColor: userColor }} />
+             <AvatarImage src={userAvatarUri} />
+             <AvatarFallback />
           </Avatar>
           <div className="flex-1">
             <FormField

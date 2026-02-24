@@ -9,13 +9,13 @@ import { createClient } from '@/lib/supabase/client'
 import { Tables } from '@/lib/supabase/types'
 import { User } from '@supabase/supabase-js'
 import { v4 as uuidv4 } from 'uuid'
-import { generateHslColorFromString } from '@/lib/utils'
+import { generateHslColorFromString, generateAvatarDataUri } from '@/lib/utils'
 import { joinRoom, leaveRoom, postRoomMessage } from '@/actions'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Send, LogIn, LogOut } from 'lucide-react'
@@ -133,10 +133,12 @@ export default function RoomClient({
                 <div className="space-y-6">
                     {messages.map((msg) => {
                         const commenterColor = generateHslColorFromString(msg.user_id, 50, 60);
+                        const avatarUri = generateAvatarDataUri(msg.user_id);
                         return (
                             <div key={msg.id} className="flex items-start gap-4 group">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarFallback style={{ backgroundColor: commenterColor }} />
+                                    <AvatarImage src={avatarUri} />
+                                    <AvatarFallback />
                                 </Avatar>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 text-sm">
@@ -191,11 +193,13 @@ export default function RoomClient({
                 <div className="space-y-2">
                     {members.map(member => {
                         const memberColor = generateHslColorFromString(member.user_id, 50, 60);
+                        const memberAvatarUri = generateAvatarDataUri(member.user_id);
                         const isCurrentUser = member.user_id === user.id;
                         return (
                             <div key={member.user_id} className="flex items-center gap-2">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarFallback style={{ backgroundColor: memberColor }} />
+                                    <AvatarImage src={memberAvatarUri} />
+                                    <AvatarFallback />
                                 </Avatar>
                                 <span className={`text-sm font-medium ${isCurrentUser ? 'text-primary' : ''}`}>
                                     Anonymous {isCurrentUser && '(You)'}

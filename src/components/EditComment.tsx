@@ -7,14 +7,14 @@ import * as z from 'zod'
 import { formatDistanceToNow } from 'date-fns'
 import { Tables } from '@/lib/supabase/types'
 import { User } from '@supabase/supabase-js'
-import { isEditable, generateHslColorFromString } from '@/lib/utils'
+import { isEditable, generateHslColorFromString, generateAvatarDataUri } from '@/lib/utils'
 import { updateComment } from '@/actions'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
-import { Avatar, AvatarFallback } from './ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Pencil, Loader2 } from 'lucide-react'
 
 type Comment = Tables<'comments'>
@@ -30,6 +30,7 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
 
   const canEdit = user.id === comment.user_id && isEditable(comment.created_at)
   const commenterColor = generateHslColorFromString(comment.user_id, 50, 60);
+  const avatarUri = generateAvatarDataUri(comment.user_id);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,7 +54,8 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
     return (
         <div className="flex items-start gap-4 w-full">
             <Avatar className="h-10 w-10">
-                <AvatarFallback style={{ backgroundColor: commenterColor }} />
+                <AvatarImage src={avatarUri} />
+                <AvatarFallback />
             </Avatar>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 flex-1">
@@ -90,7 +92,8 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
   return (
     <div key={comment.id} className="flex items-start gap-4 group">
       <Avatar className="h-10 w-10">
-        <AvatarFallback style={{ backgroundColor: commenterColor }} />
+        <AvatarImage src={avatarUri} />
+        <AvatarFallback />
       </Avatar>
       <div className="flex-1">
         <div className="flex items-center gap-2 text-sm">
