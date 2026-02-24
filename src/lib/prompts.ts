@@ -1,0 +1,22 @@
+export const reflectionPrompts = [
+    "What's a secret you've never told anyone?",
+    "What are you grateful for today?",
+    "Describe a moment you felt truly alive.",
+    "What is a dream you've never shared?",
+    "If you could apologize for one thing, what would it be?",
+    "What is a belief you hold that most people would disagree with?",
+    "Describe a time you were genuinely proud of yourself.",
+    "What's one thing you wish you could change about your past?",
+    "Who has had the biggest impact on your life and why?",
+    "What is a fear you want to overcome?",
+    "What does 'home' mean to you?",
+    "Describe a lesson you learned the hard way.",
+    "What's something you're looking forward to?",
+    "If you could give your younger self one piece of advice, what would it be?",
+    "What's a small act of kindness you witnessed or performed recently?",
+    "What is a personal project you're excited about?",
+    "Describe a place where you feel completely at peace.",
+    "What's a promise you made to yourself that you want to keep?",
+    "What's a recent challenge you've faced and how are you handling it?",
+    "What's a simple pleasure that always brings a smile to your face?"
+];

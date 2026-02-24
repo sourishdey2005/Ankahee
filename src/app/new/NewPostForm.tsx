@@ -41,7 +41,7 @@ const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) =
     })
 }
 
-export default function NewPostForm({ userId }: { userId: string }) {
+export default function NewPostForm({ userId, promptText }: { userId: string, promptText?: string }) {
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -51,7 +51,8 @@ export default function NewPostForm({ userId }: { userId: string }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      content: '',
+      content: promptText || '',
+      mood: undefined,
     },
   })
 

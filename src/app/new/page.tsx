@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function NewPostPage() {
+export default async function NewPostPage({ searchParams }: { searchParams?: { prompt?: string } }) {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
@@ -18,6 +18,8 @@ export default async function NewPostPage() {
     redirect('/feed')
   }
 
+  const promptText = searchParams?.prompt || ''
+
   return (
     <div className="container mx-auto max-w-2xl py-8">
         <Link href="/feed" className="mb-8 inline-block">
@@ -28,7 +30,7 @@ export default async function NewPostPage() {
         </Link>
       <h1 className="text-4xl font-headline font-bold mb-2">Share Your Story</h1>
       <p className="text-muted-foreground mb-8">It will be gone in 24 hours. No one will know it was you.</p>
-      <NewPostForm userId={session.user.id} />
+      <NewPostForm userId={session.user.id} promptText={promptText} />
     </div>
   )
 }

@@ -2,12 +2,14 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Tables } from '@/lib/supabase/types'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Lightbulb, Plus } from 'lucide-react'
 import Link from 'next/link'
 import ConfessionsList from './ConfessionsList'
 import { MoodTag, MoodTags, moodColors } from '@/lib/mood-tags'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { reflectionPrompts } from '@/lib/prompts'
+import { Card, CardContent } from '@/components/ui/card'
 
 export const revalidate = 0
 
@@ -27,7 +29,6 @@ export default async function FeedPage({
 
   const { data: { session }} = await supabase.auth.getSession()
 
-  // Although layout handles this, it's good practice to check here too
   if (!session) {
     return (
       <div className="container mx-auto p-4 text-center">
@@ -62,10 +63,32 @@ export default async function FeedPage({
   
   const initialPosts: PostWithCounts[] = (posts as any) || [];
 
+  const getDayOfYear = (date: Date) => {
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff = (date.getTime() - start.getTime()) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
+    const oneDay = 1000 * 60 * 60 * 24;
+    return Math.floor(diff / oneDay);
+  };
+  const dayOfYear = getDayOfYear(new Date());
+  const dailyPrompt = reflectionPrompts[dayOfYear % reflectionPrompts.length];
+
   return (
     <div className="container mx-auto max-w-2xl py-8">
        <div className="mb-8 space-y-4">
         <h1 className="text-3xl font-headline font-bold">The Void</h1>
+
+        <Link href={`/new?prompt=${encodeURIComponent(dailyPrompt)}`} className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-4 flex items-start gap-4">
+              <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-foreground/90">Daily Prompt</p>
+                <p className="text-muted-foreground">{dailyPrompt}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground mr-2">Sort by:</span>
           <Link href={{ pathname: '/feed', query: { mood } }}>
