@@ -14,7 +14,7 @@ type PostWithDetails = Tables<'posts'> & {
 
 export default function ArchivedPostCard({ post }: { post: PostWithDetails }) {
   const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
-  const commentCount = post.comments?.[0]?.count ?? 0;
+  const commentCount = post.comments && Array.isArray(post.comments) && post.comments.length > 0 ? post.comments[0].count : 0;
   
   const reactionCounts = post.reactions.reduce((acc, reaction) => {
     const reactionType = reaction.reaction as keyof typeof REACTIONS;

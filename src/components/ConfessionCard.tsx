@@ -20,7 +20,7 @@ type PostWithDetails = Tables<'posts'> & {
 
 export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: User | null }) {
   const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
-  const commentCount = post.comments?.[0]?.count ?? 0;
+  const commentCount = post.comments && Array.isArray(post.comments) && post.comments.length > 0 ? post.comments[0].count : 0;
 
   const expires = new Date(post.expires_at);
   const now = new Date();
