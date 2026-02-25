@@ -102,6 +102,18 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
             return { ...currentPost, void_answers: newAnswers };
         });
       })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'posts',
+        filter: `id=eq.${initialPost.id}`
+      }, (payload: any) => {
+        setPost(currentPost => {
+            if (!currentPost) return null as any;
+            const updatedPostData = payload.new as Tables<'posts'>;
+            return { ...currentPost, ...updatedPostData };
+        });
+      })
       .subscribe();
 
     return () => {

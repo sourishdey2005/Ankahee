@@ -54,6 +54,19 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
       )
       .on(
         'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'posts' },
+        (payload) => {
+          setPosts((prevPosts) =>
+            prevPosts.map(post =>
+              post.id === payload.new.id
+                ? { ...post, ...(payload.new as Tables<'posts'>) }
+                : post
+            )
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'posts' },
         (payload) => {
           setPosts((prevPosts) => prevPosts.filter((p) => p.id !== (payload.old as Post).id))
@@ -102,7 +115,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
              currentPosts.map(p => {
                if (p.id !== postId) return p;
                
-               const currentCount = p.comments[0]?.count ?? 0;
+               const currentCount = Array.isArray(p.comments) && p.comments.length > 0 ? p.comments[0].count : 0;
                let newCount: number;
 
                if (payload.eventType === 'INSERT') {
