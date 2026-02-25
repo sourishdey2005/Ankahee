@@ -94,4 +94,4 @@ Open [http://localhost:9002](http://localhost:9002) in your browser to see the a
 
 ## 📞 Contact
 
-Created by [Sourish Dey](https://github.com/sourishdey2005) as part of a Firebase Studio project.
+Created by [Sourish Dey](https://github.com/sourishdey2005)
