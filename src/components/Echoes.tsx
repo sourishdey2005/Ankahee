@@ -20,7 +20,7 @@ type PostWithReactions = Tables<'posts'> & {
 }
 
 export default function Echoes({ post }: { post: PostWithReactions }) {
-  const [reactions, setReactions] = useState(post.reactions)
+  const [reactions, setReactions] = useState(post.reactions || [])
   const [userReaction, setUserReaction] = useState<ReactionType | null>(null)
   const [userId, setUserId] = useState<string | undefined>()
   const [isPending, startTransition] = useTransition()
@@ -28,7 +28,7 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
   const { toast } = useToast()
 
   useEffect(() => {
-    setReactions(post.reactions)
+    setReactions(post.reactions || [])
   }, [post.reactions])
 
   useEffect(() => {
@@ -49,6 +49,8 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
 
   const reactionCounts = useMemo(() => {
     const counts: { [key in ReactionType]?: number } = {}
+    if (!Array.isArray(reactions)) return counts
+
     for (const reaction of reactions) {
       const type = reaction.reaction as ReactionType
       if (ReactionTypes.includes(type)) {
@@ -73,10 +75,10 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
       if (userReaction === reaction) {
         setUserReaction(null)
         setReactions(prev => prev.filter(r => !(r.user_id === userId && r.reaction === reaction)))
-        
+
         const { error } = await supabase.from('reactions').delete().match({ post_id: post.id, user_id: userId, reaction: reaction })
         if (error) {
-          toast({ title: 'Error', description: error.message || 'Could not remove reaction.', variant: 'destructive'})
+          toast({ title: 'Error', description: error.message || 'Could not remove reaction.', variant: 'destructive' })
           // Revert optimistic update
           setUserReaction(reaction)
           setReactions(post.reactions)
@@ -87,13 +89,13 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
 
         // Optimistic update
         const newReactions = reactions.filter(r => r.user_id !== userId)
-        newReactions.push({ id: '', created_at: new Date().toISOString(), post_id: post.id, user_id, reaction })
+        newReactions.push({ id: '', created_at: new Date().toISOString(), post_id: post.id, user_id: userId, reaction })
         setReactions(newReactions)
-        
+
         const { error } = await supabase.from('reactions').upsert({ post_id: post.id, user_id: userId, reaction: reaction }, { onConflict: 'post_id, user_id' })
 
         if (error) {
-          toast({ title: 'Error', description: error.message || 'Could not add reaction.', variant: 'destructive'})
+          toast({ title: 'Error', description: error.message || 'Could not add reaction.', variant: 'destructive' })
           // Revert optimistic update
           setUserReaction(oldReaction)
           setReactions(post.reactions)

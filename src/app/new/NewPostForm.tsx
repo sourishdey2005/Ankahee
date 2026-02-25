@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Sparkles, PlusCircle, X, CloudQuestion } from 'lucide-react'
+import { Loader2, Sparkles, PlusCircle, X, HelpCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 const formSchema = z.object({
@@ -29,15 +29,15 @@ const formSchema = z.object({
   pollOptionOne: z.string().max(80, 'Option cannot exceed 80 characters.').optional(),
   pollOptionTwo: z.string().max(80, 'Option cannot exceed 80 characters.').optional(),
 })
-.refine(data => {
+  .refine(data => {
     if (data.pollOptionOne || data.pollOptionTwo) {
-        return !!data.pollOptionOne && !!data.pollOptionTwo && data.pollOptionOne.length > 0 && data.pollOptionTwo.length > 0;
+      return !!data.pollOptionOne && !!data.pollOptionTwo && data.pollOptionOne.length > 0 && data.pollOptionTwo.length > 0;
     }
     return true;
-}, {
+  }, {
     message: "Both poll options are required if you add a poll.",
     path: ["pollOptionTwo"],
-});
+  });
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -75,8 +75,8 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
 
   const getSuggestion = useCallback(async (text: string) => {
     if (text.length < 20) {
-        setSuggestedMood(null)
-        return;
+      setSuggestedMood(null)
+      return;
     };
     setIsSuggesting(true)
     try {
@@ -91,7 +91,7 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
       setIsSuggesting(false)
     }
   }, [])
-  
+
   const debouncedSuggest = useCallback(debounce(getSuggestion, 1000), [getSuggestion])
 
   useEffect(() => {
@@ -136,9 +136,9 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {parentId && (
-            <div className="p-4 border rounded-lg bg-card/50 text-sm text-muted-foreground">
-                You are replying to another confession. Your post will be added to the chain.
-            </div>
+          <div className="p-4 border rounded-lg bg-card/50 text-sm text-muted-foreground">
+            You are replying to another confession. Your post will be added to the chain.
+          </div>
         )}
         <FormField
           control={form.control}
@@ -202,63 +202,63 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
           {creationMode === null && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Button variant="outline" onClick={() => setCreationMode('poll')} className="w-full">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Poll
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Poll
               </Button>
               <Button variant="outline" onClick={() => setCreationMode('void')} className="w-full">
-                  <CloudQuestion className="mr-2 h-4 w-4" />
-                  Ask the Void
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Ask the Void
               </Button>
             </div>
           )}
 
           {creationMode === 'poll' && (
             <div className="p-4 border rounded-lg space-y-4 bg-card/50">
-                <div className="flex justify-between items-center">
-                    <h3 className="font-semibold">Add a Poll</h3>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                        setCreationMode(null)
-                        form.setValue('pollOptionOne', '')
-                        form.setValue('pollOptionTwo', '')
-                    }}>
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
-                <FormField
-                    control={form.control}
-                    name="pollOptionOne"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Option 1</FormLabel>
-                        <FormControl>
-                            <Input placeholder="E.g., Yes" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="pollOptionTwo"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Option 2</FormLabel>
-                        <FormControl>
-                            <Input placeholder="E.g., No" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold">Add a Poll</h3>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                  setCreationMode(null)
+                  form.setValue('pollOptionOne', '')
+                  form.setValue('pollOptionTwo', '')
+                }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <FormField
+                control={form.control}
+                name="pollOptionOne"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Option 1</FormLabel>
+                    <FormControl>
+                      <Input placeholder="E.g., Yes" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pollOptionTwo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Option 2</FormLabel>
+                    <FormControl>
+                      <Input placeholder="E.g., No" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           )}
 
           {creationMode === 'void' && (
             <div className="p-4 border rounded-lg space-y-2 bg-card/50">
               <div className="flex justify-between items-center">
-                <h3 className="font-semibold flex items-center gap-2"><CloudQuestion className="h-4 w-4" /> Ask the Void</h3>
+                <h3 className="font-semibold flex items-center gap-2"><HelpCircle className="h-4 w-4" /> Ask the Void</h3>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCreationMode(null)}>
-                    <X className="h-4 w-4" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">Your confession will become a question. Others can only respond with a single word, which will form a word cloud.</p>

@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Tables } from '@/lib/supabase/types'
 import { Button } from '@/components/ui/button'
@@ -11,8 +10,7 @@ export const revalidate = 0
 type Letter = Tables<'letters'>
 
 export default async function LettersPage() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
   const { data: letters, error } = await supabase
     .from('letters')
@@ -28,16 +26,16 @@ export default async function LettersPage() {
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
-       <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8">
         <div className="space-y-2">
-            <h1 className="text-3xl font-headline font-bold">Unsent Letters</h1>
-            <p className="text-muted-foreground">A space for words left unspoken. Letters expire after 3 days.</p>
+          <h1 className="text-3xl font-headline font-bold">Unsent Letters</h1>
+          <p className="text-muted-foreground">A space for words left unspoken. Letters expire after 3 days.</p>
         </div>
         <Link href="/new/letter">
-            <Button>
-                <MailPlus className="mr-2 h-4 w-4" />
-                Write a Letter
-            </Button>
+          <Button>
+            <MailPlus className="mr-2 h-4 w-4" />
+            Write a Letter
+          </Button>
         </Link>
       </div>
 

@@ -1,7 +1,8 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { Database } from '@/lib/supabase/types'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { add } from 'date-fns'
 import { revalidatePath } from 'next/cache'
@@ -23,8 +24,7 @@ const PostSchema = z.object({
 })
 
 export async function createPost(input: z.infer<typeof PostSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const {
     data: { session },
@@ -33,7 +33,7 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
   if (!session || session.user.id !== input.userId) {
     return { error: { message: 'Unauthorized' } }
   }
-  
+
   const parsed = PostSchema.safeParse(input)
   if (!parsed.success) {
     return { error: { message: 'Invalid input' } }
@@ -62,14 +62,14 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
     })
 
     if (pollError) {
-        console.error("Poll creation failed:", pollError)
-        return { error: { message: "Your confession was posted, but the poll could not be created." } }
+      console.error("Poll creation failed:", pollError)
+      return { error: { message: "Your confession was posted, but the poll could not be created." } }
     }
   }
 
   revalidatePath('/feed');
   if (parsed.data.parentId) {
-      revalidatePath(`/confession/${parsed.data.parentId}`)
+    revalidatePath(`/confession/${parsed.data.parentId}`)
   }
   return { data }
 }
@@ -79,8 +79,7 @@ const LetterSchema = z.object({
 })
 
 export async function createLetter(input: z.infer<typeof LetterSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -114,8 +113,7 @@ const UpdatePostSchema = z.object({
 })
 
 export async function updatePost(input: z.infer<typeof UpdatePostSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -141,7 +139,7 @@ export async function updatePost(input: z.infer<typeof UpdatePostSchema>) {
   }
 
   if (!isEditable(post.created_at)) {
-      return { error: { message: 'Edit window has expired.' } }
+    return { error: { message: 'Edit window has expired.' } }
   }
 
   const { error: updateError } = await supabase.from('posts').update({ content }).eq('id', postId)
@@ -161,131 +159,128 @@ const UpdateCommentSchema = z.object({
 })
 
 export async function updateComment(input: z.infer<typeof UpdateCommentSchema>) {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session) {
-        return { error: { message: 'Unauthorized' } }
-    }
+  if (!session) {
+    return { error: { message: 'Unauthorized' } }
+  }
 
-    const parsed = UpdateCommentSchema.safeParse(input)
-    if (!parsed.success) {
-        return { error: { message: 'Invalid input' } }
-    }
+  const parsed = UpdateCommentSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: { message: 'Invalid input' } }
+  }
 
-    const { commentId, content } = parsed.data
+  const { commentId, content } = parsed.data
 
-    const { data: comment, error: fetchError } = await supabase.from('comments').select('user_id, created_at, post_id').eq('id', commentId).single()
+  const { data: comment, error: fetchError } = await supabase.from('comments').select('user_id, created_at, post_id').eq('id', commentId).single()
 
-    if (fetchError || !comment) {
-        return { error: { message: 'Comment not found.' } }
-    }
+  if (fetchError || !comment) {
+    return { error: { message: 'Comment not found.' } }
+  }
 
-    if (comment.user_id !== session.user.id) {
-        return { error: { message: 'You are not the owner of this comment.' } }
-    }
+  if (comment.user_id !== session.user.id) {
+    return { error: { message: 'You are not the owner of this comment.' } }
+  }
 
-    if (!isEditable(comment.created_at)) {
-        return { error: { message: 'Edit window has expired.' } }
-    }
+  if (!isEditable(comment.created_at)) {
+    return { error: { message: 'Edit window has expired.' } }
+  }
 
-    const { error: updateError } = await supabase.from('comments').update({ content }).eq('id', commentId)
+  const { error: updateError } = await supabase.from('comments').update({ content }).eq('id', commentId)
 
-    if (updateError) {
-        return { error: updateError }
-    }
+  if (updateError) {
+    return { error: updateError }
+  }
 
-    revalidatePath(`/confession/${comment.post_id}`)
-    return { data: { message: 'Comment updated successfully.' } }
+  revalidatePath(`/confession/${comment.post_id}`)
+  return { data: { message: 'Comment updated successfully.' } }
 }
 
 const DeletePostSchema = z.object({
-    postId: z.string().uuid(),
+  postId: z.string().uuid(),
 })
 
 export async function deletePost(input: z.infer<typeof DeletePostSchema>) {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session) {
-        return { error: { message: 'Unauthorized' } }
-    }
+  if (!session) {
+    return { error: { message: 'Unauthorized' } }
+  }
 
-    const parsed = DeletePostSchema.safeParse(input)
-    if (!parsed.success) {
-        return { error: { message: 'Invalid input' } }
-    }
+  const parsed = DeletePostSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: { message: 'Invalid input' } }
+  }
 
-    const { postId } = parsed.data
+  const { postId } = parsed.data
 
-    const { data: post, error: fetchError } = await supabase.from('posts').select('user_id').eq('id', postId).single()
+  const { data: post, error: fetchError } = await supabase.from('posts').select('user_id').eq('id', postId).single()
 
-    if (fetchError || !post) {
-        return { error: { message: 'Post not found.' } }
-    }
+  if (fetchError || !post) {
+    return { error: { message: 'Post not found.' } }
+  }
 
-    if (post.user_id !== session.user.id) {
-        return { error: { message: 'You are not the owner of this post.' } }
-    }
+  if (post.user_id !== session.user.id) {
+    return { error: { message: 'You are not the owner of this post.' } }
+  }
 
-    const { error: deleteError } = await supabase.from('posts').delete().eq('id', postId)
+  const { error: deleteError } = await supabase.from('posts').delete().eq('id', postId)
 
-    if (deleteError) {
-        return { error: deleteError }
-    }
+  if (deleteError) {
+    return { error: deleteError }
+  }
 
-    revalidatePath('/feed')
-    revalidatePath(`/confession/${postId}`)
+  revalidatePath('/feed')
+  revalidatePath(`/confession/${postId}`)
 
-    return { data: { message: 'Post deleted successfully.' } }
+  return { data: { message: 'Post deleted successfully.' } }
 }
 
 const VoteSchema = z.object({
-    pollId: z.string().uuid(),
-    option: z.union([z.literal(1), z.literal(2)]),
+  pollId: z.string().uuid(),
+  option: z.union([z.literal(1), z.literal(2)]),
 })
 
 export async function castVote(input: z.infer<typeof VoteSchema>) {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session) {
-        return { error: { message: 'Unauthorized' } }
+  if (!session) {
+    return { error: { message: 'Unauthorized' } }
+  }
+
+  const parsed = VoteSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: { message: 'Invalid input' } }
+  }
+
+  const { pollId, option } = parsed.data
+
+  const { error } = await supabase.from('poll_votes').insert({
+    poll_id: pollId,
+    user_id: session.user.id,
+    selected_option: option,
+  })
+
+  if (error) {
+    if (error.code === '23505') { // unique_violation
+      return { error: { message: 'You have already voted on this poll.' } }
     }
+    return { error: { message: 'Failed to cast vote.' } }
+  }
 
-    const parsed = VoteSchema.safeParse(input)
-    if (!parsed.success) {
-        return { error: { message: 'Invalid input' } }
-    }
+  const { data: pollData } = await supabase.from('polls').select('post_id').eq('id', pollId).single()
+  if (pollData) {
+    revalidatePath(`/confession/${pollData.post_id}`)
+    revalidatePath('/feed')
+  }
 
-    const { pollId, option } = parsed.data
-
-    const { error } = await supabase.from('poll_votes').insert({
-        poll_id: pollId,
-        user_id: session.user.id,
-        selected_option: option,
-    })
-
-    if (error) {
-        if (error.code === '23505') { // unique_violation
-            return { error: { message: 'You have already voted on this poll.' } }
-        }
-        return { error: { message: 'Failed to cast vote.' } }
-    }
-    
-    const { data: pollData } = await supabase.from('polls').select('post_id').eq('id', pollId).single()
-    if (pollData) {
-        revalidatePath(`/confession/${pollData.post_id}`)
-        revalidatePath('/feed')
-    }
-
-    return { data: { message: 'Vote cast successfully.' } }
+  return { data: { message: 'Vote cast successfully.' } }
 }
 
 const RoomSchema = z.object({
@@ -293,8 +288,7 @@ const RoomSchema = z.object({
 })
 
 export async function createRoom(input: z.infer<typeof RoomSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -325,8 +319,7 @@ export async function createRoom(input: z.infer<typeof RoomSchema>) {
 const RoomIdSchema = z.object({ roomId: z.string().uuid() })
 
 export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -336,14 +329,13 @@ export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {
   })
 
   if (error) return { error: { message: 'Failed to join room.' } }
-  
+
   revalidatePath(`/rooms/${input.roomId}`)
   return { data: { message: 'Joined room.' } }
 }
 
 export async function leaveRoom(input: z.infer<typeof RoomIdSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase: SupabaseClient<Database> = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -352,7 +344,7 @@ export async function leaveRoom(input: z.infer<typeof RoomIdSchema>) {
     .eq('user_id', session.user.id)
 
   if (error) return { error: { message: 'Failed to leave room.' } }
-  
+
   revalidatePath(`/rooms/${input.roomId}`)
   return { data: { message: 'Left room.' } }
 }
@@ -363,21 +355,20 @@ const RoomMessageSchema = z.object({
 })
 
 export async function postRoomMessage(input: z.infer<typeof RoomMessageSchema>) {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return { error: { message: 'Unauthorized' } }
+  const supabase: SupabaseClient<Database> = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { error: { message: 'Unauthorized' } }
 
-    const { error } = await supabase.from('room_messages').insert({
-        room_id: input.roomId,
-        user_id: session.user.id,
-        content: input.content,
-    })
+  const { error } = await supabase.from('room_messages').insert({
+    room_id: input.roomId,
+    user_id: session.user.id,
+    content: input.content,
+  })
 
-    if (error) return { error: { message: 'Failed to send message.' } }
+  if (error) return { error: { message: error.message } }
 
-    // No revalidation needed, client will handle real-time update
-    return { data: { message: 'Message sent.' } }
+  // No revalidation needed, client will handle real-time update
+  return { data: { message: 'Message sent.' } }
 }
 
 const StorySegmentSchema = z.object({
@@ -387,77 +378,75 @@ const StorySegmentSchema = z.object({
 })
 
 export async function addStorySegment(input: z.infer<typeof StorySegmentSchema>) {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return { error: { message: 'Unauthorized' } }
+  const supabase: SupabaseClient<Database> = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { error: { message: 'Unauthorized' } }
 
-    // Basic check to prevent user from posting twice in a row
-    const { data: lastSegment, error: lastSegmentError } = await supabase
-        .from('story_segments')
-        .select('user_id')
-        .eq('story_id', input.storyId)
-        .order('order', { ascending: false })
-        .limit(1)
-        .single()
-    
-    if (lastSegment && lastSegment.user_id === session.user.id) {
-        return { error: { message: 'Please wait for someone else to contribute.' } }
+  // Basic check to prevent user from posting twice in a row
+  const { data: lastSegment, error: lastSegmentError } = await supabase
+    .from('story_segments')
+    .select('user_id')
+    .eq('story_id', input.storyId)
+    .order('order', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (lastSegment && lastSegment.user_id === session.user.id) {
+    return { error: { message: 'Please wait for someone else to contribute.' } }
+  }
+
+  const { error } = await supabase.from('story_segments').insert({
+    story_id: input.storyId,
+    user_id: session.user.id,
+    content: input.content,
+    order: input.order,
+  })
+
+  if (error) {
+    if (error.code === '23505') { // unique_violation on (story_id, order)
+      return { error: { message: 'Someone just added a sentence. Please try again.' } }
     }
+    return { error: { message: 'Failed to add to story.' } }
+  }
 
-    const { error } = await supabase.from('story_segments').insert({
-        story_id: input.storyId,
-        user_id: session.user.id,
-        content: input.content,
-        order: input.order,
-    })
-
-    if (error) {
-        if (error.code === '23505') { // unique_violation on (story_id, order)
-            return { error: { message: 'Someone just added a sentence. Please try again.' } }
-        }
-        return { error: { message: 'Failed to add to story.' } }
-    }
-
-    revalidatePath('/story')
-    return { data: { message: 'Segment added.' } }
+  revalidatePath('/story')
+  return { data: { message: 'Segment added.' } }
 }
 
 const VoidAnswerSchema = z.object({
-    postId: z.string().uuid(),
-    word: z.string().trim().min(1).max(30),
+  postId: z.string().uuid(),
+  word: z.string().trim().min(1).max(30),
 })
 
 export async function addVoidAnswer(input: z.infer<typeof VoidAnswerSchema>) {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return { error: { message: 'Unauthorized' } }
+  const supabase: SupabaseClient<Database> = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { error: { message: 'Unauthorized' } }
 
-    const parsed = VoidAnswerSchema.safeParse(input)
-    if (!parsed.success) {
-        return { error: { message: 'Invalid input' } }
+  const parsed = VoidAnswerSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: { message: 'Invalid input' } }
+  }
+
+  if (parsed.data.word.includes(' ')) {
+    return { error: { message: 'Only a single word is allowed.' } }
+  }
+
+  const { error } = await supabase.from('void_answers').insert({
+    post_id: parsed.data.postId,
+    user_id: session.user.id,
+    word: parsed.data.word.toLowerCase(),
+  })
+
+  if (error) {
+    if (error.code === '23505') { // unique_violation for user already answering
+      return { error: { message: 'You have already answered.' } }
     }
+    return { error: { message: 'Failed to submit answer.' } }
+  }
 
-    if (parsed.data.word.includes(' ')) {
-        return { error: { message: 'Only a single word is allowed.' } }
-    }
+  revalidatePath(`/confession/${parsed.data.postId}`)
+  revalidatePath('/feed')
 
-    const { error } = await supabase.from('void_answers').insert({
-        post_id: parsed.data.postId,
-        user_id: session.user.id,
-        word: parsed.data.word.toLowerCase(),
-    })
-
-    if (error) {
-        if (error.code === '23505') { // unique_violation for user already answering
-            return { error: { message: 'You have already answered.' } }
-        }
-        return { error: { message: 'Failed to submit answer.' } }
-    }
-    
-    revalidatePath(`/confession/${parsed.data.postId}`)
-    revalidatePath('/feed')
-
-    return { data: { message: 'Answer submitted.' } }
+  return { data: { message: 'Answer submitted.' } }
 }

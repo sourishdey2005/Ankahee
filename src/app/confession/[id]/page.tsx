@@ -20,9 +20,9 @@ type PostWithDetails = Tables<'posts'> & {
   void_answers: Tables<'void_answers'>[]
 }
 
-export default async function ConfessionPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+export default async function ConfessionPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const supabase = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -32,8 +32,8 @@ export default async function ConfessionPage({ params }: { params: { id: string 
   // 1. Fetch the main post
   const { data: post, error: postError } = await supabase
     .from('posts')
-    .select('*, polls(*, poll_votes(*)), void_answers(*)')
-    .eq('id', params.id)
+    .select('*, reactions(*), polls(*, poll_votes(*)), void_answers(*)')
+    .eq('id', id)
     .single()
 
   if (postError || !post) {
@@ -43,29 +43,29 @@ export default async function ConfessionPage({ params }: { params: { id: string 
   // 2. Fetch the parent post, if it exists
   let parentPost: PostWithDetails | null = null;
   if (post.parent_post_id) {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
-        .eq('id', post.parent_post_id)
-        .single()
-      if (data) {
-          parentPost = data as any;
-      }
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
+      .eq('id', post.parent_post_id)
+      .single()
+    if (data) {
+      parentPost = data as any;
+    }
   }
 
   // 3. Fetch child posts
   const { data: childPostsData, error: childPostsError } = await supabase
     .from('posts')
     .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
-    .eq('parent_post_id', params.id)
+    .eq('parent_post_id', id)
     .order('created_at', { ascending: true })
-  
+
   const childPosts: PostWithDetails[] = (childPostsData as any) || [];
 
   const { data: comments, error: commentsError } = await supabase
     .from('comments')
     .select('*')
-    .eq('post_id', params.id)
+    .eq('post_id', id)
     .order('created_at', { ascending: true })
 
   const initialComments: Comment[] = comments || [];
@@ -78,13 +78,13 @@ export default async function ConfessionPage({ params }: { params: { id: string 
           Back to Feed
         </Button>
       </Link>
-      
+
       {/* Display parent post */}
       {parentPost && (
-          <div className="mb-8">
-              <p className="text-sm font-semibold mb-2 text-muted-foreground">In reply to:</p>
-              <ConfessionCard post={parentPost} user={session.user} />
-          </div>
+        <div className="mb-8">
+          <p className="text-sm font-semibold mb-2 text-muted-foreground">In reply to:</p>
+          <ConfessionCard post={parentPost} user={session.user} />
+        </div>
       )}
 
       <EditPost post={post as any} user={session.user} />
@@ -92,24 +92,24 @@ export default async function ConfessionPage({ params }: { params: { id: string 
       <div className="my-8 flex justify-center">
         <Link href={`/new?parent_id=${post.id}`}>
           <Button variant="outline" size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Add to the chain
+            <Plus className="mr-2 h-4 w-4" />
+            Add to the chain
           </Button>
         </Link>
       </div>
 
       {childPosts.length > 0 && (
-          <div className="space-y-6">
-              <Separator />
-              <h3 className="text-xl font-headline font-bold pt-4">Replies in this chain:</h3>
-              <div className="space-y-4">
-                {childPosts.map(child => (
-                    <ConfessionCard key={child.id} post={child} user={session.user} />
-                ))}
-              </div>
+        <div className="space-y-6">
+          <Separator />
+          <h3 className="text-xl font-headline font-bold pt-4">Replies in this chain:</h3>
+          <div className="space-y-4">
+            {childPosts.map(child => (
+              <ConfessionCard key={child.id} post={child} user={session.user} />
+            ))}
           </div>
+        </div>
       )}
-      
+
       <Separator className="my-8" />
       <CommentSection postId={post.id} initialComments={initialComments} session={session} />
     </div>

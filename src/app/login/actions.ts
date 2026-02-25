@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
@@ -17,14 +16,13 @@ const signupSchema = z.object({
 })
 
 export async function login(formData: z.infer<typeof loginSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
-  
+  const supabase = await createClient()
+
   const validatedData = loginSchema.safeParse(formData)
   if (!validatedData.success) {
     return { error: 'Invalid data.' }
   }
-  
+
   const { email, password } = validatedData.data
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -41,8 +39,7 @@ export async function login(formData: z.infer<typeof loginSchema>) {
 }
 
 export async function signup(formData: z.infer<typeof signupSchema>) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
   const validatedData = signupSchema.safeParse(formData)
   if (!validatedData.success) {

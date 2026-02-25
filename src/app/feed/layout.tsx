@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Feather, Archive, MessagesSquare, Mail, BookOpen } from 'lucide-react'
@@ -21,15 +20,14 @@ export default async function FeedLayout({
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
-  const { data: { session }} = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
     redirect('/login')
   }
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,25 +37,25 @@ export default async function FeedLayout({
             <span className="font-bold font-headline text-lg">Ankahee</span>
           </Link>
           <div className="flex items-center space-x-4">
-             <Link href="/letters">
+            <Link href="/letters">
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
-                  <Mail className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-2">Letters</span>
+                <Mail className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Letters</span>
               </Button>
             </Link>
-             <Link href="/rooms">
+            <Link href="/rooms">
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
-                  <MessagesSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-2">Rooms</span>
+                <MessagesSquare className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Rooms</span>
               </Button>
             </Link>
             <Link href="/story">
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
-                  <BookOpen className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-2">Story</span>
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Story</span>
               </Button>
             </Link>
-             <DropdownMenu>
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
@@ -77,7 +75,7 @@ export default async function FeedLayout({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 <Link href="/account/archive">
+                <Link href="/account/archive">
                   <DropdownMenuItem className="cursor-pointer">
                     <Archive className="mr-2 h-4 w-4" />
                     <span>My Archive</span>

@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Tables } from '@/lib/supabase/types'
 import { Button } from '@/components/ui/button'
@@ -16,49 +15,55 @@ import CommunityWordCloud from '@/components/CommunityWordCloud'
 export const revalidate = 0
 
 type PostWithCounts = Tables<'posts'> & {
-  comments: Array<{ count: number }>
-  reactions: Array<Tables<'reactions'>>
+  comments: { count: number }[]
+  reactions: Tables<'reactions'>[]
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
   void_answers: Tables<'void_answers'>[]
 }
 
 const processPostsForWordCloud = (posts: PostWithCounts[]) => {
-  if (!posts || posts.length === 0) {
-    return [];
-  }
+  if (!posts?.length) return []
 
-  const allText = posts.map(p => p.content).join(' ');
-  
+  const allText = posts.map(p => p.content || '').join(' ')
+
   const words = allText
     .toLowerCase()
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"") // remove punctuation
-    .split(/\s+/); // split into words
+    .replace(/[^\w\s]/gi, '')
+    .split(/\s+/)
 
-  const wordFrequencies: { [key: string]: number } = {};
+  const wordFrequencies: Record<string, number> = {}
 
   for (const word of words) {
     if (word && word.length > 2 && !stopwords.includes(word)) {
-      wordFrequencies[word] = (wordFrequencies[word] || 0) + 1;
+      wordFrequencies[word] = (wordFrequencies[word] || 0) + 1
     }
   }
 
   return Object.entries(wordFrequencies)
     .map(([text, value]) => ({ text, value }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 50); // Take top 50 words
+    .slice(0, 50)
 }
-
 
 export default async function FeedPage({
   searchParams,
 }: {
-  searchParams: { mood?: string; sort?: string }
+  searchParams: Promise<{ mood?: string; sort?: string }>
 }) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
-  const { mood, sort } = searchParams
+  const resolvedParams = await searchParams
+  const mood = resolvedParams?.mood
+  const sort = resolvedParams?.sort
 
-  const { data: { session }} = await supabase.auth.getSession()
+  const supabase = await createClient()
+
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession()
+
+  if (sessionError) {
+    console.error("Session error:", sessionError)
+  }
 
   if (!session) {
     return (
@@ -68,45 +73,58 @@ export default async function FeedPage({
     )
   }
 
+  // 🔥 MAIN QUERY
   let query = supabase
     .from('posts')
-    .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
+    .select(`
+      *,
+      comments(count),
+      reactions(*),
+      polls(*, poll_votes(*)),
+      void_answers(*)
+    `)
     .gt('expires_at', new Date().toISOString())
-  
+
+  // Mood filter
   if (mood && (MoodTags as readonly string[]).includes(mood)) {
     query = query.eq('mood', mood)
   }
 
-  if (sort === 'popular' || sort === 'loved') {
-    // We will fetch all and sort on the client in ConfessionsList.
-    // For more complex scenarios, a database function/view would be better.
-     query = query.order('created_at', { ascending: false })
-  } else {
-    query = query.order('created_at', { ascending: false })
-  }
+  // Always sort newest first (client will handle other sorts)
+  query = query.order('created_at', { ascending: false })
 
-  const { data: posts, error } = await query
+  const { data, error } = await query
 
   if (error) {
-    console.error('Error fetching posts:', error)
+    console.error('Supabase fetch error:', JSON.stringify(error, null, 2))
   }
-  
-  const initialPosts: PostWithCounts[] = (posts as any) || [];
-  const wordCloudData = processPostsForWordCloud(initialPosts);
 
+  const initialPosts: PostWithCounts[] = (data ?? []) as PostWithCounts[]
+
+  const wordCloudData = processPostsForWordCloud(initialPosts)
+
+  // Daily Prompt Logic
   const getDayOfYear = (date: Date) => {
-    const start = new Date(date.getFullYear(), 0, 0);
-    const diff = (date.getTime() - start.getTime()) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
-    const oneDay = 1000 * 60 * 60 * 24;
-    return Math.floor(diff / oneDay);
-  };
-  const dayOfYear = getDayOfYear(new Date());
-  const dailyPrompt = reflectionPrompts[dayOfYear % reflectionPrompts.length];
+    const start = new Date(date.getFullYear(), 0, 0)
+    const diff =
+      date.getTime() -
+      start.getTime() +
+      (start.getTimezoneOffset() - date.getTimezoneOffset()) *
+      60 *
+      1000
+    return Math.floor(diff / (1000 * 60 * 60 * 24))
+  }
+
+  const dayOfYear = getDayOfYear(new Date())
+  const dailyPrompt =
+    reflectionPrompts[dayOfYear % reflectionPrompts.length]
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
-       <div className="mb-8 space-y-4">
-        <h1 className="text-3xl font-headline font-bold">The Void</h1>
+      <div className="mb-8 space-y-4">
+        <h1 className="text-3xl font-headline font-bold">
+          The Void
+        </h1>
 
         {wordCloudData.length > 0 && (
           <div className="pt-4">
@@ -114,62 +132,106 @@ export default async function FeedPage({
           </div>
         )}
 
-        <Link href={`/new?prompt=${encodeURIComponent(dailyPrompt)}`} className="block">
+        <Link
+          href={`/new?prompt=${encodeURIComponent(
+            dailyPrompt
+          )}`}
+          className="block"
+        >
           <Card className="hover:border-primary/50 transition-colors cursor-pointer bg-card/50 backdrop-blur-sm">
             <CardContent className="p-4 flex items-start gap-4">
               <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
               <div>
-                <p className="font-semibold text-foreground/90">Daily Prompt</p>
-                <p className="text-muted-foreground">{dailyPrompt}</p>
+                <p className="font-semibold text-foreground/90">
+                  Daily Prompt
+                </p>
+                <p className="text-muted-foreground">
+                  {dailyPrompt}
+                </p>
               </div>
             </CardContent>
           </Card>
         </Link>
 
+        {/* SORT */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground mr-2">Sort by:</span>
+          <span className="text-sm font-medium text-muted-foreground mr-2">
+            Sort by:
+          </span>
+
           <Link href={{ pathname: '/feed', query: { mood } }}>
-            <Badge
-              variant={!sort ? 'default' : 'secondary'}
-              className="cursor-pointer transition-colors"
-            >
+            <Badge variant={!sort ? 'default' : 'secondary'}>
               Newest
             </Badge>
           </Link>
-          <Link href={{ pathname: '/feed', query: { mood, sort: 'popular' } }}>
-             <Badge
-              variant={sort === 'popular' ? 'default' : 'secondary'}
-              className="cursor-pointer transition-colors"
+
+          <Link
+            href={{
+              pathname: '/feed',
+              query: { mood, sort: 'popular' },
+            }}
+          >
+            <Badge
+              variant={
+                sort === 'popular'
+                  ? 'default'
+                  : 'secondary'
+              }
             >
               Popular
             </Badge>
           </Link>
-           <Link href={{ pathname: '/feed', query: { mood, sort: 'loved' } }}>
-             <Badge
-              variant={sort === 'loved' ? 'default' : 'secondary'}
-              className="cursor-pointer transition-colors inline-flex items-center gap-1"
+
+          <Link
+            href={{
+              pathname: '/feed',
+              query: { mood, sort: 'loved' },
+            }}
+          >
+            <Badge
+              variant={
+                sort === 'loved'
+                  ? 'default'
+                  : 'secondary'
+              }
+              className="inline-flex items-center gap-1"
             >
               <Heart className="h-3 w-3" />
               Most Loved
             </Badge>
           </Link>
         </div>
+
+        {/* MOOD FILTER */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground mr-2">Filter by mood:</span>
-          <Link href={{ pathname: '/feed', query: { sort } }}>
+          <span className="text-sm font-medium text-muted-foreground mr-2">
+            Filter by mood:
+          </span>
+
+          <Link
+            href={{
+              pathname: '/feed',
+              query: { sort },
+            }}
+          >
             <Badge
               variant={!mood ? 'default' : 'secondary'}
-              className="cursor-pointer transition-colors"
             >
               All
             </Badge>
           </Link>
+
           {MoodTags.map((tag) => (
-            <Link href={{ pathname: '/feed', query: { sort, mood: tag } }} key={tag}>
+            <Link
+              href={{
+                pathname: '/feed',
+                query: { sort, mood: tag },
+              }}
+              key={tag}
+            >
               <Badge
                 variant="outline"
                 className={cn(
-                  'cursor-pointer transition-colors',
                   mood === tag
                     ? `${moodColors[tag as MoodTag]} border-primary/60 ring-1 ring-primary/60`
                     : 'hover:bg-accent/50'
@@ -181,14 +243,21 @@ export default async function FeedPage({
           ))}
         </div>
       </div>
-      <ConfessionsList serverPosts={initialPosts} sort={sort} />
+
+      <ConfessionsList
+        serverPosts={initialPosts}
+        sort={sort}
+      />
+
       <Link href="/new">
         <Button
           aria-label="New Confession"
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-gradient-to-r from-primary to-purple-600"
         >
           <Plus className="h-8 w-8" />
-          <span className="sr-only">New Confession</span>
+          <span className="sr-only">
+            New Confession
+          </span>
         </Button>
       </Link>
     </div>
