@@ -51,40 +51,57 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
   }, [initialPost]);
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*, reactions(*), polls(*, poll_votes(*)), void_answers(*)')
-        .eq('id', initialPost.id)
-        .single();
-
-      if (data) {
-        setPost(data as PostWithDetails);
-      }
-    };
-
-    const channel = supabase.channel(`details:${initialPost.id}`)
+    const channel = supabase.channel(`details-granular:${initialPost.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'reactions',
         filter: `post_id=eq.${initialPost.id}`
-      }, (payload) => fetchDetails())
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'poll_votes'
-        // This is tricky to filter, so we just refetch on any vote change.
-        // For a high-traffic app, we'd want a more specific subscription.
-      }, (payload) => {
-        fetchDetails()
+      }, (payload: any) => {
+        setPost(currentPost => {
+          if (!currentPost) return null as any;
+          const reactionUser = (payload.new?.user_id || payload.old?.user_id);
+          const filteredReactions = currentPost.reactions.filter(r => r.user_id !== reactionUser);
+          
+          let newReactions: Tables<'reactions'>[];
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            newReactions = [...filteredReactions, payload.new as Tables<'reactions'>];
+          } else { // DELETE
+            newReactions = filteredReactions;
+          }
+          return { ...currentPost, reactions: newReactions };
+        });
       })
       .on('postgres_changes', {
-        event: '*',
+        event: 'INSERT',
+        schema: 'public',
+        table: 'poll_votes'
+      }, (payload: any) => {
+        setPost(currentPost => {
+            if (!currentPost || !currentPost.polls.length) return currentPost;
+            const pollId = currentPost.polls[0].id;
+            if (payload.new.poll_id !== pollId) return currentPost;
+            
+            if (currentPost.polls[0].poll_votes.some(v => v.id === payload.new.id)) return currentPost;
+            
+            const newVotes = [...currentPost.polls[0].poll_votes, payload.new as Tables<'poll_votes'>];
+            const updatedPoll = { ...currentPost.polls[0], poll_votes: newVotes };
+            return { ...currentPost, polls: [updatedPoll] };
+        });
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
         schema: 'public',
         table: 'void_answers',
         filter: `post_id=eq.${initialPost.id}`
-      }, (payload) => fetchDetails())
+      }, (payload: any) => {
+        setPost(currentPost => {
+            if (!currentPost) return currentPost;
+            if (currentPost.void_answers.some(a => a.id === payload.new.id)) return currentPost;
+            const newAnswers = [...currentPost.void_answers, payload.new as Tables<'void_answers'>];
+            return { ...currentPost, void_answers: newAnswers };
+        });
+      })
       .subscribe();
 
     return () => {

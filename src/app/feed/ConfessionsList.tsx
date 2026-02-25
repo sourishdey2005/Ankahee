@@ -40,31 +40,9 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
     return postsCopy;
   }, [posts, sort]);
 
-  const handlePostUpdate = useCallback(async (postId: string) => {
-    const { data: updatedPostData, error } = await supabase
-      .from('posts')
-      .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*)')
-      .eq('id', postId)
-      .single()
-
-    if (error) {
-      if (error.code !== 'PGRST116') { // Post might have been deleted
-        console.error('Error refetching post:', error)
-      } else {
-        setPosts(currentPosts => currentPosts.filter(p => p.id !== postId));
-      }
-      return
-    }
-
-    const updatedPost = updatedPostData as Post;
-    setPosts(currentPosts => 
-      currentPosts.map(p => (p.id === postId ? updatedPost : p))
-    );
-  }, [supabase])
-
   useEffect(() => {
     const postsChannel = supabase
-      .channel('realtime-posts-feed')
+      .channel('realtime-posts-feed-granular')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts' },
@@ -83,57 +61,112 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
       ).subscribe()
 
     const reactionsChannel = supabase
-      .channel('realtime-reactions-feed')
+      .channel('realtime-reactions-feed-granular')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reactions' },
         (payload: any) => {
           const postId = payload.new?.post_id || payload.old?.post_id
-          if (postId) {
-            handlePostUpdate(postId)
-          }
+          if (!postId) return;
+
+          setPosts(currentPosts => 
+            currentPosts.map(p => {
+              if (p.id !== postId) return p;
+
+              const reactionUser = (payload.new?.user_id || payload.old?.user_id);
+              const filteredReactions = p.reactions.filter(r => r.user_id !== reactionUser);
+
+              let newReactions: Tables<'reactions'>[];
+              if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                newReactions = [...filteredReactions, payload.new as Tables<'reactions'>];
+              } else { // DELETE
+                newReactions = filteredReactions;
+              }
+              return { ...p, reactions: newReactions };
+            })
+          );
         }
       )
       .subscribe()
 
     const commentsChannel = supabase
-      .channel('realtime-comments-feed')
+      .channel('realtime-comments-feed-granular')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'comments' },
         (payload: any) => {
            const postId = payload.new?.post_id || payload.old?.post_id
-          if (postId) {
-            handlePostUpdate(postId)
-          }
+           if (!postId) return;
+
+           setPosts(currentPosts => 
+             currentPosts.map(p => {
+               if (p.id !== postId) return p;
+               
+               const currentCount = p.comments[0]?.count ?? 0;
+               let newCount: number;
+
+               if (payload.eventType === 'INSERT') {
+                 newCount = currentCount + 1;
+               } else if (payload.eventType === 'DELETE') {
+                 newCount = Math.max(0, currentCount - 1);
+               } else {
+                 newCount = currentCount;
+               }
+               return { ...p, comments: [{ count: newCount }] };
+             })
+           );
         }
       )
       .subscribe()
 
-    const pollsChannel = supabase
-      .channel('realtime-polls-feed')
+    const pollVotesChannel = supabase
+      .channel('realtime-poll-votes-feed')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'polls' },
+        { event: 'INSERT', schema: 'public', table: 'poll_votes' },
         (payload: any) => {
-           const postId = payload.new?.post_id
-          if (postId) {
-            handlePostUpdate(postId)
-          }
+           const pollId = payload.new?.poll_id
+           if (!pollId) return;
+
+            setPosts(currentPosts => {
+                const postToUpdate = currentPosts.find(p => p.polls.some(poll => poll.id === pollId));
+                if (!postToUpdate) return currentPosts;
+
+                return currentPosts.map(p => {
+                    if (p.id !== postToUpdate.id) return p;
+
+                    const updatedPolls = p.polls.map(poll => {
+                        if (poll.id !== pollId) return poll;
+                        if (poll.poll_votes.some(v => v.id === payload.new.id)) return poll;
+                        
+                        const newVotes = [...poll.poll_votes, payload.new as Tables<'poll_votes'>];
+                        return { ...poll, poll_votes: newVotes };
+                    });
+                    return { ...p, polls: updatedPolls };
+                });
+            });
         }
       )
       .subscribe()
 
     const voidAnswersChannel = supabase
-      .channel('realtime-void-answers-feed')
+      .channel('realtime-void-answers-feed-granular')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'void_answers' },
         (payload: any) => {
             const postId = payload.new?.post_id
-            if (postId) {
-            handlePostUpdate(postId)
-            }
+            if (!postId) return;
+
+            setPosts(currentPosts => 
+              currentPosts.map(p => {
+                if (p.id !== postId) return p;
+                if (p.void_answers.some(a => a.id === payload.new.id)) return p;
+                
+                const newAnswers = [...p.void_answers, payload.new as Tables<'void_answers'>];
+                return { ...p, void_answers: newAnswers };
+              })
+            );
         }
       )
       .subscribe()
@@ -142,10 +175,10 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
       supabase.removeChannel(postsChannel)
       supabase.removeChannel(reactionsChannel)
       supabase.removeChannel(commentsChannel)
-      supabase.removeChannel(pollsChannel)
+      supabase.removeChannel(pollVotesChannel)
       supabase.removeChannel(voidAnswersChannel)
     }
-  }, [supabase, handlePostUpdate])
+  }, [supabase])
 
   if (sortedPosts.length === 0) {
     return (
