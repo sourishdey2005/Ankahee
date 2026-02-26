@@ -4,9 +4,6 @@ import { useState, useTransition, useMemo, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import WordCloud from 'react-wordcloud'
-import 'tippy.js/dist/tippy.css'
-import 'tippy.js/animations/scale.css'
 import { addVoidAnswer } from '@/actions'
 import { useToast } from '@/hooks/use-toast'
 import { Input } from './ui/input'
@@ -32,14 +29,9 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
     const { toast } = useToast();
     const supabase = createClient();
     const [isMounted, setIsMounted] = useState(false);
-    const [isFontLoaded, setIsFontLoaded] = useState(false);
 
     useEffect(() => {
       setIsMounted(true);
-      // Ensure the font is loaded before rendering the word cloud to prevent measurement errors.
-      document.fonts.load('bold 1rem "Space Grotesk"').then(() => {
-        setIsFontLoaded(true);
-      });
     }, []);
 
     useEffect(() => {
@@ -73,23 +65,22 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
         for (const answer of answers) {
             frequencies[answer.word] = (frequencies[answer.word] || 0) + 1;
         }
-        return Object.entries(frequencies)
+        const data = Object.entries(frequencies)
             .map(([text, value]) => ({ text, value }))
             .sort((a, b) => b.value - a.value)
             .slice(0, 50);
+
+        if (data.length === 0) return [];
+        
+        const max = Math.max(...data.map((w) => w.value), 1);
+
+        return data.map((w) => ({
+          ...w,
+          size: 14 + (w.value / max) * 34,
+        }));
     }, [answers]);
 
-    const colors = useMemo(() => ['#FF9933', '#A162F7', '#F2C94C', '#EB5757', '#2D9CDB', '#6FCF97'], []);
-    const options: any = {
-        colors,
-        fontFamily: '"Space Grotesk", sans-serif',
-        fontSizes: [16, 48],
-        padding: 1,
-        rotations: 0,
-        scale: 'sqrt',
-        spiral: 'archimedean',
-        transitionDuration: 1000,
-    };
+    const colors = useMemo(() => ['text-primary', 'text-purple-400', 'text-yellow-400', 'text-red-400', 'text-blue-400', 'text-green-400'], []);
 
     const onSubmit = (values: z.infer<typeof answerSchema>) => {
         startTransition(async () => {
@@ -109,8 +100,19 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
     return (
         <div className="my-4 pt-4 border-t space-y-4">
             {wordCloudData.length > 0 ? (
-                <div className="h-48 w-full">
-                    {isMounted && isFontLoaded ? <WordCloud words={wordCloudData} options={options} /> : <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>}
+                <div className="h-48 w-full flex flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden">
+                    {isMounted ? wordCloudData.map((word, index) => (
+                        <span
+                          key={word.text}
+                          className={`font-bold transition-transform duration-300 hover:scale-125 ${colors[index % colors.length]}`}
+                          style={{
+                            fontSize: `${word.size}px`,
+                            fontFamily: '"Space Grotesk", sans-serif',
+                          }}
+                        >
+                          {word.text}
+                        </span>
+                    )) : <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>}
                 </div>
             ) : (
                 <div className="h-48 flex items-center justify-center text-muted-foreground">

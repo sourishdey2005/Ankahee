@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import SignOutButton from '@/components/SignOutButton'
 import DeleteAccountButton from '@/components/DeleteAccountButton'
 import Image from 'next/image'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export default async function FeedLayout({
   children,
@@ -56,6 +57,7 @@ export default async function FeedLayout({
                 <span className="hidden sm:inline ml-2">Story</span>
               </Button>
             </Link>
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
