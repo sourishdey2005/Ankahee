@@ -57,10 +57,9 @@ export async function signup(formData: z.infer<typeof signupSchema>) {
     return { error: error.message }
   }
 
-  // Supabase sends a confirmation email. To make development easier, you might
-  // want to disable "Confirm email" in your project's auth settings.
+  // On successful signup, Supabase will also sign the user in if email confirmation
+  // is disabled in your project's auth settings. We then immediately redirect
+  // them to the feed, skipping the email confirmation message.
   revalidatePath('/', 'layout')
-
-  // Don't auto-redirect. Let user know to check their email.
-  return { error: null }
+  redirect('/feed')
 }
