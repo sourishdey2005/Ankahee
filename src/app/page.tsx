@@ -1,3 +1,4 @@
+
 'use client'
 
 import { Button } from '@/components/ui/button'
@@ -76,30 +77,28 @@ export default function Home() {
       </div>
 
       {/* Persistent Navigation */}
-      <nav className="relative z-50 container mx-auto px-6 py-6 flex justify-between items-center">
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="flex items-center space-x-2 group shrink-0 cursor-pointer"
+      <motion.nav
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+          className="relative z-50 container mx-auto px-6 py-6 flex justify-between items-center"
         >
-          <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-500">
-            <Feather className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
-          </div>
+        <Link href="/" className="flex items-center space-x-2 group shrink-0 cursor-pointer">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: -5 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="p-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-500"
+          >
+            <Feather className="h-6 w-6 text-primary" />
+          </motion.div>
           <span className="font-headline font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">Ankahee</span>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        >
-          <Link href="/login">
+        </Link>
+        <Link href="/login">
             <Button variant="ghost" className="text-muted-foreground hover:text-white hover:bg-white/5 px-6 font-medium transition-all">
               Login
             </Button>
-          </Link>
-        </motion.div>
-      </nav>
+        </Link>
+      </motion.nav>
 
       {/* High-Fidelity Hero Section */}
       <motion.main
@@ -107,89 +106,74 @@ export default function Home() {
         className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-24 max-w-5xl mx-auto"
       >
         <motion.div
-          className="relative mb-14"
-          initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{
-            type: "spring",
-            stiffness: 100,
-            damping: 20,
-            delay: 0.2
-          }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.2 }}
         >
           <motion.div
-            animate={{
-              scale: [1, 1.4, 1],
-              opacity: [0.1, 0.4, 0.1],
-              rotate: [0, 180, 360]
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full scale-125"
-          ></motion.div>
-          <Image
-            src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png"
-            alt="Ankahee Logo"
-            width={180}
-            height={180}
-            className="relative drop-shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:scale-105 transition-transform duration-700"
-            priority
-          />
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="relative mb-8"
+          >
+            <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full scale-125"></div>
+            <Image
+              src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png"
+              alt="Ankahee Logo"
+              width={160}
+              height={160}
+              className="relative drop-shadow-[0_0_40px_rgba(124,58,237,0.4)] hover:drop-shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all duration-500"
+              priority
+            />
+          </motion.div>
         </motion.div>
 
         <motion.h1
-          className="text-7xl md:text-9xl font-headline font-bold mb-8 tracking-tighter italic"
-          initial={{ opacity: 0, filter: "blur(20px)", y: 40 }}
+          className="text-6xl md:text-8xl font-headline font-extrabold mb-6 tracking-tighter"
+          initial={{ opacity: 0, filter: "blur(10px)", y: 30 }}
           animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-          transition={{ duration: 1.2, delay: 0.4 }}
+          transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/30 drop-shadow-sm">Ankahee</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-neutral-300 to-primary/70">Ankahee</span>
         </motion.h1>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
+        <motion.p
+          className="text-2xl md:text-3xl text-primary font-semibold tracking-wider font-headline mb-8"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.6 }}
-          className="space-y-10"
         >
-          <p className="text-2xl md:text-4xl text-primary font-semibold tracking-widest font-headline uppercase">
-            Speak Freely. Stay Unknown.
-          </p>
-          <div className="max-w-2xl mx-auto space-y-8">
-            <p className="text-2xl text-white/90 font-light leading-relaxed font-headline italic">
-              “Every heart has an <span className="text-primary not-italic font-bold underline decoration-primary/50 underline-offset-8">untold story</span>.”
-            </p>
-            <p className="text-muted-foreground text-xl max-w-xl mx-auto leading-relaxed border-l-2 border-primary/40 pl-8 text-left py-2 font-light">
-              A refined sanctuary to release your deepest secrets without a trace.
-              Our ephemeral architecture ensures your voice is heard, then forgotten.
-            </p>
-          </div>
-        </motion.div>
+          Speak Freely. Stay Unknown.
+        </motion.p>
+        
+        <motion.p 
+          className="text-xl md:text-2xl text-white/80 font-light max-w-2xl mx-auto leading-relaxed"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.8 }}
+        >
+          A digital sanctuary to release your deepest thoughts without a trace. Where every word is heard, then forgotten.
+        </motion.p>
 
         <motion.div
           className="mt-16 flex flex-col sm:flex-row gap-6"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.8 }}
+          transition={{ duration: 1, delay: 1 }}
         >
           <Link href="/feed">
             <Button
               size="lg"
-              className="px-10 py-8 font-bold text-2xl bg-white text-black hover:bg-[#F0F0F0] transition-all duration-500 rounded-3xl shadow-[0_20px_60px_rgba(255,255,255,0.1)] group overflow-hidden relative"
+              className="px-10 py-8 font-bold text-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 rounded-2xl shadow-[0_10px_30px_-5px_rgba(255,153,51,0.3)] hover:shadow-[0_15px_40px_-5px_rgba(255,153,51,0.5)] group relative overflow-hidden"
             >
-              <span className="relative z-10 flex items-center">
-                Enter the Void
-                <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-500" />
-              </span>
-              <motion.div
-                className="absolute inset-0 bg-primary/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-700"
-              />
+              Enter the Void
+              <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
             </Button>
           </Link>
           <Button
             asChild
             size="lg"
             variant="outline"
-            className="px-10 py-8 font-bold text-2xl border-white/10 bg-white/5 backdrop-blur-2xl hover:bg-white/10 transition-all duration-500 rounded-3xl cursor-pointer group"
+            className="px-10 py-8 font-bold text-2xl border-white/10 bg-white/5 backdrop-blur-2xl hover:bg-white/10 transition-all duration-300 rounded-2xl cursor-pointer group"
           >
             <a href="#how-it-works">
               How It Works
@@ -197,22 +181,6 @@ export default function Home() {
             </a>
           </Button>
         </motion.div>
-
-        <motion.a
-          href="#how-it-works"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 0.4, y: 0 }}
-          transition={{
-            delay: 1.8,
-            duration: 1,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-          whileHover={{ opacity: 1, scale: 1.1 }}
-          className="mt-28 cursor-pointer flex items-center justify-center w-full group"
-        >
-          <ChevronDown className="h-10 w-10 text-white/40 group-hover:text-primary transition-colors" />
-        </motion.a>
       </motion.main>
 
       {/* Interactive Feature Grid Section */}
@@ -222,8 +190,8 @@ export default function Home() {
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1 }}
-            className="text-center mb-32"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-center mb-24"
           >
             <h2 className="text-5xl md:text-7xl font-headline font-bold text-white mb-6 tracking-tight">
               The Architecture of Anonymity
@@ -231,7 +199,7 @@ export default function Home() {
             <div className="h-1.5 w-24 bg-primary mx-auto rounded-full shadow-[0_0_20px_rgba(124,58,237,0.5)]"></div>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-10 lg:gap-16">
+          <div className="grid md:grid-cols-3 gap-10 lg:gap-12">
             <FeatureCard
               icon={<PenSquare className="w-9 h-9" />}
               title="Share Anonymously"
@@ -292,7 +260,7 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
             whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             viewport={{ once: true }}
-            transition={{ duration: 1.5 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             className="text-5xl md:text-7xl font-headline font-bold mb-16 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40 italic leading-tight"
           >
             "In permanence, we hide.<br />In transience, we find freedom."
@@ -301,7 +269,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 1 }}
+            transition={{ delay: 0.5, duration: 1, ease: "easeOut" }}
             className="space-y-10 text-2xl text-muted-foreground font-extralight leading-relaxed"
           >
             <p className="hover:text-white transition-colors duration-700">
@@ -389,22 +357,26 @@ function SectionWrapper({ id, children, className }: { id?: string, children: Re
 function FeatureCard({ icon, title, description, index }: { icon: React.ReactNode, title: string, description: string, index: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 50, filter: 'blur(10px)' }}
+      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.8, delay: index * 0.15 }}
+      transition={{ duration: 0.8, delay: index * 0.15, ease: "easeOut" }}
       whileHover={{
-        y: -15,
-        scale: 1.02,
+        y: -10,
+        borderColor: "hsla(var(--primary), 0.5)",
+        boxShadow: "0 20px 40px -10px hsla(var(--primary), 0.2)",
         transition: { type: "spring", stiffness: 300, damping: 20 }
       }}
-      className="p-10 rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl hover:border-primary/40 transition-all duration-700 group relative overflow-hidden"
+      className="p-10 rounded-[2rem] bg-gradient-to-br from-white/5 to-white/0 border border-white/10 backdrop-blur-xl group relative overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-40 transition-all duration-700"></div>
       <div className="relative z-10">
-        <div className="w-20 h-20 rounded-[1.5rem] bg-black/60 border border-white/5 flex items-center justify-center text-primary mb-10 group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-700 shadow-3xl">
+        <motion.div 
+            className="w-20 h-20 rounded-[1.5rem] bg-black/60 border border-white/5 flex items-center justify-center text-primary mb-10 shadow-lg group-hover:bg-primary/20 transition-all duration-500"
+            whileHover={{ scale: 1.1, rotate: -5 }}
+        >
           {icon}
-        </div>
+        </motion.div>
         <h3 className="text-3xl font-headline font-bold text-white mb-6 group-hover:text-primary transition-colors duration-500">
           {title}
         </h3>
@@ -412,7 +384,7 @@ function FeatureCard({ icon, title, description, index }: { icon: React.ReactNod
           {description}
         </p>
       </div>
-      <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full translate-x-1/2 translate-y-1/2 group-hover:bg-primary/20 transition-all duration-1000" />
+      <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full translate-x-1/2 translate-y-1/2 group-hover:bg-primary/10 transition-all duration-1000" />
     </motion.div>
   );
 }
@@ -422,7 +394,7 @@ function FeatureRow({ icon, title, description, reversed }: { icon: React.ReactN
   const isInView = useInView(ref, { once: true, margin: "-20%" })
 
   return (
-    <div ref={ref} className={`flex flex-col ${reversed ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-20 lg:gap-32 group`}>
+    <div ref={ref} className={`flex flex-col ${reversed ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-16 lg:gap-24 group`}>
       <motion.div
         initial={{ opacity: 0, x: reversed ? 60 : -60 }}
         animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -430,27 +402,41 @@ function FeatureRow({ icon, title, description, reversed }: { icon: React.ReactN
         className="flex-1 space-y-8"
       >
         <motion.div
-          whileHover={{ rotate: 360, scale: 1.1 }}
-          transition={{ duration: 1 }}
-          className="inline-block p-5 rounded-[2rem] bg-primary/5 border border-primary/20 backdrop-blur-3xl shadow-[0_0_50px_rgba(124,58,237,0.1)] cursor-none"
+          whileHover={{ rotate: 10, scale: 1.1 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="inline-block p-5 rounded-[2rem] bg-primary/5 border border-primary/20 backdrop-blur-3xl shadow-[0_0_50px_rgba(124,58,237,0.1)] cursor-default"
         >
           {icon}
         </motion.div>
         <h3 className="text-4xl lg:text-5xl font-headline font-bold text-white tracking-tight group-hover:text-primary transition-colors duration-700 leading-tight">
           {title}
         </h3>
-        <p className="text-2xl text-muted-foreground leading-relaxed font-extralight italic">
+        <p className="text-xl text-muted-foreground leading-relaxed font-extralight italic">
           {description}
         </p>
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.8, rotateY: reversed ? -20 : 20 }}
-        animate={isInView ? { opacity: 1, scale: 1, rotateY: 0 } : {}}
-        transition={{ duration: 1.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="flex-1 w-full aspect-square md:aspect-video rounded-[4rem] bg-gradient-to-tr from-primary/30 via-white/5 to-transparent border border-white/10 p-1.5 shadow-2xl relative"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={isInView ? { opacity: 1, scale: 1 } : {}}
+        transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        className="flex-1 w-full min-h-[400px] md:min-h-0 md:aspect-[4/3] rounded-[3rem] bg-gradient-to-tr from-white/10 via-white/5 to-transparent border border-white/10 p-1.5 shadow-2xl relative"
       >
-        <div className="w-full h-full rounded-[3.8rem] bg-[#0A0A1F] flex items-center justify-center relative overflow-hidden group-hover:shadow-[0_0_80px_rgba(124,58,237,0.15)] transition-shadow duration-1000">
+        <div className="w-full h-full rounded-[2.8rem] bg-[#0A0A1F] flex items-center justify-center relative overflow-hidden group-hover:shadow-[0_0_80px_rgba(124,58,237,0.15)] transition-shadow duration-1000">
+          {/* Scanning Line Effect */}
+          <motion.div
+            initial={{ y: "-10%" }}
+            animate={isInView ? { y: "110%" } : {}}
+            transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeInOut", repeatType: 'mirror' }}
+            className="absolute left-0 right-0 h-1.5 bg-primary/60 blur-md z-10"
+          />
+          <motion.div
+            initial={{ y: "-10%" }}
+            animate={isInView ? { y: "110%" } : {}}
+            transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeInOut", repeatType: 'mirror' }}
+            className="absolute left-0 right-0 h-px bg-primary z-10"
+          />
+          
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
@@ -464,17 +450,11 @@ function FeatureRow({ icon, title, description, reversed }: { icon: React.ReactN
           <div className="absolute w-1/3 h-1/3 bg-primary/20 blur-[100px] rounded-full" />
           <motion.div
             animate={{ opacity: [0.2, 0.7, 0.2] }}
-            transition={{ duration: 4, repeat: Infinity }}
+            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
             className="text-white/60 font-headline font-bold text-sm tracking-[0.8em] uppercase text-center px-4"
           >
             Scanning The Void
           </motion.div>
-          {/* Subtle Scanning Line Effect */}
-          <motion.div
-            animate={{ y: ["100%", "-100%"] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent z-20 pointer-events-none"
-          />
         </div>
       </motion.div>
     </div>
