@@ -76,17 +76,7 @@ NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
 
-You will also need to add your Google AI API Key for the Genkit features to work.
-
-```
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-```
-
-### 4. Database Setup
-
-You will need to run the SQL scripts provided by the AI assistant when features were added. If you don't have them, you can ask the assistant to provide them again.
-
-### 5. Run the Application
+### 4. Run the Application
 
 You'll need two terminals for the full experience.
 
@@ -108,4 +98,4 @@ Open [http://localhost:9002](http://localhost:9002) in your browser to see the a
 
 ## 📞 Contact
 
-Created by [Sourish Dey](https://github.com/sourishdey2005) as part of a Firebase Studio project.
+Created by [Sourish Dey](https://github.com/sourishdey2005).
