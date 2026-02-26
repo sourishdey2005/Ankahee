@@ -24,6 +24,7 @@ Ankahee is more than just a confession board; it's a suite of tools for anonymou
 -   **💬 Real-time Chat Rooms**: Create or join temporary, topic-based chat rooms for live, anonymous conversations.
 -   **✉️ Ephemeral Direct Messaging**: Start a private, 1-on-1 chat with another user directly from a comment they've made. These conversations expire 1 hour after creation.
 -   **✍️ Collaborative Story**: Each day brings a new writing prompt. Contribute one sentence at a time to build a unique story with the community.
+-   **🔖 Ephemeral Bookmarks**: Save a confession to a private list. Bookmarks are automatically removed when the post expires.
 -   **🗄️ Private Archive**: View your own expired confessions in a private archive, accessible only to you.
 -   **🔥 Full Account Deletion**: Permanently delete your account and all associated content with a single click.
 
@@ -296,7 +297,24 @@ ALTER TABLE public.story_segments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all to view story" ON public.story_segments FOR SELECT USING (true);
 CREATE POLICY "Allow users to add to story" ON public.story_segments FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- 9. USER PUBLIC DATA
+-- 9. BOOKMARKS TABLE
+CREATE TABLE public.bookmarks (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    user_id uuid NOT NULL,
+    post_id uuid NOT NULL,
+    CONSTRAINT bookmarks_pkey PRIMARY KEY (id),
+    CONSTRAINT bookmarks_user_id_post_id_key UNIQUE (user_id, post_id),
+    CONSTRAINT bookmarks_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE,
+    CONSTRAINT bookmarks_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+);
+ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow users to view their own bookmarks" ON public.bookmarks FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Allow users to create their own bookmarks" ON public.bookmarks FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Allow users to delete their own bookmarks" ON public.bookmarks FOR DELETE USING (auth.uid() = user_id);
+
+
+-- 10. USER PUBLIC DATA
 -- Create a public table for user data
 create table public.users (
   id uuid not null references auth.users on delete cascade,

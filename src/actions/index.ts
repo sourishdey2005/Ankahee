@@ -515,3 +515,45 @@ export async function addVoidAnswer(input: z.infer<typeof VoidAnswerSchema>) {
 
   return { data: { message: 'Answer submitted.' } }
 }
+
+const BookmarkSchema = z.object({
+  postId: z.string().uuid(),
+})
+
+export async function addBookmark(input: z.infer<typeof BookmarkSchema>) {
+    const supabase: SupabaseClient<Database> = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { error: { message: 'Unauthorized' } }
+
+    const { error } = await supabase.from('bookmarks').insert({
+        post_id: input.postId,
+        user_id: session.user.id
+    })
+
+    if (error) {
+        return { error: { message: 'Failed to add bookmark.' } }
+    }
+    revalidatePath('/feed')
+    revalidatePath(`/confession/${input.postId}`)
+    revalidatePath('/account/bookmarks')
+    return { data: { message: 'Bookmark added.' } }
+}
+
+
+export async function removeBookmark(input: z.infer<typeof BookmarkSchema>) {
+    const supabase: SupabaseClient<Database> = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { error: { message: 'Unauthorized' } }
+    
+    const { error } = await supabase.from('bookmarks').delete()
+        .eq('post_id', input.postId)
+        .eq('user_id', session.user.id)
+
+    if (error) {
+        return { error: { message: 'Failed to remove bookmark.' } }
+    }
+    revalidatePath('/feed')
+    revalidatePath(`/confession/${input.postId}`)
+    revalidatePath('/account/bookmarks')
+    return { data: { message: 'Bookmark removed.' } }
+}

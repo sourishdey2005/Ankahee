@@ -11,6 +11,7 @@ type Post = Tables<'posts'> & {
   reactions: Array<Tables<'reactions'>>
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
   void_answers: Tables<'void_answers'>[]
+  bookmarks: Tables<'bookmarks'>[]
 }
 
 export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Post[], sort?: string }) {
@@ -48,7 +49,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
         { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
             const newPost = payload.new as Tables<'posts'>
-            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [], void_answers: [] }
+            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [], void_answers: [], bookmarks: [] }
             setPosts((prevPosts) => [postWithCounts, ...prevPosts])
         }
       )
@@ -184,12 +185,43 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
       )
       .subscribe()
 
+    const bookmarksChannel = supabase
+      .channel('realtime-bookmarks-feed-granular')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bookmarks' },
+        (payload: any) => {
+          const postId = payload.new?.post_id || payload.old?.post_id;
+          if (!postId) return;
+
+          setPosts(currentPosts =>
+            currentPosts.map(p => {
+              if (p.id !== postId) return p;
+
+              const bookmarkUser = payload.new?.user_id || payload.old?.user_id;
+
+              const filteredBookmarks = (p.bookmarks || []).filter(b => b.user_id !== bookmarkUser);
+
+              let newBookmarks: Tables<'bookmarks'>[];
+              if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                newBookmarks = [...filteredBookmarks, payload.new as Tables<'bookmarks'>];
+              } else { // DELETE
+                newBookmarks = filteredBookmarks;
+              }
+              return { ...p, bookmarks: newBookmarks };
+            })
+          );
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(postsChannel)
       supabase.removeChannel(reactionsChannel)
       supabase.removeChannel(commentsChannel)
       supabase.removeChannel(pollVotesChannel)
       supabase.removeChannel(voidAnswersChannel)
+      supabase.removeChannel(bookmarksChannel)
     }
   }, [supabase])
 

@@ -10,12 +10,15 @@ import { cn } from '@/lib/utils'
 import Poll from './Poll'
 import { User } from '@supabase/supabase-js'
 import VoidQuestion from './VoidQuestion'
+import BookmarkButton from './BookmarkButton'
+import { useMemo } from 'react'
 
 type PostWithDetails = Tables<'posts'> & {
   comments: Array<{ count: number }>
   reactions: Array<Tables<'reactions'>>
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
   void_answers: Tables<'void_answers'>[]
+  bookmarks: Tables<'bookmarks'>[]
 };
 
 export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: User | null }) {
@@ -29,6 +32,11 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
 
   const poll = post.polls?.[0];
   const isVoidQuestion = post.is_void_question;
+
+  const isBookmarked = useMemo(() => {
+    if (!user || !post.bookmarks) return false;
+    return post.bookmarks.some(b => b.user_id === user.id);
+  }, [post.bookmarks, user]);
 
   return (
     <Link href={`/confession/${post.id}`} className="block">
@@ -65,6 +73,7 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
             </div>
           </div>
           <div className="flex items-center space-x-2 text-sm">
+            {user && <BookmarkButton postId={post.id} isBookmarked={isBookmarked} />}
             <Clock className="h-4 w-4" />
             <Countdown expiresAt={post.expires_at} />
           </div>

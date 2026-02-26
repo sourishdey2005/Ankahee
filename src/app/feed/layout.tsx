@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Feather, Archive, MessagesSquare, Mail, BookOpen } from 'lucide-react'
+import { Feather, Archive, MessagesSquare, Mail, BookOpen, Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -79,6 +79,12 @@ export default async function FeedLayout({
                   <DropdownMenuItem className="cursor-pointer">
                     <Archive className="mr-2 h-4 w-4" />
                     <span>My Archive</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/account/bookmarks">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    <span>Bookmarks</span>
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />

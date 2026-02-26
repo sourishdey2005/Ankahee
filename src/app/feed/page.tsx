@@ -19,6 +19,7 @@ type PostWithCounts = Tables<'posts'> & {
   reactions: Tables<'reactions'>[]
   polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
   void_answers: Tables<'void_answers'>[]
+  bookmarks: Tables<'bookmarks'>[]
 }
 
 const processPostsForWordCloud = (posts: PostWithCounts[]) => {
@@ -81,7 +82,8 @@ export default async function FeedPage({
       comments(count),
       reactions(*),
       polls(*, poll_votes(*)),
-      void_answers(*)
+      void_answers(*),
+      bookmarks(*)
     `)
     .gt('expires_at', new Date().toISOString())
 

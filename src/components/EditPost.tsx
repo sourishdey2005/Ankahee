@@ -23,11 +23,17 @@ import Echoes from './Echoes'
 import BurnButton from './BurnButton'
 import Poll from './Poll'
 import VoidQuestion from './VoidQuestion'
+import BookmarkButton from './BookmarkButton'
 
 type Post = Tables<'posts'>
 type PollVote = Tables<'poll_votes'>
 type PollWithVotes = Tables<'polls'> & { poll_votes: PollVote[] }
-type PostWithDetails = Post & { reactions: Tables<'reactions'>[], polls: PollWithVotes[], void_answers: Tables<'void_answers'>[] }
+type PostWithDetails = Post & { 
+  reactions: Tables<'reactions'>[], 
+  polls: PollWithVotes[], 
+  void_answers: Tables<'void_answers'>[], 
+  bookmarks: Tables<'bookmarks'>[] 
+}
 
 
 const formSchema = z.object({
@@ -45,6 +51,7 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
   const moodColor = post.mood ? moodColors[post.mood as keyof typeof moodColors] || 'bg-secondary' : 'bg-secondary';
   const poll = post.polls?.[0];
   const isVoidQuestion = post.is_void_question;
+  const isBookmarked = post.bookmarks?.some(b => b.user_id === user.id) ?? false;
 
   useEffect(() => {
     setPost(initialPost);
@@ -113,6 +120,26 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
             const updatedPostData = payload.new as Tables<'posts'>;
             return { ...currentPost, ...updatedPostData };
         });
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bookmarks',
+        filter: `post_id=eq.${initialPost.id}`
+      }, (payload: any) => {
+        setPost(currentPost => {
+          if (!currentPost) return null as any;
+          const bookmarkUser = payload.new?.user_id || payload.old?.user_id;
+          const filteredBookmarks = (currentPost.bookmarks || []).filter(b => b.user_id !== bookmarkUser);
+
+          let newBookmarks: Tables<'bookmarks'>[];
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            newBookmarks = [...filteredBookmarks, payload.new as Tables<'bookmarks'>];
+          } else { // DELETE
+            newBookmarks = filteredBookmarks;
+          }
+          return { ...currentPost, bookmarks: newBookmarks };
+        })
       })
       .subscribe();
 
@@ -200,17 +227,20 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
                 <Countdown expiresAt={post.expires_at} />
             </div>
         </div>
-        {canEdit && !isEditing && (
-            <div className="flex items-center gap-2">
-                {isEditable(post.created_at) && (
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                    </Button>
-                )}
-                <BurnButton postId={post.id} />
-            </div>
-        )}
+        <div className="flex items-center gap-2">
+            {user && <BookmarkButton postId={post.id} isBookmarked={isBookmarked} />}
+            {canEdit && !isEditing && (
+                <>
+                    {isEditable(post.created_at) && (
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                        </Button>
+                    )}
+                    <BurnButton postId={post.id} />
+                </>
+            )}
+        </div>
       </CardFooter>
     </Card>
   )
