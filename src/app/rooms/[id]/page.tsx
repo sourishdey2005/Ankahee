@@ -44,6 +44,11 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
     .eq('room_id', resolvedParams.id)
     .eq('user_id', session.user.id)
     .maybeSingle()
+    
+  const isDM = room.is_dm;
+  const pageTitle = isDM ? 'Direct Message' : room.name;
+  const breadcrumbText = 'All Chats';
+
 
   return (
     <div className="container mx-auto max-w-6xl py-8">
@@ -51,11 +56,11 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
         <Link href="/rooms">
           <Button variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            All Rooms
+            {breadcrumbText}
           </Button>
         </Link>
         <div className="text-right">
-          <h1 className="text-2xl font-headline font-bold">{room.name}</h1>
+          <h1 className="text-2xl font-headline font-bold">{pageTitle}</h1>
           <p className="text-sm text-muted-foreground flex items-center justify-end gap-2">
             Expires <Countdown expiresAt={room.expires_at} />
           </p>

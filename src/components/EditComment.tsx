@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -8,14 +9,14 @@ import { formatDistanceToNow } from 'date-fns'
 import { Tables } from '@/lib/supabase/types'
 import { User } from '@supabase/supabase-js'
 import { isEditable, generateHslColorFromString, generateAvatarDataUri } from '@/lib/utils'
-import { updateComment } from '@/actions'
+import { updateComment, createOrGetDirectMessageRoom } from '@/actions'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Pencil, Loader2 } from 'lucide-react'
+import { Pencil, Loader2, MessageSquarePlus } from 'lucide-react'
 
 type Comment = Tables<'comments'>
 
@@ -27,6 +28,8 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
+  const router = useRouter()
+  const [isCreatingDm, startDmCreation] = useTransition()
 
   const canEdit = user.id === comment.user_id && isEditable(comment.created_at)
   const commenterColor = generateHslColorFromString(comment.user_id, 50, 60);
@@ -47,6 +50,21 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
       } else {
         setIsEditing(false)
       }
+    })
+  }
+
+  const handleStartDm = () => {
+    startDmCreation(async () => {
+        const result = await createOrGetDirectMessageRoom({ receiverId: comment.user_id })
+        if (result.error) {
+            toast({
+                title: 'Error starting chat',
+                description: result.error.message,
+                variant: 'destructive',
+            })
+        } else {
+            router.push(`/rooms/${result.data.roomId}`)
+        }
     })
   }
   
@@ -105,12 +123,20 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
         </div>
         <p className="text-foreground/90 mt-1">{comment.content}</p>
       </div>
-      {canEdit && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4" />
-            <span className="sr-only">Edit comment</span>
-          </Button>
-      )}
+      <div className="flex items-center">
+        {user.id !== comment.user_id && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleStartDm} disabled={isCreatingDm}>
+                {isCreatingDm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquarePlus className="h-4 w-4" />}
+                <span className="sr-only">Message commenter</span>
+            </Button>
+        )}
+        {canEdit && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setIsEditing(true)}>
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Edit comment</span>
+            </Button>
+        )}
+      </div>
     </div>
   )
 }

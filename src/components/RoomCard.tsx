@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Tables } from '@/lib/supabase/types'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Countdown from './Countdown'
-import { Users, Clock } from 'lucide-react'
+import { Users, Clock, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type RoomWithMembers = Tables<'rooms'> & {
@@ -11,6 +11,30 @@ type RoomWithMembers = Tables<'rooms'> & {
 
 export default function RoomCard({ room }: { room: RoomWithMembers }) {
   const memberCount = room.room_members && Array.isArray(room.room_members) && room.room_members.length > 0 ? room.room_members[0].count : 0;
+
+  if (room.is_dm) {
+    return (
+      <Link href={`/rooms/${room.id}`} className="block">
+        <Card className="hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-sm h-full flex flex-col">
+            <CardHeader>
+                <CardTitle className="truncate flex items-center gap-2">
+                    <MessageSquare />
+                    Direct Message
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+                <p className="text-sm text-muted-foreground">A private conversation. Expires in 1 hour.</p>
+            </CardContent>
+            <CardFooter className="flex justify-end items-center text-muted-foreground text-sm">
+                <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4" />
+                    <Countdown expiresAt={room.expires_at} />
+                </div>
+            </CardFooter>
+        </Card>
+    </Link>
+    )
+  }
 
   return (
     <Link href={`/rooms/${room.id}`} className="block">

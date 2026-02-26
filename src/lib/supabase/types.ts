@@ -320,22 +320,28 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          dm_key: string | null
           expires_at: string
           id: string
+          is_dm: boolean
           name: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          dm_key?: string | null
           expires_at: string
           id?: string
+          is_dm?: boolean
           name: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          dm_key?: string | null
           expires_at?: string
           id?: string
+          is_dm?: boolean
           name?: string
         }
         Relationships: [
@@ -345,7 +351,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       story_segments: {

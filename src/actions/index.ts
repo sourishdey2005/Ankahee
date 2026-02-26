@@ -316,6 +316,71 @@ export async function createRoom(input: z.infer<typeof RoomSchema>) {
   return { data: room }
 }
 
+const DmSchema = z.object({ receiverId: z.string().uuid() })
+
+export async function createOrGetDirectMessageRoom(input: z.infer<typeof DmSchema>) {
+  const supabase: SupabaseClient<Database> = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { error: { message: 'Unauthorized' } }
+
+  const senderId = session.user.id
+  const { receiverId } = input
+
+  if (senderId === receiverId) {
+    return { error: { message: 'Cannot start a conversation with yourself.' } }
+  }
+
+  const dm_key = [senderId, receiverId].sort().join(':')
+
+  let { data: existingRoom } = await supabase
+    .from('rooms')
+    .select('id, expires_at')
+    .eq('dm_key', dm_key)
+    .eq('is_dm', true)
+    .single()
+
+  if (existingRoom && new Date(existingRoom.expires_at) > new Date()) {
+    return { data: { roomId: existingRoom.id } }
+  }
+
+  const expires_at = add(new Date(), { hours: 1 }).toISOString()
+
+  const { data: newRoom, error: createError } = await supabase
+    .from('rooms')
+    .insert({
+      name: `DM between ${senderId} and ${receiverId}`,
+      created_by: senderId,
+      expires_at,
+      is_dm: true,
+      dm_key: dm_key,
+    })
+    .select('id')
+    .single()
+
+  if (createError) {
+    if (createError.code === '23505') { // unique_violation on dm_key
+      const { data: finalRoom } = await supabase.from('rooms').select('id').eq('dm_key', dm_key).single()
+      if (finalRoom) {
+        return { data: { roomId: finalRoom.id } }
+      }
+    }
+    return { error: { message: 'Failed to create direct message room.', details: createError.message } }
+  }
+
+  const { error: memberError } = await supabase.from('room_members').insert([
+    { room_id: newRoom.id, user_id: senderId },
+    { room_id: newRoom.id, user_id: receiverId },
+  ])
+
+  if (memberError) {
+    return { error: { message: 'Failed to add members to the room.' } }
+  }
+
+  revalidatePath('/rooms')
+  return { data: { roomId: newRoom.id } }
+}
+
+
 const RoomIdSchema = z.object({ roomId: z.string().uuid() })
 
 export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {

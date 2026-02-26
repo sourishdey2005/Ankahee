@@ -46,7 +46,7 @@ export default async function FeedLayout({
             <Link href="/rooms">
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
                 <MessagesSquare className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">Rooms</span>
+                <span className="hidden sm:inline ml-2">Chats</span>
               </Button>
             </Link>
             <Link href="/story">

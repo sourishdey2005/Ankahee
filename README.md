@@ -22,6 +22,7 @@ Ankahee is more than just a confession board; it's a suite of tools for anonymou
 -   **🧠 Community Pulse**: The main feed features a dynamic word cloud showing the most-used words across all confessions in the last 24 hours.
 -   **✉️ Unsent Letters**: A dedicated space for longer-form thoughts that never found their recipient. Letters expire after 3 days.
 -   **💬 Real-time Chat Rooms**: Create or join temporary, topic-based chat rooms for live, anonymous conversations.
+-   **✉️ Ephemeral Direct Messaging**: Start a private, 1-on-1 chat with another user directly from a comment they've made. These conversations expire 1 hour after creation.
 -   **✍️ Collaborative Story**: Each day brings a new writing prompt. Contribute one sentence at a time to build a unique story with the community.
 -   **🗄️ Private Archive**: View your own expired confessions in a private archive, accessible only to you.
 -   **🔥 Full Account Deletion**: Permanently delete your account and all associated content with a single click.
@@ -35,7 +36,7 @@ Ankahee is built with a modern, performant, and scalable technology stack.
 -   **Framework**: [Next.js](https://nextjs.org/) (App Router, Server Components)
 -   **Language**: [TypeScript](https://www.typescriptlang.org/)
 -   **Database & Backend**: [Supabase](https://supabase.io/) (Postgres, Auth, Realtime, Storage)
--   **Generative AI**: [Google Gemini](https://deepmind.google/technologies/gemini/) via [Genkit](https://firebase.google.com/docs/genkit)
+-   **Generative AI**: [Google Gemini](https://deepmind.google.com/technologies/gemini/) via [Genkit](https://firebase.google.com/docs/genkit)
 -   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 -   **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
 -   **Animation**: [Framer Motion](https://www.framer.com/motion/)
@@ -237,12 +238,18 @@ CREATE TABLE public.rooms (
     created_by uuid NOT NULL,
     name text NOT NULL,
     expires_at timestamp with time zone NOT NULL,
+    is_dm boolean NOT NULL DEFAULT false,
+    dm_key text,
     CONSTRAINT rooms_pkey PRIMARY KEY (id),
-    CONSTRAINT rooms_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE CASCADE
+    CONSTRAINT rooms_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE CASCADE,
+    CONSTRAINT rooms_dm_key_key UNIQUE (dm_key)
 );
 ALTER TABLE public.rooms ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all to view rooms" ON public.rooms FOR SELECT USING (true);
+CREATE POLICY "Allow users to view rooms they are in or public rooms" ON public.rooms FOR SELECT USING (((is_dm = false) OR (EXISTS ( SELECT 1
+   FROM room_members
+  WHERE ((room_members.room_id = rooms.id) AND (room_members.user_id = auth.uid()))))));
 CREATE POLICY "Allow users to create rooms" ON public.rooms FOR INSERT WITH CHECK (auth.uid() = created_by);
+
 
 CREATE TABLE public.room_members (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -317,3 +324,4 @@ create trigger on_auth_user_created
 ## 📞 Contact
 
 Created by [Sourish Dey](https://github.com/sourishdey2005) as part of a Firebase Studio project.
+
