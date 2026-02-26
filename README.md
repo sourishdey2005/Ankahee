@@ -44,58 +44,6 @@ Ankahee is built with a modern, performant, and scalable technology stack.
 
 ---
 
-## 🛠️ Getting Started
-
-Follow these instructions to get a local copy of Ankahee up and running.
-
-### Prerequisites
-
--   Node.js (v18 or later)
--   npm, pnpm, or yarn
-
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/sourishdey2005/Ankahee.git
-cd Ankahee
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Set Up Environment Variables
-
-You will need to create a `.env` file in the root of the project and add your Supabase project URL and anon key.
-
-```
-NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-```
-
-### 4. Run the Application
-
-You'll need two terminals for the full experience.
-
-In the first terminal, run the Next.js development server:
-
-```bash
-npm run dev
-```
-
-In the second terminal, run the Genkit development server for the AI features:
-
-```bash
-npm run genkit:watch
-```
-
-Open [http://localhost:9002](http://localhost:9002) in your browser to see the application. The Genkit UI will be running on [http://localhost:4000](http://localhost:4000).
-
----
-
 ## 📞 Contact
 
-Created by [Sourish Dey](https://github.com/sourishdey2005).
+Created by [Sourish Dey](https://sourishdeyportfolio.vercel.app/).
