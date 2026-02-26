@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Feather, Archive, MessagesSquare, Mail, BookOpen, Bookmark } from 'lucide-react'
+import { Archive, MessagesSquare, Mail, BookOpen, Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import SignOutButton from '@/components/SignOutButton'
 import DeleteAccountButton from '@/components/DeleteAccountButton'
+import Image from 'next/image'
 
 export default async function FeedLayout({
   children,
@@ -33,7 +34,7 @@ export default async function FeedLayout({
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/feed" className="flex items-center space-x-2">
-            <Feather className="h-6 w-6 text-primary" />
+            <Image src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png" alt="Ankahee Logo" width={32} height={32} className="rounded-full" />
             <span className="font-bold font-headline text-lg">Ankahee</span>
           </Link>
           <div className="flex items-center space-x-2 sm:space-x-4">

@@ -1,9 +1,7 @@
-
 'use client'
 
 import { Button } from '@/components/ui/button'
 import {
-  Feather,
   HeartHandshake,
   Hourglass,
   MessagesSquare,
@@ -83,13 +81,13 @@ export default function Home() {
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
           className="relative z-50 container mx-auto px-6 py-6 flex justify-between items-center"
         >
-        <Link href="/" className="flex items-center space-x-2 group shrink-0 cursor-pointer">
+        <Link href="/" className="flex items-center space-x-3 group shrink-0 cursor-pointer">
           <motion.div
             whileHover={{ scale: 1.1, rotate: -5 }}
             transition={{ type: "spring", stiffness: 300 }}
-            className="p-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-500"
+            className="p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-500"
           >
-            <Feather className="h-6 w-6 text-primary" />
+            <Image src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png" alt="Ankahee Logo" width={32} height={32} className="rounded-lg" />
           </motion.div>
           <span className="font-headline font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">Ankahee</span>
         </Link>
@@ -290,8 +288,8 @@ export default function Home() {
             whileHover={{ scale: 1.05 }}
             className="flex items-center space-x-3 cursor-pointer"
           >
-            <div className="p-2 rounded-xl bg-white/5 border border-white/10">
-              <Feather className="h-6 w-6 text-primary" />
+            <div className="p-1 rounded-xl bg-white/5 border border-white/10">
+              <Image src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png" alt="Ankahee Logo" width={32} height={32} className="rounded-lg" />
             </div>
             <span className="font-headline font-bold text-2xl">Ankahee</span>
           </motion.div>

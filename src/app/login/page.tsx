@@ -9,7 +9,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import LoginForm from './LoginForm'
 import SignupForm from './SignupForm'
-import { Feather } from 'lucide-react'
+import Image from 'next/image'
 
 export default function LoginPage() {
   return (
@@ -18,7 +18,7 @@ export default function LoginPage() {
       
       <div className="relative z-10 flex flex-col items-center animate-in fade-in-0 zoom-in-95 duration-500 w-full">
         <div className="flex items-center justify-center space-x-4 mb-8">
-            <Feather className="w-12 h-12 text-primary" />
+            <Image src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png" alt="Ankahee Logo" width={64} height={64} className="rounded-2xl" />
             <h1 className="text-4xl sm:text-5xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
                 Ankahee
             </h1>
