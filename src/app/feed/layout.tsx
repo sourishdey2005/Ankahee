@@ -36,7 +36,7 @@ export default async function FeedLayout({
             <Feather className="h-6 w-6 text-primary" />
             <span className="font-bold font-headline text-lg">Ankahee</span>
           </Link>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Link href="/letters">
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-full sm:w-auto sm:px-3 sm:rounded-md">
                 <Mail className="h-4 w-4" />

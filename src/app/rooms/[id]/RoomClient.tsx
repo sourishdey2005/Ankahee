@@ -134,7 +134,7 @@ export default function RoomClient({
     }
 
     return (
-        <div className="flex h-[calc(100vh-10rem)]">
+        <div className="flex h-full">
             <div className="flex-1 flex flex-col">
                 <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                     <div className="space-y-6">
@@ -193,7 +193,7 @@ export default function RoomClient({
                     </div>
                 )}
             </div>
-            <aside className="w-64 border-l p-4 flex flex-col space-y-4">
+            <aside className="hidden md:flex w-64 border-l p-4 flex-col space-y-4">
                 <div>
                     <h3 className="text-lg font-semibold mb-2">Members ({members.length})</h3>
                     <ScrollArea className="h-64">

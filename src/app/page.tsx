@@ -128,7 +128,7 @@ export default function Home() {
         </motion.div>
 
         <motion.h1
-          className="text-6xl md:text-8xl font-headline font-extrabold mb-6 tracking-tighter"
+          className="text-5xl sm:text-6xl md:text-8xl font-headline font-extrabold mb-6 tracking-tighter"
           initial={{ opacity: 0, filter: "blur(10px)", y: 30 }}
           animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
@@ -261,7 +261,7 @@ export default function Home() {
             whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             viewport={{ once: true }}
             transition={{ duration: 1.5, ease: "easeOut" }}
-            className="text-5xl md:text-7xl font-headline font-bold mb-16 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40 italic leading-tight"
+            className="text-4xl sm:text-5xl md:text-7xl font-headline font-bold mb-16 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40 italic leading-tight"
           >
             "In permanence, we hide.<br />In transience, we find freedom."
           </motion.h2>
@@ -270,7 +270,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.5, duration: 1, ease: "easeOut" }}
-            className="space-y-10 text-2xl text-muted-foreground font-extralight leading-relaxed"
+            className="space-y-10 text-xl md:text-2xl text-muted-foreground font-extralight leading-relaxed"
           >
             <p className="hover:text-white transition-colors duration-700">
               Ankahee is a response to the digital panopticon. We believe that some truths are too heavy to carry on a permanent profile, but too important to be kept silent forever.

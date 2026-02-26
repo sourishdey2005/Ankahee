@@ -52,22 +52,22 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="container mx-auto max-w-6xl py-8">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
         <Link href="/rooms">
           <Button variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {breadcrumbText}
           </Button>
         </Link>
-        <div className="text-right">
+        <div className="w-full text-left sm:w-auto sm:text-right">
           <h1 className="text-2xl font-headline font-bold">{pageTitle}</h1>
-          <p className="text-sm text-muted-foreground flex items-center justify-end gap-2">
+          <p className="text-sm text-muted-foreground flex items-center justify-start sm:justify-end gap-2">
             Expires <Countdown expiresAt={room.expires_at} />
           </p>
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-hidden h-[calc(100vh-18rem)] sm:h-[calc(100vh-13rem)]">
         <RoomClient
           room={room}
           user={session.user}
