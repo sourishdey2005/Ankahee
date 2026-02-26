@@ -1,4 +1,3 @@
-
 # Ankahee - The Ephemeral Sanctuary
 
 ![Ankahee Banner](https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png)
@@ -53,8 +52,7 @@ Follow these instructions to get a local copy of Ankahee up and running.
 
 -   Node.js (v18 or later)
 -   npm, pnpm, or yarn
--   A Supabase account ([app.supabase.com](https://app.supabase.com))
--   A Google AI API Key ([makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey))
+
 
 ### 1. Clone the Repository
 
@@ -69,28 +67,9 @@ cd Ankahee
 npm install
 ```
 
-### 3. Set Up Supabase
 
-1.  **Create a new Supabase project.**
-2.  Navigate to the **SQL Editor** in your Supabase dashboard.
-3.  Copy the entire contents of the [Database Setup](#-database-setup) script below and run it.
-4.  Go to **Project Settings > API**.
-5.  Find your **Project URL** and **`anon` public API key**.
 
-### 4. Configure Environment Variables
 
-Create a file named `.env` in the root of your project and add the following variables:
-
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-
-# Genkit (Google AI)
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-```
-
-Replace the placeholder values with your actual Supabase and Gemini keys.
 
 ### 5. Run the Application
 
