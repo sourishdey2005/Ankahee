@@ -111,19 +111,25 @@ export default function ConfessionsList({ sort, mood }: { sort?: string, mood?: 
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'posts' },
         (payload) => {
-          const updatedPost = payload.new as Post;
+          const updatedData = payload.new as Tables<'posts'>;
 
-          if (mood && updatedPost.mood !== mood) {
-              setPosts(prevPosts => prevPosts.filter(p => p.id !== updatedPost.id));
+          if (mood && updatedData.mood !== mood) {
+              setPosts(prevPosts => prevPosts.filter(p => p.id !== updatedData.id));
               return;
           }
 
           setPosts((prevPosts) =>
-            prevPosts.map(post =>
-              post.id === payload.new.id
-                ? { ...post, ...(payload.new as Tables<'posts'>) }
-                : post
-            )
+            prevPosts.map(post => {
+              if (post.id === updatedData.id) {
+                // Create a new object, preserving relations and updating only relevant post fields
+                return {
+                  ...post,
+                  content: updatedData.content,
+                  mood: updatedData.mood,
+                };
+              }
+              return post;
+            })
           );
         }
       )

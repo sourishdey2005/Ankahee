@@ -67,6 +67,7 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
     }
   }
 
+  revalidatePath('/feed')
   if (parsed.data.parentId) {
     revalidatePath(`/confession/${parsed.data.parentId}`)
   }
@@ -147,6 +148,9 @@ export async function updatePost(input: z.infer<typeof UpdatePostSchema>) {
     return { error: updateError }
   }
 
+  revalidatePath('/feed')
+  revalidatePath(`/confession/${postId}`)
+
   return { data: { message: 'Post updated successfully.' } }
 }
 
@@ -190,6 +194,8 @@ export async function updateComment(input: z.infer<typeof UpdateCommentSchema>) 
   if (updateError) {
     return { error: updateError }
   }
+  
+  revalidatePath(`/confession/${comment.post_id}`)
 
   return { data: { message: 'Comment updated successfully.' } }
 }
@@ -230,6 +236,7 @@ export async function deletePost(input: z.infer<typeof DeletePostSchema>) {
     return { error: deleteError }
   }
 
+  revalidatePath('/feed');
   return { data: { message: 'Post deleted successfully.' } }
 }
 
@@ -461,6 +468,7 @@ export async function addStorySegment(input: z.infer<typeof StorySegmentSchema>)
     return { error: { message: 'Failed to add to story.' } }
   }
 
+  revalidatePath('/story');
   return { data: { message: 'Segment added.' } }
 }
 
@@ -496,6 +504,7 @@ export async function addVoidAnswer(input: z.infer<typeof VoidAnswerSchema>) {
     return { error: { message: 'Failed to submit answer.' } }
   }
 
+  revalidatePath(`/confession/${parsed.data.postId}`)
   return { data: { message: 'Answer submitted.' } }
 }
 
