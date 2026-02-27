@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
@@ -34,7 +34,7 @@ const PostSkeleton = () => (
     </div>
   );
 
-export default function ConfessionsList({ sort }: { sort?: string }) {
+export default function ConfessionsList({ sort, mood }: { sort?: string, mood?: string }) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
@@ -49,11 +49,20 @@ export default function ConfessionsList({ sort }: { sort?: string }) {
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('posts')
         .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*), bookmarks(*)')
         .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false });
+        .is('parent_post_id', null);
+
+      if (mood) {
+        query = query.eq('mood', mood);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching posts:", error);
@@ -65,7 +74,7 @@ export default function ConfessionsList({ sort }: { sort?: string }) {
     };
 
     fetchPosts();
-  }, [supabase]);
+  }, [supabase, mood]);
 
   const sortedPosts = useMemo(() => {
     const postsCopy = [...posts];
@@ -87,8 +96,11 @@ export default function ConfessionsList({ sort }: { sort?: string }) {
         { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
             const newPost = payload.new as Tables<'posts'>;
+            
+            if (newPost.parent_post_id) return;
+            if (mood && newPost.mood !== mood) return;
+
             setPosts((prevPosts) => {
-              // Prevent duplicates from race condition between fetch and real-time
               if (prevPosts.some(p => p.id === newPost.id)) return prevPosts;
               const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [], void_answers: [], bookmarks: [] };
               return [postWithCounts, ...prevPosts];
@@ -99,6 +111,13 @@ export default function ConfessionsList({ sort }: { sort?: string }) {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'posts' },
         (payload) => {
+          const updatedPost = payload.new as Post;
+
+          if (mood && updatedPost.mood !== mood) {
+              setPosts(prevPosts => prevPosts.filter(p => p.id !== updatedPost.id));
+              return;
+          }
+
           setPosts((prevPosts) =>
             prevPosts.map(post =>
               post.id === payload.new.id
@@ -265,7 +284,7 @@ export default function ConfessionsList({ sort }: { sort?: string }) {
       supabase.removeChannel(voidAnswersChannel)
       supabase.removeChannel(bookmarksChannel)
     }
-  }, [supabase])
+  }, [supabase, mood])
 
   if (loading) {
     return (
@@ -281,7 +300,7 @@ export default function ConfessionsList({ sort }: { sort?: string }) {
     return (
         <div className="text-center py-20">
             <h2 className="text-2xl font-headline mb-2">The Void is Quiet</h2>
-            <p className="text-muted-foreground">Be the first to share a confession.</p>
+            <p className="text-muted-foreground">No confessions found for this filter. Be the first to share one.</p>
         </div>
     )
   }

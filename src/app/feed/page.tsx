@@ -232,6 +232,7 @@ export default async function FeedPage({
 
       <ConfessionsList
         sort={sort}
+        mood={mood}
       />
 
       <Link href="/new">
