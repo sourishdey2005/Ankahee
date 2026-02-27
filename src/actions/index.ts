@@ -67,7 +67,6 @@ export async function createPost(input: z.infer<typeof PostSchema>) {
     }
   }
 
-  revalidatePath('/feed');
   if (parsed.data.parentId) {
     revalidatePath(`/confession/${parsed.data.parentId}`)
   }
@@ -148,8 +147,6 @@ export async function updatePost(input: z.infer<typeof UpdatePostSchema>) {
     return { error: updateError }
   }
 
-  revalidatePath(`/confession/${postId}`)
-  revalidatePath('/feed')
   return { data: { message: 'Post updated successfully.' } }
 }
 
@@ -194,7 +191,6 @@ export async function updateComment(input: z.infer<typeof UpdateCommentSchema>) 
     return { error: updateError }
   }
 
-  revalidatePath(`/confession/${comment.post_id}`)
   return { data: { message: 'Comment updated successfully.' } }
 }
 
@@ -234,9 +230,6 @@ export async function deletePost(input: z.infer<typeof DeletePostSchema>) {
     return { error: deleteError }
   }
 
-  revalidatePath('/feed')
-  revalidatePath(`/confession/${postId}`)
-
   return { data: { message: 'Post deleted successfully.' } }
 }
 
@@ -272,12 +265,6 @@ export async function castVote(input: z.infer<typeof VoteSchema>) {
       return { error: { message: 'You have already voted on this poll.' } }
     }
     return { error: { message: 'Failed to cast vote.' } }
-  }
-
-  const { data: pollData } = await supabase.from('polls').select('post_id').eq('id', pollId).single()
-  if (pollData) {
-    revalidatePath(`/confession/${pollData.post_id}`)
-    revalidatePath('/feed')
   }
 
   return { data: { message: 'Vote cast successfully.' } }
@@ -509,9 +496,6 @@ export async function addVoidAnswer(input: z.infer<typeof VoidAnswerSchema>) {
     return { error: { message: 'Failed to submit answer.' } }
   }
 
-  revalidatePath(`/confession/${parsed.data.postId}`)
-  revalidatePath('/feed')
-
   return { data: { message: 'Answer submitted.' } }
 }
 
@@ -532,8 +516,6 @@ export async function addBookmark(input: z.infer<typeof BookmarkSchema>) {
     if (error) {
         return { error: { message: 'Failed to add bookmark.' } }
     }
-    revalidatePath('/feed')
-    revalidatePath(`/confession/${input.postId}`)
     revalidatePath('/account/bookmarks')
     return { data: { message: 'Bookmark added.' } }
 }
@@ -551,8 +533,6 @@ export async function removeBookmark(input: z.infer<typeof BookmarkSchema>) {
     if (error) {
         return { error: { message: 'Failed to remove bookmark.' } }
     }
-    revalidatePath('/feed')
-    revalidatePath(`/confession/${input.postId}`)
     revalidatePath('/account/bookmarks')
     return { data: { message: 'Bookmark removed.' } }
 }
