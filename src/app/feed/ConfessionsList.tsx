@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
 import { User } from '@supabase/supabase-js'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type Post = Tables<'posts'> & {
   comments: Array<{ count: number }>
@@ -14,8 +15,28 @@ type Post = Tables<'posts'> & {
   bookmarks: Tables<'bookmarks'>[]
 }
 
-export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Post[], sort?: string }) {
-  const [posts, setPosts] = useState<Post[]>(serverPosts)
+const PostSkeleton = () => (
+    <div className="space-y-4 rounded-lg border bg-card/50 p-6 backdrop-blur-sm">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-6 w-24" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+      <div className="flex justify-between items-center pt-2">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-8 w-28" />
+      </div>
+    </div>
+  );
+
+export default function ConfessionsList({ sort }: { sort?: string }) {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
   const supabase = createClient()
 
@@ -25,13 +46,34 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
     })
   }, [supabase.auth])
 
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*), bookmarks(*)')
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching posts:", error);
+        setPosts([]);
+      } else {
+        setPosts((data as any) || []);
+      }
+      setLoading(false);
+    };
+
+    fetchPosts();
+  }, [supabase]);
+
   const sortedPosts = useMemo(() => {
     const postsCopy = [...posts];
     if (sort === 'popular') {
-      return postsCopy.sort((a, b) => b.reactions.length - a.reactions.length);
+      return postsCopy.sort((a, b) => (b.reactions?.length ?? 0) - (a.reactions?.length ?? 0));
     }
     if (sort === 'loved') {
-        const countHearts = (reactions: Tables<'reactions'>[]) => reactions.filter(r => r.reaction === 'Heart').length;
+        const countHearts = (reactions: Tables<'reactions'>[]) => (reactions || []).filter(r => r.reaction === 'Heart').length;
         return postsCopy.sort((a, b) => countHearts(b.reactions) - countHearts(a.reactions));
     }
     return postsCopy;
@@ -44,9 +86,13 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts' },
         (payload) => {
-            const newPost = payload.new as Tables<'posts'>
-            const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [], void_answers: [], bookmarks: [] }
-            setPosts((prevPosts) => [postWithCounts, ...prevPosts])
+            const newPost = payload.new as Tables<'posts'>;
+            setPosts((prevPosts) => {
+              // Prevent duplicates from race condition between fetch and real-time
+              if (prevPosts.some(p => p.id === newPost.id)) return prevPosts;
+              const postWithCounts: Post = { ...newPost, comments: [{count: 0}], reactions: [], polls: [], void_answers: [], bookmarks: [] };
+              return [postWithCounts, ...prevPosts];
+            });
         }
       )
       .on(
@@ -84,7 +130,7 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
               if (p.id !== postId) return p;
 
               const reactionUser = (payload.new?.user_id || payload.old?.user_id);
-              const filteredReactions = p.reactions.filter(r => r.user_id !== reactionUser);
+              const filteredReactions = (p.reactions || []).filter(r => r.user_id !== reactionUser);
 
               let newReactions: Tables<'reactions'>[];
               if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
@@ -139,17 +185,17 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
            if (!pollId) return;
 
             setPosts(currentPosts => {
-                const postToUpdate = currentPosts.find(p => p.polls.some(poll => poll.id === pollId));
+                const postToUpdate = currentPosts.find(p => (p.polls || []).some(poll => poll.id === pollId));
                 if (!postToUpdate) return currentPosts;
 
                 return currentPosts.map(p => {
                     if (p.id !== postToUpdate.id) return p;
 
-                    const updatedPolls = p.polls.map(poll => {
+                    const updatedPolls = (p.polls || []).map(poll => {
                         if (poll.id !== pollId) return poll;
-                        if (poll.poll_votes.some(v => v.id === payload.new.id)) return poll;
+                        if ((poll.poll_votes || []).some(v => v.id === payload.new.id)) return poll;
                         
-                        const newVotes = [...poll.poll_votes, payload.new as Tables<'poll_votes'>];
+                        const newVotes = [...(poll.poll_votes || []), payload.new as Tables<'poll_votes'>];
                         return { ...poll, poll_votes: newVotes };
                     });
                     return { ...p, polls: updatedPolls };
@@ -171,9 +217,9 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
             setPosts(currentPosts => 
               currentPosts.map(p => {
                 if (p.id !== postId) return p;
-                if (p.void_answers.some(a => a.id === payload.new.id)) return p;
+                if ((p.void_answers || []).some(a => a.id === payload.new.id)) return p;
                 
-                const newAnswers = [...p.void_answers, payload.new as Tables<'void_answers'>];
+                const newAnswers = [...(p.void_answers || []), payload.new as Tables<'void_answers'>];
                 return { ...p, void_answers: newAnswers };
               })
             );
@@ -220,6 +266,16 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
       supabase.removeChannel(bookmarksChannel)
     }
   }, [supabase])
+
+  if (loading) {
+    return (
+        <div className="space-y-4">
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+        </div>
+    )
+  }
 
   if (sortedPosts.length === 0) {
     return (

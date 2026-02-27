@@ -74,26 +74,11 @@ export default async function FeedPage({
     )
   }
 
-  // 🔥 MAIN QUERY
+  // 🔥 MAIN QUERY - Now only for word cloud
   let query = supabase
     .from('posts')
-    .select(`
-      *,
-      comments(count),
-      reactions(*),
-      polls(*, poll_votes(*)),
-      void_answers(*),
-      bookmarks(*)
-    `)
+    .select(`content`)
     .gt('expires_at', new Date().toISOString())
-
-  // Mood filter
-  if (mood && (MoodTags as readonly string[]).includes(mood)) {
-    query = query.eq('mood', mood)
-  }
-
-  // Always sort newest first (client will handle other sorts)
-  query = query.order('created_at', { ascending: false })
 
   const { data, error } = await query
 
@@ -101,9 +86,8 @@ export default async function FeedPage({
     console.error('Supabase fetch error:', JSON.stringify(error, null, 2))
   }
 
-  const initialPosts: PostWithCounts[] = (data ?? []) as PostWithCounts[]
-
-  const wordCloudData = processPostsForWordCloud(initialPosts)
+  const postsForWordCloud: PostWithCounts[] = (data ?? []) as PostWithCounts[]
+  const wordCloudData = processPostsForWordCloud(postsForWordCloud)
 
   // Daily Prompt Logic
   const getDayOfYear = (date: Date) => {
@@ -247,7 +231,6 @@ export default async function FeedPage({
       </div>
 
       <ConfessionsList
-        serverPosts={initialPosts}
         sort={sort}
       />
 
