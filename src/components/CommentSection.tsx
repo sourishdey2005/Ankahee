@@ -44,10 +44,6 @@ export default function CommentSection({
   })
 
   useEffect(() => {
-    setComments(initialComments)
-  }, [initialComments])
-
-  useEffect(() => {
     const channel = supabase
       .channel(`comments:${postId}`)
       .on(

@@ -54,10 +54,6 @@ export default function EditPost({ post: initialPost, user }: { post: PostWithDe
   const isBookmarked = post.bookmarks?.some(b => b.user_id === user.id) ?? false;
 
   useEffect(() => {
-    setPost(initialPost);
-  }, [initialPost]);
-
-  useEffect(() => {
     const channel = supabase.channel(`details-granular:${initialPost.id}`)
       .on('postgres_changes', {
         event: '*',

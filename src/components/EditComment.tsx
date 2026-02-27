@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,12 +26,18 @@ const formSchema = z.object({
 
 export default function EditComment({ comment, user }: { comment: Comment, user: User }) {
   const [isEditing, setIsEditing] = useState(false)
+  const [content, setContent] = useState(comment.content)
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
   const router = useRouter()
   const [isCreatingDm, startDmCreation] = useTransition()
 
   const canEdit = user.id === comment.user_id && isEditable(comment.created_at)
+
+  useEffect(() => {
+    setContent(comment.content)
+  }, [comment.content])
+
   const commenterColor = generateHslColorFromString(comment.user_id, 50, 60);
   const avatarUri = generateAvatarDataUri(comment.user_id);
 
@@ -48,6 +54,7 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
       if (result.error) {
         toast({ title: 'Error', description: result.error.message, variant: 'destructive' })
       } else {
+        setContent(values.content)
         setIsEditing(false)
       }
     })
@@ -121,7 +128,7 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
           </span>
         </div>
-        <p className="text-foreground/90 mt-1">{comment.content}</p>
+        <p className="text-foreground/90 mt-1">{content}</p>
       </div>
       <div className="flex items-center">
         {user.id !== comment.user_id && (

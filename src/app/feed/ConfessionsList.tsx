@@ -25,10 +25,6 @@ export default function ConfessionsList({ serverPosts, sort }: { serverPosts: Po
     })
   }, [supabase.auth])
 
-  useEffect(() => {
-    setPosts(serverPosts)
-  }, [serverPosts])
-
   const sortedPosts = useMemo(() => {
     const postsCopy = [...posts];
     if (sort === 'popular') {
