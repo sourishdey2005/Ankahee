@@ -474,7 +474,6 @@ export async function addStorySegment(input: z.infer<typeof StorySegmentSchema>)
     return { error: { message: 'Failed to add to story.' } }
   }
 
-  revalidatePath('/story')
   return { data: { message: 'Segment added.' } }
 }
 
