@@ -1,3 +1,4 @@
+'use client'
 import Link from 'next/link'
 import { Tables } from '@/lib/supabase/types'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'

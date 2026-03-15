@@ -10,7 +10,6 @@ export const createClient = async () => {
 
   if (!supabaseUrl || !supabaseKey) {
     console.warn('Supabase environment variables are missing')
-    return null as any // Return something that won't crash the caller immediately but logs the issue
   }
 
   return createServerClient<Database>(

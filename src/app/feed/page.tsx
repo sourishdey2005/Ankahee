@@ -51,208 +51,222 @@ export default async function FeedPage({
 }: {
   searchParams: Promise<{ mood?: string; sort?: string }>
 }) {
-  const resolvedParams = await searchParams
-  const mood = resolvedParams?.mood
-  const sort = resolvedParams?.sort
-
-  const supabase = await createClient()
-
-  if (!supabase) {
-    return (
-      <div className="container mx-auto p-4 text-center">
-        <p>Supabase configuration missing.</p>
-      </div>
-    )
-  }
-
-  let session = null;
   try {
-    const { data } = await supabase.auth.getSession()
-    session = data.session
-  } catch (e) {
-    console.error("Session error:", e)
-  }
+    const resolvedParams = await searchParams
+    const mood = resolvedParams?.mood
+    const sort = resolvedParams?.sort
 
-  if (!session) {
-    return (
-      <div className="container mx-auto p-4 text-center">
-        <p>Authenticating...</p>
-      </div>
-    )
-  }
+    const supabase = await createClient()
 
-  // 🔥 MAIN QUERY - Now only for word cloud
-  let query = supabase
-    .from('posts')
-    .select(`content`)
-    .gt('expires_at', new Date().toISOString())
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error('Supabase fetch error:', error)
-  }
-
-  const postsForWordCloud: PostWithCounts[] = (data ?? []) as PostWithCounts[]
-  const wordCloudData = processPostsForWordCloud(postsForWordCloud)
-
-  // Daily Prompt Logic
-  const getDayOfYear = (date: Date) => {
-    const start = new Date(date.getFullYear(), 0, 0)
-    const diff =
-      date.getTime() -
-      start.getTime() +
-      (start.getTimezoneOffset() - date.getTimezoneOffset()) *
-      60 *
-      1000
-    return Math.floor(diff / (1000 * 60 * 60 * 24))
-  }
-
-  const dayOfYear = getDayOfYear(new Date())
-  const dailyPrompt =
-    reflectionPrompts[dayOfYear % reflectionPrompts.length]
-
-  return (
-    <div className="container mx-auto max-w-2xl py-8">
-      <div className="mb-8 space-y-4">
-        <h1 className="text-3xl font-headline font-bold">
-          The Void
-        </h1>
-
-        {wordCloudData.length > 0 && (
-          <div className="pt-4">
-            <CommunityWordCloud data={wordCloudData} />
-          </div>
-        )}
-
-        <Link
-          href={`/new?prompt=${encodeURIComponent(
-            dailyPrompt
-          )}`}
-          className="block"
-        >
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-4 flex items-start gap-4">
-              <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-foreground/90">
-                  Daily Prompt
-                </p>
-                <p className="text-muted-foreground">
-                  {dailyPrompt}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* SORT */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground mr-2">
-            Sort by:
-          </span>
-
-          <Link href={{ pathname: '/feed', query: { mood } }}>
-            <Badge variant={!sort ? 'default' : 'secondary'}>
-              Newest
-            </Badge>
-          </Link>
-
-          <Link
-            href={{
-              pathname: '/feed',
-              query: { mood, sort: 'popular' },
-            }}
-          >
-            <Badge
-              variant={
-                sort === 'popular'
-                  ? 'default'
-                  : 'secondary'
-              }
-            >
-              Popular
-            </Badge>
-          </Link>
-
-          <Link
-            href={{
-              pathname: '/feed',
-              query: { mood, sort: 'loved' },
-            }}
-          >
-            <Badge
-              variant={
-                sort === 'loved'
-                  ? 'default'
-                  : 'secondary'
-              }
-              className="inline-flex items-center gap-1"
-            >
-              <Heart className="h-3 w-3" />
-              Most Loved
-            </Badge>
-          </Link>
+    if (!supabase) {
+      return (
+        <div className="container mx-auto p-4 text-center">
+          <p>Supabase configuration missing.</p>
         </div>
+      )
+    }
 
-        {/* MOOD FILTER */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground mr-2">
-            Filter by mood:
-          </span>
+    let session = null;
+    try {
+      const { data } = await supabase.auth.getSession()
+      session = data.session
+    } catch (e) {
+      console.error("Session error:", e)
+    }
+
+    if (!session) {
+      return (
+        <div className="container mx-auto p-4 text-center">
+          <p>Authenticating...</p>
+        </div>
+      )
+    }
+
+    // 🔥 MAIN QUERY - Now only for word cloud
+    let query = supabase
+      .from('posts')
+      .select(`content`)
+      .gt('expires_at', new Date().toISOString())
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Supabase fetch error:', error)
+    }
+
+    const postsForWordCloud: PostWithCounts[] = (data ?? []) as PostWithCounts[]
+    const wordCloudData = processPostsForWordCloud(postsForWordCloud)
+
+    // Daily Prompt Logic
+    const getDayOfYear = (date: Date) => {
+      const start = new Date(date.getFullYear(), 0, 0)
+      const diff =
+        date.getTime() -
+        start.getTime() +
+        (start.getTimezoneOffset() - date.getTimezoneOffset()) *
+        60 *
+        1000
+      return Math.floor(diff / (1000 * 60 * 60 * 24))
+    }
+
+    const dayOfYear = getDayOfYear(new Date())
+    const dailyPrompt =
+      reflectionPrompts[dayOfYear % reflectionPrompts.length]
+
+    return (
+      <div className="container mx-auto max-w-2xl py-8">
+        <div className="mb-8 space-y-4">
+          <h1 className="text-3xl font-headline font-bold">
+            The Void
+          </h1>
+
+          {wordCloudData.length > 0 && (
+            <div className="pt-4">
+              <CommunityWordCloud data={wordCloudData} />
+            </div>
+          )}
 
           <Link
-            href={{
-              pathname: '/feed',
-              query: { sort },
-            }}
+            href={`/new?prompt=${encodeURIComponent(
+              dailyPrompt
+            )}`}
+            className="block"
           >
-            <Badge
-              variant={!mood ? 'default' : 'secondary'}
-            >
-              All
-            </Badge>
+            <Card className="hover:border-primary/50 transition-colors cursor-pointer bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4 flex items-start gap-4">
+                <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-foreground/90">
+                    Daily Prompt
+                  </p>
+                  <p className="text-muted-foreground">
+                    {dailyPrompt}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </Link>
 
-          {MoodTags.map((tag) => (
+          {/* SORT */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground mr-2">
+              Sort by:
+            </span>
+
+            <Link href={{ pathname: '/feed', query: { mood } }}>
+              <Badge variant={!sort ? 'default' : 'secondary'}>
+                Newest
+              </Badge>
+            </Link>
+
             <Link
               href={{
                 pathname: '/feed',
-                query: { sort, mood: tag },
+                query: { mood, sort: 'popular' },
               }}
-              key={tag}
             >
               <Badge
-                variant="outline"
-                className={cn(
-                  mood === tag
-                    ? `${moodColors[tag as MoodTag]} border-primary/60 ring-1 ring-primary/60`
-                    : 'hover:bg-accent/50'
-                )}
+                variant={
+                  sort === 'popular'
+                    ? 'default'
+                    : 'secondary'
+                }
               >
-                {tag}
+                Popular
               </Badge>
             </Link>
-          ))}
+
+            <Link
+              href={{
+                pathname: '/feed',
+                query: { mood, sort: 'loved' },
+              }}
+            >
+              <Badge
+                variant={
+                  sort === 'loved'
+                    ? 'default'
+                    : 'secondary'
+                }
+                className="inline-flex items-center gap-1"
+              >
+                <Heart className="h-3 w-3" />
+                Most Loved
+              </Badge>
+            </Link>
+          </div>
+
+          {/* MOOD FILTER */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground mr-2">
+              Filter by mood:
+            </span>
+
+            <Link
+              href={{
+                pathname: '/feed',
+                query: { sort },
+              }}
+            >
+              <Badge
+                variant={!mood ? 'default' : 'secondary'}
+              >
+                All
+              </Badge>
+            </Link>
+
+            {MoodTags.map((tag) => (
+              <Link
+                href={{
+                  pathname: '/feed',
+                  query: { sort, mood: tag },
+                }}
+                key={tag}
+              >
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    mood === tag
+                      ? `${moodColors[tag as MoodTag]} border-primary/60 ring-1 ring-primary/60`
+                      : 'hover:bg-accent/50'
+                  )}
+                >
+                  {tag}
+                </Badge>
+              </Link>
+            ))}
+          </div>
         </div>
+
+        <ConfessionsList
+          sort={sort}
+          mood={mood}
+        />
+
+        <Link href="/new">
+          <Button
+            aria-label="New Confession"
+            className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-gradient-to-r from-primary to-purple-600"
+          >
+            <Plus className="h-8 w-8" />
+            <span className="sr-only">
+              New Confession
+            </span>
+          </Button>
+        </Link>
       </div>
-
-      <ConfessionsList
-        sort={sort}
-        mood={mood}
-      />
-
-      <Link href="/new">
-        <Button
-          aria-label="New Confession"
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-gradient-to-r from-primary to-purple-600"
-        >
-          <Plus className="h-8 w-8" />
-          <span className="sr-only">
-            New Confession
-          </span>
-        </Button>
-      </Link>
-    </div>
-  )
+    )
+  } catch (error: any) {
+    console.error("FeedPage Error:", error);
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">The Void is currently unreachable</h1>
+        <p className="text-muted-foreground">Error Details: {error?.message || "Unknown error"}</p>
+        <Link href="/">
+          <Button variant="outline" className="mt-4">Back to Home</Button>
+        </Link>
+      </div>
+    )
+  }
+}
 }
