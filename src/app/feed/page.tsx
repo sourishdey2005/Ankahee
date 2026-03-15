@@ -269,4 +269,3 @@ export default async function FeedPage({
     )
   }
 }
-}
