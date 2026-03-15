@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { ConvexHttpClient } from "convex/browser"
+import { api } from '../../../convex/_generated/api'
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -34,6 +38,15 @@ export async function login(formData: z.infer<typeof loginSchema>) {
     return { error: error.message }
   }
 
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.user) {
+    await convex.mutation(api.users.syncUser, {
+      tokenIdentifier: session.user.id,
+      name: session.user.email?.split('@')[0] || 'Anonymous',
+      email: session.user.email,
+    })
+  }
+
   revalidatePath('/', 'layout')
   redirect('/feed')
 }
@@ -57,9 +70,15 @@ export async function signup(formData: z.infer<typeof signupSchema>) {
     return { error: error.message }
   }
 
-  // On successful signup, Supabase will also sign the user in if email confirmation
-  // is disabled in your project's auth settings. We then immediately redirect
-  // them to the feed, skipping the email confirmation message.
+  const { data: { session: newSession } } = await supabase.auth.getSession()
+  if (newSession?.user) {
+    await convex.mutation(api.users.syncUser, {
+      tokenIdentifier: newSession.user.id,
+      name: newSession.user.email?.split('@')[0] || 'Anonymous',
+      email: newSession.user.email,
+    })
+  }
+
   revalidatePath('/', 'layout')
   redirect('/feed')
 }
