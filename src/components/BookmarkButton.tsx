@@ -1,29 +1,42 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addBookmark, removeBookmark } from '@/actions'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Bookmark } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { useAuth } from '@clerk/nextjs'
 
-export default function BookmarkButton({ postId, isBookmarked: initialIsBookmarked }: { postId: string, isBookmarked: boolean }) {
+export default function BookmarkButton({ postId, isBookmarked: initialIsBookmarked }: { postId: any, isBookmarked: boolean }) {
   const { toast } = useToast()
+  const { userId } = useAuth()
   const [isPending, startTransition] = useTransition()
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
+  const toggleBookmark = useMutation(api.bookmarks.toggleBookmark)
 
   const handleToggleBookmark = () => {
+    if (!userId) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to bookmark.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     startTransition(async () => {
-      const action = isBookmarked ? removeBookmark : addBookmark
       const newBookmarkState = !isBookmarked
       setIsBookmarked(newBookmarkState) // Optimistic update
 
-      const result = await action({ postId })
-      if (result?.error) {
+      try {
+        await toggleBookmark({ postId, userId })
+      } catch (err: any) {
         setIsBookmarked(!newBookmarkState) // Revert on error
         toast({
-          title: `Error ${newBookmarkState ? 'saving' : 'removing'} bookmark`,
-          description: result.error.message,
+          title: `Error updating bookmark`,
+          description: err.message || 'Could not update bookmark.',
           variant: 'destructive',
         })
       }

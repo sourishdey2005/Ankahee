@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
-import { Tables } from '@/lib/supabase/types'
 import { Button } from '@/components/ui/button'
 import { Lightbulb, Plus, Heart } from 'lucide-react'
 import Link from 'next/link'
@@ -11,18 +9,15 @@ import { reflectionPrompts } from '@/lib/prompts'
 import { Card, CardContent } from '@/components/ui/card'
 import { stopwords } from '@/lib/stopwords'
 import CommunityWordCloud from '@/components/CommunityWordCloud'
+import { ConvexHttpClient } from "convex/browser"
+import { api } from '../../../convex/_generated/api'
 
 export const revalidate = 0
 
-type PostWithCounts = Tables<'posts'> & {
-  comments: { count: number }[]
-  reactions: Tables<'reactions'>[]
-  polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
-  void_answers: Tables<'void_answers'>[]
-  bookmarks: Tables<'bookmarks'>[]
-}
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null
 
-const processPostsForWordCloud = (posts: PostWithCounts[]) => {
+const processPostsForWordCloud = (posts: any[]) => {
   if (!posts?.length) return []
 
   const allText = posts.map(p => p.content || '').join(' ')
@@ -56,45 +51,12 @@ export default async function FeedPage({
     const mood = resolvedParams?.mood
     const sort = resolvedParams?.sort
 
-    const supabase = await createClient()
-
-    if (!supabase) {
-      return (
-        <div className="container mx-auto p-4 text-center">
-          <p>Supabase configuration missing.</p>
-        </div>
-      )
+    if (!convexUrl || !convex) {
+       throw new Error("NEXT_PUBLIC_CONVEX_URL is missing or invalid");
     }
 
-    let session = null;
-    try {
-      const { data } = await supabase.auth.getSession()
-      session = data.session
-    } catch (e) {
-      console.error("Session error:", e)
-    }
-
-    if (!session) {
-      return (
-        <div className="container mx-auto p-4 text-center">
-          <p>Authenticating...</p>
-        </div>
-      )
-    }
-
-    // 🔥 MAIN QUERY - Now only for word cloud
-    let query = supabase
-      .from('posts')
-      .select(`content`)
-      .gt('expires_at', new Date().toISOString())
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Supabase fetch error:', error)
-    }
-
-    const postsForWordCloud: PostWithCounts[] = (data ?? []) as PostWithCounts[]
+    // Fetch posts for word cloud from Convex
+    const postsForWordCloud = await convex.query(api.posts.getPosts, { mood })
     const wordCloudData = processPostsForWordCloud(postsForWordCloud)
 
     // Daily Prompt Logic
@@ -116,9 +78,16 @@ export default async function FeedPage({
     return (
       <div className="container mx-auto max-w-2xl py-8">
         <div className="mb-8 space-y-4">
-          <h1 className="text-3xl font-headline font-bold">
-            The Void
-          </h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-headline font-bold">The Void</h1>
+            <div className="flex gap-2">
+               <Link href="/bookmarks">
+                 <Button variant="ghost" size="icon" className="rounded-full">
+                   <Heart className="h-5 w-5" />
+                 </Button>
+               </Link>
+            </div>
+          </div>
 
           {wordCloudData.length > 0 && (
             <div className="pt-4">

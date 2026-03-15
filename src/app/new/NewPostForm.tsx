@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { createPost } from '@/actions'
 import { suggestMoodTagForConfession } from '@/ai/flows/suggest-mood-tag-flow'
 import { MoodTags } from '@/lib/mood-tags'
 
@@ -117,6 +116,8 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
           storageId: storageId as any,
           parentId: parentId,
           isVoidQuestion: creationMode === 'void',
+          pollOptionOne: values.pollOptionOne,
+          pollOptionTwo: values.pollOptionTwo,
         });
 
         toast({

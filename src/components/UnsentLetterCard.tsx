@@ -4,7 +4,7 @@ import { Clock } from 'lucide-react'
 import Image from 'next/image'
 
 export default function UnsentLetterCard({ letter }: { letter: any }) {
-  const expiresAt = letter.expires_at || (letter._creationTime + (3 * 24 * 60 * 60 * 1000));
+  const expiresAt = letter.expiresAt || (letter._creationTime + (3 * 24 * 60 * 60 * 1000));
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm overflow-hidden border-primary/10">

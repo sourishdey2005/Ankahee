@@ -1,10 +1,7 @@
 'use client'
 
-import { useState, useEffect, useTransition, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Tables } from '@/lib/supabase/types'
+import { useTransition, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { REACTIONS, ReactionTypes, type ReactionType } from '@/lib/reactions'
 import {
@@ -14,38 +11,23 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from '@/lib/utils'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { useAuth } from '@clerk/nextjs'
 
-type PostWithReactions = Tables<'posts'> & {
-  reactions: Tables<'reactions'>[]
-}
-
-export default function Echoes({ post }: { post: PostWithReactions }) {
-  const [reactions, setReactions] = useState(post.reactions || [])
-  const [userReaction, setUserReaction] = useState<ReactionType | null>(null)
-  const [userId, setUserId] = useState<string | undefined>()
+export default function Echoes({ post }: { post: any }) {
+  const { userId } = useAuth()
   const [isPending, startTransition] = useTransition()
-  const supabase = createClient()
   const { toast } = useToast()
+  const toggleReaction = useMutation(api.reactions.toggleReaction)
 
-  useEffect(() => {
-    setReactions(post.reactions || [])
-  }, [post.reactions])
+  const reactions = post.reactions || []
 
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        const currentUserId = session?.user?.id
-        setUserId(currentUserId)
-        if (currentUserId) {
-          const foundUserReaction = reactions.find(r => r.user_id === currentUserId)
-          setUserReaction(foundUserReaction?.reaction as ReactionType || null)
-        } else {
-          setUserReaction(null)
-        }
-      }
-    )
-    return () => authListener.subscription.unsubscribe()
-  }, [reactions, supabase.auth])
+  const userReaction = useMemo(() => {
+    if (!userId) return null
+    const found = reactions.find((r: any) => r.authorId === userId)
+    return found?.reaction as ReactionType || null
+  }, [reactions, userId])
 
   const reactionCounts = useMemo(() => {
     const counts: { [key in ReactionType]?: number } = {}
@@ -71,35 +53,18 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
     }
 
     startTransition(async () => {
-      // If user is removing their reaction
-      if (userReaction === reaction) {
-        setUserReaction(null)
-        setReactions(prev => prev.filter(r => !(r.user_id === userId && r.reaction === reaction)))
-
-        const { error } = await supabase.from('reactions').delete().match({ post_id: post.id, user_id: userId, reaction: reaction })
-        if (error) {
-          toast({ title: 'Error', description: error.message || 'Could not remove reaction.', variant: 'destructive' })
-          // Revert optimistic update
-          setUserReaction(reaction)
-          setReactions(post.reactions)
-        }
-      } else { // If user is adding a new reaction or changing it
-        const oldReaction = userReaction
-        setUserReaction(reaction)
-
-        // Optimistic update
-        const newReactions = reactions.filter(r => r.user_id !== userId)
-        newReactions.push({ id: '', created_at: new Date().toISOString(), post_id: post.id, user_id: userId, reaction })
-        setReactions(newReactions)
-
-        const { error } = await supabase.from('reactions').upsert({ post_id: post.id, user_id: userId, reaction: reaction }, { onConflict: 'post_id, user_id' })
-
-        if (error) {
-          toast({ title: 'Error', description: error.message || 'Could not add reaction.', variant: 'destructive' })
-          // Revert optimistic update
-          setUserReaction(oldReaction)
-          setReactions(post.reactions)
-        }
+      try {
+        await toggleReaction({
+          postId: post._id,
+          authorId: userId,
+          reaction: reaction
+        })
+      } catch (err: any) {
+        toast({
+          title: 'Error',
+          description: err.message || 'Could not update reaction.',
+          variant: 'destructive'
+        })
       }
     })
   }
@@ -122,7 +87,7 @@ export default function Echoes({ post }: { post: PostWithReactions }) {
                   className={cn(
                     "flex items-center space-x-1.5 text-muted-foreground px-2 transition-all",
                     isSelected && `${reactionInfo.color} bg-accent`,
-                    isPending && 'cursor-not-allowed'
+                    isPending && 'opacity-50 cursor-not-allowed'
                   )}
                   onClick={() => handleReact(reactionType)}
                   disabled={isPending}

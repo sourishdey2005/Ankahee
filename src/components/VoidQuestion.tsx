@@ -4,17 +4,14 @@ import { useState, useTransition, useMemo, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { addVoidAnswer } from '@/actions'
 import { useToast } from '@/hooks/use-toast'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Loader2 } from 'lucide-react'
-import { Tables } from '@/lib/supabase/types'
-import { User } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/client'
-
-type VoidAnswer = Tables<'void_answers'>
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { useAuth } from '@clerk/nextjs'
 
 const answerSchema = z.object({
   word: z.string().trim().min(1, "Answer can't be empty.").max(30, "Word is too long."),
@@ -23,33 +20,16 @@ const answerSchema = z.object({
     path: ["word"],
 });
 
-export default function VoidQuestion({ postId, initialAnswers, user }: { postId: string, initialAnswers: VoidAnswer[], user: User }) {
-    const [answers, setAnswers] = useState<VoidAnswer[]>(initialAnswers);
+export default function VoidQuestion({ postId, initialAnswers, user }: { postId: any, initialAnswers: any[], user: any }) {
+    const { userId } = useAuth()
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
-    const supabase = createClient();
     const [isMounted, setIsMounted] = useState(false);
+    const addVoidAnswer = useMutation(api.void_answers.addVoidAnswer)
 
     useEffect(() => {
       setIsMounted(true);
     }, []);
-
-    useEffect(() => {
-        const channel = supabase.channel(`void-answers:${postId}`)
-          .on(
-            'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'void_answers', filter: `post_id=eq.${postId}` },
-            (payload) => {
-              setAnswers((prev) => [...prev, payload.new as VoidAnswer])
-            }
-          )
-          .subscribe()
-    
-        return () => {
-          supabase.removeChannel(channel)
-        }
-      }, [supabase, postId]);
-
 
     const form = useForm<z.infer<typeof answerSchema>>({
         resolver: zodResolver(answerSchema),
@@ -57,12 +37,13 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
     })
 
     const userHasAnswered = useMemo(() => {
-        return answers.some(a => a.user_id === user.id)
-    }, [answers, user.id]);
+        if (!userId) return false
+        return (initialAnswers || []).some(a => a.userId === userId)
+    }, [initialAnswers, userId]);
 
     const wordCloudData = useMemo(() => {
         const frequencies: { [key: string]: number } = {};
-        for (const answer of answers) {
+        for (const answer of (initialAnswers || [])) {
             frequencies[answer.word] = (frequencies[answer.word] || 0) + 1;
         }
         const data = Object.entries(frequencies)
@@ -78,21 +59,34 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
           ...w,
           size: 14 + (w.value / max) * 34,
         }));
-    }, [answers]);
+    }, [initialAnswers]);
 
     const colors = useMemo(() => ['text-primary', 'text-purple-400', 'text-yellow-400', 'text-red-400', 'text-blue-400', 'text-green-400'], []);
 
     const onSubmit = (values: z.infer<typeof answerSchema>) => {
+        if (!userId) {
+            toast({
+                title: "Authentication required",
+                description: "You must be logged in to answer.",
+                variant: "destructive"
+            })
+            return
+        }
+
         startTransition(async () => {
-            const result = await addVoidAnswer({ postId, word: values.word });
-            if (result.error) {
+            try {
+                await addVoidAnswer({ 
+                    postId, 
+                    userId,
+                    word: values.word 
+                });
+                form.reset();
+            } catch (err: any) {
                 toast({
                     title: "Error",
-                    description: result.error.message,
+                    description: err.message || "Could not submit answer.",
                     variant: "destructive"
                 });
-            } else {
-                form.reset();
             }
         });
     }
@@ -120,7 +114,7 @@ export default function VoidQuestion({ postId, initialAnswers, user }: { postId:
                 </div>
             )}
             
-            {!userHasAnswered && (
+            {!userHasAnswered && userId && (
                  <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-2">
                         <FormField

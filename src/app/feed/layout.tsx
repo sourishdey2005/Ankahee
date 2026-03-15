@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Archive, MessagesSquare, Mail, BookOpen, Bookmark } from 'lucide-react'
@@ -22,11 +22,9 @@ export default async function FeedLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  const { userId } = await auth()
 
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
+  if (!userId) {
     redirect('/login')
   }
 
@@ -92,8 +90,6 @@ export default async function FeedLayout({
                 </Link>
                 <DropdownMenuSeparator />
                 <SignOutButton />
-                <DropdownMenuSeparator />
-                <DeleteAccountButton />
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

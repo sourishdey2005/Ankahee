@@ -1,46 +1,60 @@
 'use client'
 
 import { useTransition, useMemo } from 'react'
-import type { Tables } from '@/lib/supabase/types'
-import type { User } from '@supabase/supabase-js'
-import { castVote } from '@/actions'
 import { Button } from './ui/button'
 import { Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { useAuth } from '@clerk/nextjs'
 
-type PollWithVotes = Tables<'polls'> & {
-    poll_votes: Tables<'poll_votes'>[]
-}
-
-export default function Poll({ poll, user }: { poll: PollWithVotes, user: User }) {
+export default function Poll({ poll, user }: { poll: any, user: any }) {
+    const { userId } = useAuth()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
+    const voteInPoll = useMutation(api.polls.voteInPoll)
+
+    const pollVotes = poll.pollVotes || []
 
     const userVote = useMemo(() => {
-        return poll.poll_votes.find(v => v.user_id === user.id)
-    }, [poll.poll_votes, user.id])
+        if (!userId) return null
+        return pollVotes.find((v: any) => v.userId === userId)
+    }, [pollVotes, userId])
 
-    const totalVotes = poll.poll_votes.length
-    const optionOneVotes = poll.poll_votes.filter(v => v.selected_option === 1).length
+    const totalVotes = pollVotes.length
+    const optionOneVotes = pollVotes.filter((v: any) => v.selectedOption === 1).length
     const optionTwoVotes = totalVotes - optionOneVotes
 
     const optionOnePercentage = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0
     const optionTwoPercentage = totalVotes > 0 ? 100 - optionOnePercentage : 0
 
     const handleVote = (option: 1 | 2) => {
+        if (!userId) {
+            toast({
+                title: "Authentication required",
+                description: "You must be logged in to vote.",
+                variant: "destructive"
+            })
+            return
+        }
+
         startTransition(async () => {
-            const result = await castVote({ pollId: poll.id, option })
-            if (result.error) {
-                toast({
-                    title: "Error",
-                    description: result.error.message,
-                    variant: "destructive"
+            try {
+                await voteInPoll({ 
+                    pollId: poll._id, 
+                    userId,
+                    optionIndex: option - 1
                 })
-            } else {
-                 toast({
+                toast({
                     title: "Success",
                     description: "Your vote has been cast."
+                })
+            } catch (err: any) {
+                toast({
+                    title: "Error",
+                    description: err.message || "Could not cast vote.",
+                    variant: "destructive"
                 })
             }
         })
@@ -56,14 +70,14 @@ export default function Poll({ poll, user }: { poll: PollWithVotes, user: User }
                     <div className="relative h-8 w-full rounded-md overflow-hidden bg-secondary">
                         <div className="absolute h-full bg-primary/50 transition-all" style={{ width: `${optionOnePercentage}%` }}></div>
                         <div className="absolute inset-0 flex justify-between items-center px-3 text-sm">
-                            <span className={cn("font-medium", userVote?.selected_option === 1 && "text-primary-foreground font-bold")}>{poll.option_one_text}</span>
+                            <span className={cn("font-medium", userVote?.selectedOption === 1 && "text-primary-foreground font-bold")}>{poll.optionOneText}</span>
                             <span className="font-bold">{optionOnePercentage}%</span>
                         </div>
                     </div>
                      <div className="relative h-8 w-full rounded-md overflow-hidden bg-secondary">
                         <div className="absolute h-full bg-accent transition-all" style={{ width: `${optionTwoPercentage}%` }}></div>
                          <div className="absolute inset-0 flex justify-between items-center px-3 text-sm">
-                            <span className={cn("font-medium", userVote?.selected_option === 2 && "text-accent-foreground font-bold")}>{poll.option_two_text}</span>
+                            <span className={cn("font-medium", userVote?.selectedOption === 2 && "text-accent-foreground font-bold")}>{poll.optionTwoText}</span>
                             <span className="font-bold">{optionTwoPercentage}%</span>
                         </div>
                     </div>
@@ -74,11 +88,11 @@ export default function Poll({ poll, user }: { poll: PollWithVotes, user: User }
                 <div className="grid grid-cols-2 gap-2">
                     <Button variant="outline" onClick={() => handleVote(1)} disabled={isPending}>
                         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {poll.option_one_text}
+                        {poll.optionOneText}
                     </Button>
                     <Button variant="outline" onClick={() => handleVote(2)} disabled={isPending}>
                         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {poll.option_two_text}
+                        {poll.optionTwoText}
                     </Button>
                 </div>
             )}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { createLetter } from '@/actions'
+import { useAuth } from '@clerk/nextjs'
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -30,6 +30,7 @@ import { api } from '../../../../convex/_generated/api'
 import { useState } from 'react'
 
 export default function NewLetterForm() {
+  const { userId } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -45,10 +46,12 @@ export default function NewLetterForm() {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    if (!userId) return;
     startTransition(async () => {
       try {
         await createConvexLetter({
           content: values.content,
+          authorId: userId,
           storageId: storageId as any,
         });
         

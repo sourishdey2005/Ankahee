@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import NewLetterForm from './NewLetterForm'
 import { Button } from '@/components/ui/button'
@@ -6,13 +6,9 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function NewLetterPage() {
-  const supabase = await createClient()
+  const { userId } = await auth()
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
+  if (!userId) {
     redirect('/feed')
   }
 

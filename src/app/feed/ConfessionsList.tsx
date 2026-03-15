@@ -1,14 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Tables } from '@/lib/supabase/types'
+import { useMemo } from 'react'
 import ConfessionCard from '@/components/ConfessionCard'
-import { User } from '@supabase/supabase-js'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { Loader2 } from 'lucide-react'
+import { useUser } from '@clerk/nextjs'
 
 const PostSkeleton = () => (
     <div className="space-y-4 rounded-lg border bg-card/50 p-6 backdrop-blur-sm">
@@ -29,48 +26,32 @@ const PostSkeleton = () => (
     </div>
   );
 
-export default function ConfessionsList({ serverPosts = [], sort, mood }: { serverPosts?: any[], sort?: string, mood?: string }) {
-  const [user, setUser] = useState<User | null>(null)
-  const supabase = createClient()
+export default function ConfessionsList({ sort, mood }: { sort?: string, mood?: string }) {
+  const { user } = useUser()
   
   const convexPosts = useQuery(api.posts.getPosts, { 
     parentId: undefined,
     mood: mood
   })
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-  }, [supabase.auth])
-
   const posts = useMemo(() => {
-    if (!convexPosts) return serverPosts;
-    // Map Convex posts to the expected Post type for compatibility
-    return convexPosts.map(p => ({
-      ...p,
-      id: p._id,
-      comments: [{ count: 0 }],
-      reactions: [],
-      polls: [],
-      void_answers: [],
-      bookmarks: []
-    }));
-  }, [convexPosts, serverPosts]);
+    if (!convexPosts) return [];
+    return convexPosts;
+  }, [convexPosts]);
 
   const sortedPosts = useMemo(() => {
     const postsCopy = Array.isArray(posts) ? [...posts] : [];
     if (sort === 'popular') {
-      return postsCopy.sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0));
+      return postsCopy.sort((a: any, b: any) => (b.reactions?.length || 0) - (a.reactions?.length || 0));
     }
     if (sort === 'loved') {
         const countHearts = (reactions: any[]) => (reactions || []).filter(r => r.reaction === 'Heart').length;
-        return postsCopy.sort((a, b) => countHearts(b.reactions) - countHearts(a.reactions));
+        return postsCopy.sort((a: any, b: any) => countHearts(b.reactions) - countHearts(a.reactions));
     }
     return postsCopy;
   }, [posts, sort]);
 
-  if (!convexPosts && serverPosts.length === 0) {
+  if (!convexPosts) {
     return (
         <div className="space-y-4">
             <PostSkeleton />
@@ -92,7 +73,7 @@ export default function ConfessionsList({ serverPosts = [], sort, mood }: { serv
   return (
     <div className="space-y-4">
       {sortedPosts.map((post) => (
-        <ConfessionCard key={post.id} post={post} user={user} />
+        <ConfessionCard key={post._id} post={post} user={user} />
       ))}
     </div>
   )

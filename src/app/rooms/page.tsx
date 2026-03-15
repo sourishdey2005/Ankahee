@@ -7,20 +7,22 @@ import { Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import RoomCard from '@/components/RoomCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAuth } from '@clerk/nextjs'
 
 export default function RoomsPage() {
-  const rooms = useQuery(api.rooms.getRooms)
+  const { userId } = useAuth()
+  const rooms = useQuery(api.rooms.getRooms, userId ? { userId } : "skip")
 
   const allRooms = rooms || []
-  const publicRooms = allRooms.filter(r => !r.is_dm)
-  const dmRooms = allRooms.filter(r => r.is_dm)
+  const publicRooms = allRooms.filter(r => !r.isDM)
+  const dmRooms = allRooms.filter(r => r.isDM)
 
   return (
     <div className="container mx-auto max-w-4xl py-8">
       <div className="flex justify-between items-center mb-8 px-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-headline font-bold">Chats</h1>
-          <p className="text-muted-foreground text-sm">Join a conversation or create your own. Rooms expire after 24 hours.</p>
+          <p className="text-muted-foreground text-sm">Join a conversation or create your own. Rooms expire after 48 hours.</p>
         </div>
         <Link href="/rooms/new">
           <Button size="sm">
@@ -30,7 +32,9 @@ export default function RoomsPage() {
         </Link>
       </div>
 
-      {!rooms ? (
+      {!userId ? (
+         <div className="text-center py-20">Please log in to see your rooms.</div>
+      ) : !rooms ? (
         <div className="flex justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>

@@ -1,42 +1,21 @@
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Tables } from '@/lib/supabase/types'
 import ConfessionCard from '@/components/ConfessionCard'
-import { User } from '@supabase/supabase-js'
+import { fetchQuery } from 'convex/nextjs'
+import { api } from '../../../../convex/_generated/api'
 
-export const revalidate = 0
-
-type PostWithDetails = Tables<'posts'> & {
-  comments: Array<{ count: number }>
-  reactions: Array<Tables<'reactions'>>
-  polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
-  void_answers: Tables<'void_answers'>[]
-  bookmarks: Array<Tables<'bookmarks'>>
-}
+export const dynamic = 'force-dynamic'
 
 export default async function BookmarksPage() {
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const { userId } = await auth()
+  if (!userId) {
     redirect('/feed')
   }
 
-  const { data: bookmarkedPosts, error } = await supabase
-    .from('posts')
-    .select('*, comments(count), reactions(*), polls(*, poll_votes(*)), void_answers(*), bookmarks!inner(*)')
-    .eq('bookmarks.user_id', session.user.id)
-    .gt('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching bookmarked posts:', error)
-  }
-
-  const posts: PostWithDetails[] = (bookmarkedPosts as any) || [];
+  const posts = await fetchQuery(api.posts.getBookmarkedPosts, { userId }) || [];
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
@@ -55,8 +34,8 @@ export default async function BookmarksPage() {
 
         {posts.length > 0 ? (
           <div className="space-y-4">
-            {posts.map(post => (
-              <ConfessionCard key={post.id} post={post} user={session.user} />
+            {posts.map((post: any) => (
+              <ConfessionCard key={post._id} post={post} user={{ id: userId } as any} />
             ))}
           </div>
         ) : (

@@ -11,7 +11,7 @@ import RoomClient from './RoomClient'
 import { useId } from 'react'
 
 export default function RoomPage({ params }: { params: { id: string } }) {
-  const room = useQuery(api.room_queries.getRoomById, { id: params.id });
+  const room = useQuery(api.rooms.getRoomById, { id: params.id as any });
 
   if (room === undefined) {
     return (
@@ -25,10 +25,10 @@ export default function RoomPage({ params }: { params: { id: string } }) {
     return notFound();
   }
 
-  const expires_at = (room as any).expires_at || (room._creationTime + (24 * 60 * 60 * 1000));
-  const isDM = (room as any).is_dm;
+  const expiresAt = (room as any).expiresAt || (room._creationTime + (48 * 60 * 60 * 1000));
+  const isDM = (room as any).isDM;
   const pageTitle = isDM ? 'Direct Message' : (room as any).name;
-  const breadcrumbText = 'Back';
+  const breadcrumbText = 'Back to Chats';
 
   return (
     <div className="container mx-auto max-w-6xl py-8">
@@ -42,7 +42,7 @@ export default function RoomPage({ params }: { params: { id: string } }) {
         <div className="w-full text-left sm:w-auto sm:text-right">
           <h1 className="text-2xl font-headline font-bold">{pageTitle}</h1>
           <p className="text-sm text-muted-foreground flex items-center justify-start sm:justify-end gap-2">
-            Expires <Countdown expiresAt={expires_at.toString()} />
+            Expires <Countdown expiresAt={expiresAt.toString()} />
           </p>
         </div>
       </div>

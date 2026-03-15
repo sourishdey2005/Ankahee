@@ -1,16 +1,11 @@
 'use client'
 
-import { useState, useEffect, useTransition, useRef } from 'react'
+import { useTransition, useRef, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { formatDistanceToNow } from 'date-fns'
-import { createClient } from '@/lib/supabase/client'
-import { Tables } from '@/lib/supabase/types'
-import { User } from '@supabase/supabase-js'
-import { v4 as uuidv4 } from 'uuid'
 import { generateHslColorFromString, generateAvatarDataUri } from '@/lib/utils'
-import { joinRoom, leaveRoom, postRoomMessage } from '@/actions'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,9 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Send, LogIn, LogOut } from 'lucide-react'
-
-type RoomMessage = Tables<'room_messages'>;
-type RoomMember = Tables<'room_members'>;
+import { useMutation, useQuery } from 'convex/react'
+import { api } from '../../../../convex/_generated/api'
+import { useAuth } from '@clerk/nextjs'
 
 const messageSchema = z.object({
     content: z.string().min(1, 'Message cannot be empty.'),
@@ -29,104 +24,67 @@ const messageSchema = z.object({
 
 export default function RoomClient({
     room,
-    user,
-    initialMessages,
-    initialMembers,
-    isMember: initialIsMember,
 }: {
-    room: Tables<'rooms'>,
-    user: User,
-    initialMessages: RoomMessage[],
-    initialMembers: RoomMember[],
-    isMember: boolean,
+    room: any,
+    user?: any,
+    initialMessages?: any[],
+    initialMembers?: any[],
+    isMember?: boolean,
 }) {
-    const [messages, setMessages] = useState(initialMessages)
-    const [members, setMembers] = useState(initialMembers)
-    const [isMember, setIsMember] = useState(initialIsMember)
+    const { userId } = useAuth()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
-    const supabase = createClient()
     const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+    // Convex hooks
+    const messages = useQuery(api.rooms.getMessages, { roomId: room._id }) || []
+    const members = useQuery(api.rooms.getRoomMembers, { roomId: room._id }) || []
+    const isMember = useMemo(() => members.some(m => m.userId === userId), [members, userId])
+
+    const sendMessage = useMutation(api.rooms.sendMessage)
+    const joinRoom = useMutation(api.rooms.joinRoom)
+    const leaveRoom = useMutation(api.rooms.leaveRoom)
 
     const form = useForm<z.infer<typeof messageSchema>>({
         resolver: zodResolver(messageSchema),
         defaultValues: { content: '' },
     })
 
-    useEffect(() => {
-        if (scrollAreaRef.current) {
-            const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-            if (viewport) {
-                viewport.scrollTop = viewport.scrollHeight;
-            }
-        }
-    }, [messages])
-
-    useEffect(() => {
-        const messageChannel = supabase
-            .channel(`room-messages:${room.id}`)
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'room_messages', filter: `room_id=eq.${room.id}` },
-                (payload) => {
-                    setMessages((prev) => [...prev, payload.new as RoomMessage])
-                }
-            )
-            .subscribe()
-
-        const memberChannel = supabase
-            .channel(`room-members:${room.id}`)
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'room_members', filter: `room_id=eq.${room.id}` },
-                (payload) => {
-                    if (payload.eventType === 'INSERT') {
-                        setMembers(prev => [...prev, payload.new as RoomMember])
-                    } else if (payload.eventType === 'DELETE') {
-                        setMembers(prev => prev.filter(m => m.user_id !== (payload.old as RoomMember).user_id))
-                    }
-                }
-            ).subscribe()
-
-        return () => {
-            supabase.removeChannel(messageChannel)
-            supabase.removeChannel(memberChannel)
-        }
-    }, [supabase, room.id])
-
     const handleJoin = () => {
+        if (!userId) return;
         startTransition(async () => {
-            const result = await joinRoom({ roomId: room.id })
-            if (result.error) {
-                toast({ title: 'Error', description: result.error.message, variant: 'destructive' })
-            } else {
-                setIsMember(true)
+            try {
+                await joinRoom({ roomId: room._id, userId })
                 toast({ title: 'Success', description: 'You have joined the room.' })
+            } catch (err: any) {
+                toast({ title: 'Error', description: err.message || 'Could not join room.', variant: 'destructive' })
             }
         })
     }
 
     const handleLeave = () => {
+        if (!userId) return;
         startTransition(async () => {
-            const result = await leaveRoom({ roomId: room.id })
-            if (result.error) {
-                toast({ title: 'Error', description: result.error.message, variant: 'destructive' })
-            } else {
-                setIsMember(false)
+            try {
+                await leaveRoom({ roomId: room._id, userId })
                 toast({ title: 'Success', description: 'You have left the room.' })
+            } catch (err: any) {
+                toast({ title: 'Error', description: err.message || 'Could not leave room.', variant: 'destructive' })
             }
         })
     }
 
     const onSubmit = (values: z.infer<typeof messageSchema>) => {
+        if (!userId) return;
         const content = values.content
         form.reset()
         startTransition(async () => {
-            const result = await postRoomMessage({ roomId: room.id, content })
-            if (result.error) {
+            try {
+                await sendMessage({ roomId: room._id, authorId: userId, content })
+            } catch (err: any) {
                 toast({
                     title: 'Failed to send message',
-                    description: result.error.message,
+                    description: err.message || 'Could not send message.',
                     variant: 'destructive',
                 })
             }
@@ -138,11 +96,11 @@ export default function RoomClient({
             <div className="flex-1 flex flex-col">
                 <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                     <div className="space-y-6">
-                        {messages.map((msg) => {
-                            const commenterColor = generateHslColorFromString(msg.user_id, 50, 60);
-                            const avatarUri = generateAvatarDataUri(msg.user_id);
+                        {messages.map((msg: any) => {
+                            const commenterColor = generateHslColorFromString(msg.authorId, 50, 60);
+                            const avatarUri = generateAvatarDataUri(msg.authorId);
                             return (
-                                <div key={msg.id} className="flex items-start gap-4 group">
+                                <div key={msg._id} className="flex items-start gap-4 group">
                                     <Avatar className="h-10 w-10">
                                         <AvatarImage src={avatarUri} />
                                         <AvatarFallback />
@@ -152,7 +110,7 @@ export default function RoomClient({
                                             <span className="font-semibold" style={{ color: commenterColor }}>Anonymous</span>
                                             <span className="text-muted-foreground">·</span>
                                             <span className="text-muted-foreground">
-                                                {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                                                {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                                             </span>
                                         </div>
                                         <p className="text-foreground/90 mt-1">{msg.content}</p>
@@ -198,12 +156,12 @@ export default function RoomClient({
                     <h3 className="text-lg font-semibold mb-2">Members ({members.length})</h3>
                     <ScrollArea className="h-64">
                         <div className="space-y-2">
-                            {members.map(member => {
-                                const memberColor = generateHslColorFromString(member.user_id, 50, 60);
-                                const memberAvatarUri = generateAvatarDataUri(member.user_id);
-                                const isCurrentUser = member.user_id === user.id;
+                            {members.map((member: any) => {
+                                const memberColor = generateHslColorFromString(member.userId, 50, 60);
+                                const memberAvatarUri = generateAvatarDataUri(member.userId);
+                                const isCurrentUser = member.userId === userId;
                                 return (
-                                    <div key={member.user_id} className="flex items-center gap-2">
+                                    <div key={member._id} className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={memberAvatarUri} />
                                             <AvatarFallback />

@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { deletePost } from '@/actions'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,30 +16,33 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Flame } from 'lucide-react'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 
-export default function BurnButton({ postId }: { postId: string }) {
+export default function BurnButton({ postId }: { postId: any }) {
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const deleteConvexPost = useMutation(api.posts.deletePost)
 
   const handleDelete = () => {
     startTransition(async () => {
-      const result = await deletePost({ postId })
-      if (result?.error) {
-        toast({
-          title: 'Error Burning Confession',
-          description: result.error.message,
-          variant: 'destructive',
-        })
-        setIsDialogOpen(false)
-      } else {
+      try {
+        await deleteConvexPost({ id: postId })
         toast({
           title: 'Confession Burned',
           description: 'Your confession has been permanently removed.',
         })
         setIsDialogOpen(false)
         router.push('/feed')
+      } catch (err: any) {
+        toast({
+          title: 'Error Burning Confession',
+          description: err.message || 'Could not burn confession.',
+          variant: 'destructive',
+        })
+        setIsDialogOpen(false)
       }
     })
   }

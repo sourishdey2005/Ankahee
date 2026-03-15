@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import { Tables } from '@/lib/supabase/types'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare, Clock } from 'lucide-react'
@@ -9,7 +8,6 @@ import { MoodTag, moodColors } from '@/lib/mood-tags'
 import Echoes from './Echoes'
 import { cn } from '@/lib/utils'
 import Poll from './Poll'
-import { User } from '@supabase/supabase-js'
 import VoidQuestion from './VoidQuestion'
 import BookmarkButton from './BookmarkButton'
 import { useMemo } from 'react'
@@ -17,26 +15,26 @@ import Image from 'next/image'
 
 type PostWithDetails = any;
 
-export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: User | null }) {
+export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: any }) {
   const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
-  const commentCount = post.comments && Array.isArray(post.comments) && post.comments.length > 0 ? post.comments[0].count : 0;
+  const commentCount = Array.isArray(post.comments) ? post.comments.length : 0;
 
-  const expires_at = post.expires_at || (post._creationTime ? post._creationTime + (24 * 60 * 60 * 1000) : Date.now() + (24 * 60 * 60 * 1000));
-  const expires = new Date(expires_at);
-  const now = new Date();
-  const timeLeft = expires.getTime() - now.getTime();
-  const isExpiringSoon = timeLeft > 0 && timeLeft < (60 * 60 * 1000); // Less than 1 hour
+  const expires_at = post.expiresAt || (post._creationTime ? post._creationTime + (24 * 60 * 60 * 1000) : Date.now() + (24 * 60 * 60 * 1000));
+  const isExpiringSoon = useMemo(() => {
+    const timeLeft = expires_at - Date.now();
+    return timeLeft > 0 && timeLeft < (60 * 60 * 1000);
+  }, [expires_at]);
 
   const poll = post.polls?.[0];
-  const isVoidQuestion = post.is_void_question || post.isVoidQuestion;
+  const isVoidQuestion = post.isVoidQuestion;
 
   const isBookmarked = useMemo(() => {
     if (!user || !post.bookmarks) return false;
-    return post.bookmarks.some(b => b.user_id === user.id);
+    return post.bookmarks.some((b: any) => b.userId === user.id);
   }, [post.bookmarks, user]);
 
   return (
-    <Link href={`/confession/${post.id}`} className="block">
+    <Link href={`/confession/${post._id}`} className="block">
       <Card className={cn(
         "hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-sm",
         isExpiringSoon && "opacity-70 hover:opacity-100"
@@ -73,7 +71,7 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
           )}
           {isVoidQuestion && user && (
             <div onClick={(e) => e.preventDefault()}>
-                <VoidQuestion postId={post.id} initialAnswers={post.void_answers || []} user={user} />
+                <VoidQuestion postId={post._id} initialAnswers={post.void_answers || []} user={user} />
             </div>
           )}
         </CardContent>
@@ -86,7 +84,7 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
             </div>
           </div>
           <div className="flex items-center space-x-2 text-sm">
-            {user && <BookmarkButton postId={post.id} isBookmarked={isBookmarked} />}
+            {user && <BookmarkButton postId={post._id} isBookmarked={isBookmarked} />}
           </div>
         </CardFooter>
       </Card>

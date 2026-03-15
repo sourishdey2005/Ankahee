@@ -6,10 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { formatDistanceToNow } from 'date-fns'
-import { Tables } from '@/lib/supabase/types'
-import { User } from '@supabase/supabase-js'
 import { isEditable, generateHslColorFromString, generateAvatarDataUri } from '@/lib/utils'
-import { updateComment, createOrGetDirectMessageRoom } from '@/actions'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,14 +14,16 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { useToast } from '@/hooks/use-toast'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Pencil, Loader2, MessageSquarePlus } from 'lucide-react'
-
-type Comment = Tables<'comments'>
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { useAuth } from '@clerk/nextjs'
 
 const formSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty.').max(280, 'Cannot exceed 280 characters.'),
 })
 
-export default function EditComment({ comment, user }: { comment: Comment, user: User }) {
+export default function EditComment({ comment, user: initialUser }: { comment: any, user: any }) {
+  const { userId } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [content, setContent] = useState(comment.content)
   const [isPending, startTransition] = useTransition()
@@ -32,14 +31,17 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
   const router = useRouter()
   const [isCreatingDm, startDmCreation] = useTransition()
 
-  const canEdit = user.id === comment.user_id && isEditable(comment.created_at)
+  const updateConvexComment = useMutation(api.comments.updateComment)
+  const getOrCreateDM = useMutation(api.rooms.getOrCreateDM)
+
+  const canEdit = userId === comment.userId && isEditable(comment.createdAt)
 
   useEffect(() => {
     setContent(comment.content)
   }, [comment.content])
 
-  const commenterColor = generateHslColorFromString(comment.user_id, 50, 60);
-  const avatarUri = generateAvatarDataUri(comment.user_id);
+  const commenterColor = generateHslColorFromString(comment.userId, 50, 60);
+  const avatarUri = generateAvatarDataUri(comment.userId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,27 +52,28 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     startTransition(async () => {
-      const result = await updateComment({ commentId: comment.id, content: values.content })
-      if (result.error) {
-        toast({ title: 'Error', description: result.error.message, variant: 'destructive' })
-      } else {
+      try {
+        await updateConvexComment({ id: comment._id, content: values.content })
         setContent(values.content)
         setIsEditing(false)
+      } catch (err: any) {
+        toast({ title: 'Error', description: err.message || 'Could not update comment.', variant: 'destructive' })
       }
     })
   }
 
   const handleStartDm = () => {
+    if (!userId) return;
     startDmCreation(async () => {
-        const result = await createOrGetDirectMessageRoom({ receiverId: comment.user_id })
-        if (result.error) {
+        try {
+            const roomId = await getOrCreateDM({ userA: userId, userB: comment.userId })
+            router.push(`/rooms/${roomId}`)
+        } catch (err: any) {
             toast({
                 title: 'Error starting chat',
-                description: result.error.message,
+                description: err.message || 'Could not start chat.',
                 variant: 'destructive',
             })
-        } else {
-            router.push(`/rooms/${result.data.roomId}`)
         }
     })
   }
@@ -115,7 +118,7 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
   }
 
   return (
-    <div key={comment.id} className="flex items-start gap-4 group">
+    <div key={comment._id} className="flex items-start gap-4 group">
       <Avatar className="h-10 w-10">
         <AvatarImage src={avatarUri} />
         <AvatarFallback />
@@ -125,13 +128,13 @@ export default function EditComment({ comment, user }: { comment: Comment, user:
           <span className="font-semibold" style={{ color: commenterColor }}>Commenter</span>
           <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground">
-            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
           </span>
         </div>
         <p className="text-foreground/90 mt-1">{content}</p>
       </div>
       <div className="flex items-center">
-        {user.id !== comment.user_id && (
+        {userId && userId !== comment.userId && (
             <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleStartDm} disabled={isCreatingDm}>
                 {isCreatingDm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquarePlus className="h-4 w-4" />}
                 <span className="sr-only">Message commenter</span>
