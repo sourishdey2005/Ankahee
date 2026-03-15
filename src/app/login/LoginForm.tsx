@@ -42,7 +42,14 @@ export default function LoginForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!isLoaded) return
+    console.log("Login onSubmit triggered. isLoaded:", isLoaded, "isPending:", isPending);
+    if (!isLoaded) {
+      toast({
+        title: 'Authentication Not Ready',
+        description: 'Clerk is still loading. Please wait a moment.',
+      })
+      return
+    }
 
     startTransition(async () => {
       try {
@@ -116,7 +123,7 @@ export default function LoginForm() {
         <Button 
           type="submit" 
           className="w-full font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground" 
-          disabled={isPending || !isLoaded}>
+          disabled={isPending}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Login
         </Button>
