@@ -29,7 +29,7 @@ const PostSkeleton = () => (
     </div>
   );
 
-export default function ConfessionsList({ serverPosts, sort, mood }: { serverPosts: any[], sort?: string, mood?: string }) {
+export default function ConfessionsList({ serverPosts = [], sort, mood }: { serverPosts?: any[], sort?: string, mood?: string }) {
   const [user, setUser] = useState<User | null>(null)
   const supabase = createClient()
   
@@ -59,7 +59,7 @@ export default function ConfessionsList({ serverPosts, sort, mood }: { serverPos
   }, [convexPosts, serverPosts]);
 
   const sortedPosts = useMemo(() => {
-    const postsCopy = [...posts];
+    const postsCopy = Array.isArray(posts) ? [...posts] : [];
     if (sort === 'popular') {
       return postsCopy.sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0));
     }
