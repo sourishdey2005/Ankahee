@@ -41,11 +41,16 @@ export async function login(formData: z.infer<typeof loginSchema>) {
 
   const { data: { session } } = await supabase.auth.getSession()
   if (session?.user && convex) {
-    await convex.mutation(api.users.syncUser, {
-      tokenIdentifier: session.user.id,
-      name: session.user.email?.split('@')[0] || 'Anonymous',
-      email: session.user.email,
-    })
+    try {
+      await convex.mutation(api.users.syncUser, {
+        tokenIdentifier: session.user.id,
+        name: session.user.email?.split('@')[0] || 'Anonymous',
+        email: session.user.email,
+      })
+    } catch (err) {
+      console.error("Failed to sync user to Convex:", err)
+      // We don't throw here to allow the user to continue since they are logged in via Supabase
+    }
   }
 
   revalidatePath('/', 'layout')
@@ -73,11 +78,15 @@ export async function signup(formData: z.infer<typeof signupSchema>) {
 
   const { data: { session: newSession } } = await supabase.auth.getSession()
   if (newSession?.user && convex) {
-    await convex.mutation(api.users.syncUser, {
-      tokenIdentifier: newSession.user.id,
-      name: newSession.user.email?.split('@')[0] || 'Anonymous',
-      email: newSession.user.email,
-    })
+    try {
+      await convex.mutation(api.users.syncUser, {
+        tokenIdentifier: newSession.user.id,
+        name: newSession.user.email?.split('@')[0] || 'Anonymous',
+        email: newSession.user.email,
+      })
+    } catch (err) {
+      console.error("Failed to sync user to Convex:", err)
+    }
   }
 
   revalidatePath('/', 'layout')
