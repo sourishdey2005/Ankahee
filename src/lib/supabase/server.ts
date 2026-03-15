@@ -9,7 +9,7 @@ export const createClient = async () => {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase environment variables are missing')
+    throw new Error('Supabase environment variables (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY) are missing. Please check your deployment settings.');
   }
 
   return createServerClient<Database>(
