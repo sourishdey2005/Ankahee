@@ -7,7 +7,8 @@ import { z } from 'zod'
 import { ConvexHttpClient } from "convex/browser"
 import { api } from '../../../convex/_generated/api'
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -39,7 +40,7 @@ export async function login(formData: z.infer<typeof loginSchema>) {
   }
 
   const { data: { session } } = await supabase.auth.getSession()
-  if (session?.user) {
+  if (session?.user && convex) {
     await convex.mutation(api.users.syncUser, {
       tokenIdentifier: session.user.id,
       name: session.user.email?.split('@')[0] || 'Anonymous',
@@ -71,7 +72,7 @@ export async function signup(formData: z.infer<typeof signupSchema>) {
   }
 
   const { data: { session: newSession } } = await supabase.auth.getSession()
-  if (newSession?.user) {
+  if (newSession?.user && convex) {
     await convex.mutation(api.users.syncUser, {
       tokenIdentifier: newSession.user.id,
       name: newSession.user.email?.split('@')[0] || 'Anonymous',

@@ -14,6 +14,7 @@ import type * as posts from "../posts.js";
 import type * as room_queries from "../room_queries.js";
 import type * as rooms from "../rooms.js";
 import type * as stories from "../stories.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   room_queries: typeof room_queries;
   rooms: typeof rooms;
   stories: typeof stories;
+  users: typeof users;
 }>;
 
 /**
