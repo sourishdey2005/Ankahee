@@ -41,6 +41,8 @@ export default function SignupForm() {
   const router = useRouter()
   const syncUser = useMutation(api.users.syncUser)
 
+  console.log("SignupForm rendered. Clerk isLoaded:", isLoaded, "Key exists:", !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
