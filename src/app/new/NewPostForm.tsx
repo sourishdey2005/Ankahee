@@ -53,6 +53,10 @@ const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) =
     })
 }
 
+import { ImageUpload } from '@/components/ImageUpload'
+import { useMutation } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+
 export default function NewPostForm({ userId, promptText, parentId }: { userId: string, promptText?: string, parentId?: string }) {
   const router = useRouter()
   const { toast } = useToast()
@@ -60,6 +64,9 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
   const [suggestedMood, setSuggestedMood] = useState<string | null>(null)
   const [isSuggesting, setIsSuggesting] = useState(false)
   const [creationMode, setCreationMode] = useState<null | 'poll' | 'void'>(null)
+  const [storageId, setStorageId] = useState<string | undefined>()
+
+  const createConvexPost = useMutation(api.posts.createPost)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,36 +105,31 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
     debouncedSuggest(contentValue)
   }, [contentValue, debouncedSuggest])
 
-
-  const onSubmit = (values: FormValues) => {
-    const postData: any = { content: values.content, userId, parentId };
-    if (values.mood) {
-      postData.mood = values.mood;
-    }
-    if (creationMode === 'poll' && values.pollOptionOne && values.pollOptionTwo) {
-      postData.poll = {
-        optionOne: values.pollOptionOne,
-        optionTwo: values.pollOptionTwo,
-      }
-    }
-    if (creationMode === 'void') {
-      postData.is_void_question = true;
-    }
-
+  const onSubmit = async (values: FormValues) => {
+    setIsSuggesting(false); // Stop AI while submitting
+    
     startTransition(async () => {
-      const result = await createPost(postData)
-      if (result.error) {
-        toast({
-          title: 'Error',
-          description: result.error.message,
-          variant: 'destructive',
-        })
-      } else {
+      try {
+        await createConvexPost({
+          content: values.content,
+          authorId: userId,
+          mood: values.mood,
+          storageId: storageId as any,
+          parentId: parentId,
+          isVoidQuestion: creationMode === 'void',
+        });
+
         toast({
           title: 'Success',
-          description: 'Your confession has been shared.',
+          description: 'Your confession has been shared in real-time.',
         })
         router.push(parentId ? `/confession/${parentId}` : '/feed')
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to post',
+          variant: 'destructive',
+        })
       }
     })
   }
@@ -264,6 +266,11 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
               <p className="text-sm text-muted-foreground">Your confession will become a question. Others can only respond with a single word, which will form a word cloud.</p>
             </div>
           )}
+        </div>
+
+        <div className="space-y-4">
+          <FormLabel>Attach an Image (Optional)</FormLabel>
+          <ImageUpload onUpload={(id) => setStorageId(id)} />
         </div>
 
 

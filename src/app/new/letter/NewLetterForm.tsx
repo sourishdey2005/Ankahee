@@ -24,10 +24,18 @@ const formSchema = z.object({
   content: z.string().min(20, 'Must be at least 20 characters.').max(5000, 'Cannot exceed 5000 characters.'),
 })
 
+import { ImageUpload } from '@/components/ImageUpload'
+import { useMutation } from 'convex/react'
+import { api } from '../../../../convex/_generated/api'
+import { useState } from 'react'
+
 export default function NewLetterForm() {
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
+  const [storageId, setStorageId] = useState<string | undefined>()
+
+  const createConvexLetter = useMutation(api.letters.createLetter)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,19 +46,23 @@ export default function NewLetterForm() {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     startTransition(async () => {
-      const result = await createLetter(values)
-      if (result.error) {
-        toast({
-          title: 'Error',
-          description: result.error.message,
-          variant: 'destructive',
-        })
-      } else {
+      try {
+        await createConvexLetter({
+          content: values.content,
+          storageId: storageId as any,
+        });
+        
         toast({
           title: 'Success',
-          description: 'Your letter has been posted.',
+          description: 'Your letter has been posted in real-time.',
         })
         router.push('/letters')
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to post letter',
+          variant: 'destructive',
+        })
       }
     })
   }
@@ -78,6 +90,11 @@ export default function NewLetterForm() {
             </FormItem>
           )}
         />
+
+        <div className="space-y-4">
+          <FormLabel>Attach a Memory (Optional Image)</FormLabel>
+          <ImageUpload onUpload={(id) => setStorageId(id)} />
+        </div>
 
         <Button
           type="submit"

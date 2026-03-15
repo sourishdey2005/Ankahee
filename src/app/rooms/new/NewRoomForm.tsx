@@ -24,10 +24,18 @@ const formSchema = z.object({
   name: z.string().min(3, 'Must be at least 3 characters.').max(50, 'Cannot exceed 50 characters.'),
 })
 
+import { ImageUpload } from '@/components/ImageUpload'
+import { useMutation } from 'convex/react'
+import { api } from '../../../../convex/_generated/api'
+import { useState } from 'react'
+
 export default function NewRoomForm() {
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
+  const [storageId, setStorageId] = useState<string | undefined>()
+
+  const createConvexRoom = useMutation(api.rooms.createRoom)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,19 +46,23 @@ export default function NewRoomForm() {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     startTransition(async () => {
-      const result = await createRoom(values)
-      if (result.error) {
-        toast({
-          title: 'Error',
-          description: result.error.message,
-          variant: 'destructive',
-        })
-      } else {
+      try {
+        const roomId = await createConvexRoom({
+          name: values.name,
+          storageId: storageId as any,
+        });
+
         toast({
           title: 'Success',
-          description: 'Your room has been created.',
+          description: 'Your room has been created in real-time.',
         })
-        router.push(`/rooms/${result.data.id}`)
+        router.push(`/rooms/${roomId}`)
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to create room',
+          variant: 'destructive',
+        })
       }
     })
   }
@@ -71,6 +83,11 @@ export default function NewRoomForm() {
             </FormItem>
           )}
         />
+
+        <div className="space-y-4">
+          <FormLabel>Room Cover Image (Optional)</FormLabel>
+          <ImageUpload onUpload={(id) => setStorageId(id)} />
+        </div>
 
         <Button
           type="submit"

@@ -1,16 +1,14 @@
 import Link from 'next/link'
-import { Tables } from '@/lib/supabase/types'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Countdown from './Countdown'
 import { Users, Clock, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
-type RoomWithMembers = Tables<'rooms'> & {
-  room_members: Array<{ count: number }>
-}
-
-export default function RoomCard({ room }: { room: RoomWithMembers }) {
-  const memberCount = room.room_members && Array.isArray(room.room_members) && room.room_members.length > 0 ? room.room_members[0].count : 0;
+export default function RoomCard({ room }: { room: any }) {
+  const memberCount = 0; // Simplified for now
+  const expiresAt = room.expires_at || (room._creationTime + (24 * 60 * 60 * 1000));
+  const roomId = room._id || room.id;
 
   if (room.is_dm) {
     return (
@@ -37,20 +35,30 @@ export default function RoomCard({ room }: { room: RoomWithMembers }) {
   }
 
   return (
-    <Link href={`/rooms/${room.id}`} className="block">
-        <Card className="hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-sm h-full flex flex-col">
-            <CardHeader>
-                <CardTitle className="truncate">{room.name}</CardTitle>
+    <Link href={`/rooms/${roomId}`} className="block">
+        <Card className="hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-sm h-full flex flex-col overflow-hidden">
+            {room.imageUrl && (
+              <div className="relative aspect-video w-full overflow-hidden">
+                <Image
+                  src={room.imageUrl}
+                  alt={room.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <CardHeader className="pb-2">
+                <CardTitle className="truncate text-lg">{room.name}</CardTitle>
             </CardHeader>
             <CardContent className="flex-1"></CardContent>
-            <CardFooter className="flex justify-between items-center text-muted-foreground text-sm">
+            <CardFooter className="flex justify-between items-center text-muted-foreground text-xs pt-0">
                  <div className="flex items-center space-x-2">
-                    <Users className="h-4 w-4" />
-                    <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
+                    <Users className="h-3 w-3" />
+                    <span>{memberCount} members</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4" />
-                    <Countdown expiresAt={room.expires_at} />
+                    <Clock className="h-3 w-3" />
+                    <Countdown expiresAt={expiresAt.toString()} />
                 </div>
             </CardFooter>
         </Card>

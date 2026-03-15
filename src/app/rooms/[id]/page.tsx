@@ -1,60 +1,40 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound, redirect } from 'next/navigation'
+'use client'
+
+import { useQuery } from 'convex/react'
+import { api } from '../../../../convex/_generated/api'
+import { notFound, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Users } from 'lucide-react'
+import { ArrowLeft, Users, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Countdown from '@/components/Countdown'
 import RoomClient from './RoomClient'
+import { useId } from 'react'
 
-export const revalidate = 0
+export default function RoomPage({ params }: { params: { id: string } }) {
+  const room = useQuery(api.room_queries.getRoomById, { id: params.id });
 
-export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient()
-  const resolvedParams = await params
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
-    redirect('/login')
+  if (room === undefined) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  const { data: room, error: roomError } = await (supabase
-    .from('rooms')
-    .select('*')
-    .eq('id', resolvedParams.id)
-    .single() as any)
-
-  if (roomError || !room || new Date(room.expires_at) < new Date()) {
-    notFound()
+  if (room === null) {
+    return notFound();
   }
 
-  const { data: messages, error: messagesError } = await supabase
-    .from('room_messages')
-    .select('*')
-    .eq('room_id', resolvedParams.id)
-    .order('created_at', { ascending: true })
-
-  const { data: members, error: membersError } = await supabase
-    .from('room_members')
-    .select('*')
-    .eq('room_id', resolvedParams.id)
-
-  const { data: memberRecord, error: memberRecordError } = await supabase
-    .from('room_members')
-    .select('id')
-    .eq('room_id', resolvedParams.id)
-    .eq('user_id', session.user.id)
-    .maybeSingle()
-    
-  const isDM = room.is_dm;
-  const pageTitle = isDM ? 'Direct Message' : room.name;
-  const breadcrumbText = 'All Chats';
-
+  const expires_at = (room as any).expires_at || (room._creationTime + (24 * 60 * 60 * 1000));
+  const isDM = (room as any).is_dm;
+  const pageTitle = isDM ? 'Direct Message' : (room as any).name;
+  const breadcrumbText = 'Back';
 
   return (
     <div className="container mx-auto max-w-6xl py-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6 px-4">
         <Link href="/rooms">
-          <Button variant="ghost">
+          <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {breadcrumbText}
           </Button>
@@ -62,18 +42,18 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
         <div className="w-full text-left sm:w-auto sm:text-right">
           <h1 className="text-2xl font-headline font-bold">{pageTitle}</h1>
           <p className="text-sm text-muted-foreground flex items-center justify-start sm:justify-end gap-2">
-            Expires <Countdown expiresAt={room.expires_at} />
+            Expires <Countdown expiresAt={expires_at.toString()} />
           </p>
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden h-[calc(100vh-18rem)] sm:h-[calc(100vh-13rem)]">
+      <div className="border rounded-lg overflow-hidden mx-4 h-[calc(100vh-18rem)] sm:h-[calc(100vh-13rem)]">
         <RoomClient
-          room={room}
-          user={session.user}
-          initialMessages={messages || []}
-          initialMembers={members || []}
-          isMember={!!memberRecord}
+          room={{ ...room, id: room._id } as any}
+          user={null as any} 
+          initialMessages={[]}
+          initialMembers={[]}
+          isMember={true}
         />
       </div>
     </div>

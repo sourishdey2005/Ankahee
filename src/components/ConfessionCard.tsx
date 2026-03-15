@@ -12,26 +12,22 @@ import { User } from '@supabase/supabase-js'
 import VoidQuestion from './VoidQuestion'
 import BookmarkButton from './BookmarkButton'
 import { useMemo } from 'react'
+import Image from 'next/image'
 
-type PostWithDetails = Tables<'posts'> & {
-  comments: Array<{ count: number }>
-  reactions: Array<Tables<'reactions'>>
-  polls: (Tables<'polls'> & { poll_votes: Tables<'poll_votes'>[] })[]
-  void_answers: Tables<'void_answers'>[]
-  bookmarks: Tables<'bookmarks'>[]
-};
+type PostWithDetails = any;
 
 export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: User | null }) {
   const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
   const commentCount = post.comments && Array.isArray(post.comments) && post.comments.length > 0 ? post.comments[0].count : 0;
 
-  const expires = new Date(post.expires_at);
+  const expires_at = post.expires_at || (post._creationTime ? post._creationTime + (24 * 60 * 60 * 1000) : Date.now() + (24 * 60 * 60 * 1000));
+  const expires = new Date(expires_at);
   const now = new Date();
   const timeLeft = expires.getTime() - now.getTime();
   const isExpiringSoon = timeLeft > 0 && timeLeft < (60 * 60 * 1000); // Less than 1 hour
 
   const poll = post.polls?.[0];
-  const isVoidQuestion = post.is_void_question;
+  const isVoidQuestion = post.is_void_question || post.isVoidQuestion;
 
   const isBookmarked = useMemo(() => {
     if (!user || !post.bookmarks) return false;
@@ -44,14 +40,30 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
         "hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-sm",
         isExpiringSoon && "opacity-70 hover:opacity-100"
       )}>
-        <CardHeader>
-          {post.mood && (
-            <Badge variant="outline" className={`${moodColor}`}>
-              {post.mood}
-            </Badge>
-          )}
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-start w-full">
+            {post.mood && (
+              <Badge variant="outline" className={`${moodColor}`}>
+                {post.mood}
+              </Badge>
+            )}
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <Countdown expiresAt={expires_at.toString()} />
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {post.imageUrl && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg mb-4">
+              <Image
+                src={post.imageUrl}
+                alt="Confession image"
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
           <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
           {poll && !isVoidQuestion && user && (
             <div onClick={(e) => e.preventDefault()}>
@@ -64,7 +76,7 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between items-center text-muted-foreground">
+        <CardFooter className="flex justify-between items-center text-muted-foreground pt-0">
           <div className="flex items-center space-x-4">
             <Echoes post={post} />
             <div className="flex items-center space-x-2 text-sm">
@@ -74,8 +86,6 @@ export default function ConfessionCard({ post, user }: { post: PostWithDetails, 
           </div>
           <div className="flex items-center space-x-2 text-sm">
             {user && <BookmarkButton postId={post.id} isBookmarked={isBookmarked} />}
-            <Clock className="h-4 w-4" />
-            <Countdown expiresAt={post.expires_at} />
           </div>
         </CardFooter>
       </Card>
