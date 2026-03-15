@@ -28,6 +28,7 @@ export const syncUser = mutation({
       name: args.name,
       email: args.email,
       imageUrl: args.imageUrl,
+      createdAt: Date.now(),
     });
   },
 });
