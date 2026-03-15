@@ -57,13 +57,20 @@ export default async function FeedPage({
 
   const supabase = await createClient()
 
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession()
+  if (!supabase) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p>Supabase configuration missing.</p>
+      </div>
+    )
+  }
 
-  if (sessionError) {
-    console.error("Session error:", sessionError)
+  let session = null;
+  try {
+    const { data } = await supabase.auth.getSession()
+    session = data.session
+  } catch (e) {
+    console.error("Session error:", e)
   }
 
   if (!session) {
@@ -83,7 +90,7 @@ export default async function FeedPage({
   const { data, error } = await query
 
   if (error) {
-    console.error('Supabase fetch error:', JSON.stringify(error, null, 2))
+    console.error('Supabase fetch error:', error)
   }
 
   const postsForWordCloud: PostWithCounts[] = (data ?? []) as PostWithCounts[]

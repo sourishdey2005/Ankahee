@@ -25,6 +25,10 @@ export default async function ConfessionPage({ params }: { params: Promise<{ id:
   const { id } = await params
   const supabase = await createClient()
 
+  if (!supabase) {
+    redirect('/feed')
+  }
+
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     redirect('/feed')

@@ -24,7 +24,8 @@ const PostSchema = z.object({
 })
 
 export async function createPost(input: z.infer<typeof PostSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
 
   const {
     data: { session },
@@ -79,7 +80,8 @@ const LetterSchema = z.object({
 })
 
 export async function createLetter(input: z.infer<typeof LetterSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -113,7 +115,8 @@ const UpdatePostSchema = z.object({
 })
 
 export async function updatePost(input: z.infer<typeof UpdatePostSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -160,7 +163,8 @@ const UpdateCommentSchema = z.object({
 })
 
 export async function updateComment(input: z.infer<typeof UpdateCommentSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -205,7 +209,8 @@ const DeletePostSchema = z.object({
 })
 
 export async function deletePost(input: z.infer<typeof DeletePostSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -246,7 +251,8 @@ const VoteSchema = z.object({
 })
 
 export async function castVote(input: z.infer<typeof VoteSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -282,7 +288,8 @@ const RoomSchema = z.object({
 })
 
 export async function createRoom(input: z.infer<typeof RoomSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -313,7 +320,8 @@ export async function createRoom(input: z.infer<typeof RoomSchema>) {
 const DmSchema = z.object({ receiverId: z.string().uuid() })
 
 export async function createOrGetDirectMessageRoom(input: z.infer<typeof DmSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -378,7 +386,8 @@ export async function createOrGetDirectMessageRoom(input: z.infer<typeof DmSchem
 const RoomIdSchema = z.object({ roomId: z.string().uuid() })
 
 export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -394,7 +403,8 @@ export async function joinRoom(input: z.infer<typeof RoomIdSchema>) {
 }
 
 export async function leaveRoom(input: z.infer<typeof RoomIdSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -414,7 +424,8 @@ const RoomMessageSchema = z.object({
 })
 
 export async function postRoomMessage(input: z.infer<typeof RoomMessageSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -437,7 +448,8 @@ const StorySegmentSchema = z.object({
 })
 
 export async function addStorySegment(input: z.infer<typeof StorySegmentSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -478,7 +490,8 @@ const VoidAnswerSchema = z.object({
 })
 
 export async function addVoidAnswer(input: z.infer<typeof VoidAnswerSchema>) {
-  const supabase: SupabaseClient<Database> = await createClient()
+  const supabase = await createClient()
+  if (!supabase) return { error: { message: 'Supabase configuration missing' } }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -513,7 +526,8 @@ const BookmarkSchema = z.object({
 })
 
 export async function addBookmark(input: z.infer<typeof BookmarkSchema>) {
-    const supabase: SupabaseClient<Database> = await createClient()
+    const supabase = await createClient()
+    if (!supabase) return { error: { message: 'Supabase configuration missing' } }
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return { error: { message: 'Unauthorized' } }
 
@@ -531,7 +545,8 @@ export async function addBookmark(input: z.infer<typeof BookmarkSchema>) {
 
 
 export async function removeBookmark(input: z.infer<typeof BookmarkSchema>) {
-    const supabase: SupabaseClient<Database> = await createClient()
+    const supabase = await createClient()
+    if (!supabase) return { error: { message: 'Supabase configuration missing' } }
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return { error: { message: 'Unauthorized' } }
     
