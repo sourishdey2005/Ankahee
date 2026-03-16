@@ -26,10 +26,6 @@ export default function RoomClient({
     room,
 }: {
     room: any,
-    user?: any,
-    initialMessages?: any[],
-    initialMembers?: any[],
-    isMember?: boolean,
 }) {
     const { userId } = useUser()
     const [isPending, startTransition] = useTransition()
@@ -54,7 +50,7 @@ export default function RoomClient({
         if (!userId) return;
         startTransition(async () => {
             try {
-                await joinRoom({ roomId: room._id, userId })
+                await joinRoom({ roomId: room._id })
                 toast({ title: 'Success', description: 'You have joined the room.' })
             } catch (err: any) {
                 toast({ title: 'Error', description: err.message || 'Could not join room.', variant: 'destructive' })
@@ -66,7 +62,7 @@ export default function RoomClient({
         if (!userId) return;
         startTransition(async () => {
             try {
-                await leaveRoom({ roomId: room._id, userId })
+                await leaveRoom({ roomId: room._id })
                 toast({ title: 'Success', description: 'You have left the room.' })
             } catch (err: any) {
                 toast({ title: 'Error', description: err.message || 'Could not leave room.', variant: 'destructive' })
@@ -80,7 +76,7 @@ export default function RoomClient({
         form.reset()
         startTransition(async () => {
             try {
-                await sendMessage({ roomId: room._id, authorId: userId, content })
+                await sendMessage({ roomId: room._id, content })
             } catch (err: any) {
                 toast({
                     title: 'Failed to send message',

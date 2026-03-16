@@ -1,13 +1,17 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const createLetter = mutation({
   args: {
     content: v.string(),
-    authorId: v.string(),
     storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
+    const authorId = await getAuthUserId(ctx);
+    if (authorId === null) {
+      throw new Error("Not authenticated");
+    }
     let imageUrl;
     if (args.storageId) {
       imageUrl = await ctx.storage.getUrl(args.storageId);
@@ -17,7 +21,7 @@ export const createLetter = mutation({
 
     return await ctx.db.insert("letters", {
       content: args.content,
-      authorId: args.authorId,
+      authorId: authorId,
       imageUrl: imageUrl ?? undefined,
       storageId: args.storageId,
       expiresAt: expiresAt,
@@ -27,11 +31,13 @@ export const createLetter = mutation({
 });
 
 export const getLetters = query({
-  args: { authorId: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const authorId = await getAuthUserId(ctx);
+    if (authorId === null) return [];
     return await ctx.db
       .query("letters")
-      .withIndex("by_author", (q) => q.eq("authorId", args.authorId))
+      .withIndex("by_author", (q) => q.eq("authorId", authorId))
       .filter((q) => q.gt(q.field("expiresAt"), Date.now()))
       .order("desc")
       .collect();

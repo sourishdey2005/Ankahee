@@ -51,7 +51,6 @@ export default function NewRoomForm() {
       try {
         const roomId = await createConvexRoom({
           name: values.name,
-          createdBy: userId,
           isDM: false,
           storageId: storageId as any,
         });

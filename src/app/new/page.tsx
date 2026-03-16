@@ -1,4 +1,4 @@
-import { getAuthUserId } from '@convex-dev/auth/nextjs/server'
+import { isAuthenticatedNextjs } from '@convex-dev/auth/nextjs/server'
 import { redirect } from 'next/navigation'
 import NewPostForm from './NewPostForm'
 import { Button } from '@/components/ui/button'
@@ -8,12 +8,10 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function NewPostPage({ searchParams }: { searchParams: Promise<{ prompt?: string, parent_id?: string }> }) {
-  const userId = await getAuthUserId()
-  const resolvedSearchParams = await searchParams
-
-  if (!userId) {
+  if (!(await isAuthenticatedNextjs())) {
     redirect('/login')
   }
+  const resolvedSearchParams = await searchParams
 
   const promptText = resolvedSearchParams.prompt || ''
   const parentId = resolvedSearchParams.parent_id
@@ -28,7 +26,7 @@ export default async function NewPostPage({ searchParams }: { searchParams: Prom
       </Link>
       <h1 className="text-4xl font-headline font-bold mb-2">{parentId ? 'Reply with your story' : 'Share Your Story'}</h1>
       <p className="text-muted-foreground mb-8">It will be gone in 24 hours. No one will know it was you.</p>
-      <NewPostForm userId={userId} promptText={promptText} parentId={parentId} />
+      <NewPostForm promptText={promptText} parentId={parentId} />
     </div>
   )
 }

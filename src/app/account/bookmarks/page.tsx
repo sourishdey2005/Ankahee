@@ -1,4 +1,4 @@
-import { getAuthUserId } from '@convex-dev/auth/nextjs/server'
+import { convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -10,12 +10,12 @@ import { api } from '../../../../convex/_generated/api'
 export const dynamic = 'force-dynamic'
 
 export default async function BookmarksPage() {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const token = await convexAuthNextjsToken()
+  if (!token) {
     redirect('/login')
   }
-
-  const posts = await fetchQuery(api.posts.getBookmarkedPosts, { userId }) || [];
+  
+  const posts = await fetchQuery(api.posts.getBookmarkedPosts, {}, { token }) || [];
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
@@ -35,7 +35,7 @@ export default async function BookmarksPage() {
         {posts.length > 0 ? (
           <div className="space-y-4">
             {posts.map((post: any) => (
-              <ConfessionCard key={post._id} post={post} user={{ id: userId } as any} />
+              <ConfessionCard key={post._id} post={post} />
             ))}
           </div>
         ) : (

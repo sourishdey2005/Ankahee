@@ -1,4 +1,4 @@
-import { getAuthUserId } from '@convex-dev/auth/nextjs/server'
+import { convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Plus } from 'lucide-react'
@@ -14,14 +14,13 @@ export const dynamic = 'force-dynamic'
 
 export default async function ConfessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const userId = await getAuthUserId()
-
-  if (!userId) {
+  const token = await convexAuthNextjsToken()
+  if (!token) {
     redirect('/login')
   }
 
   // Fetch the main post with enriched details via Convex
-  const post: any = await fetchQuery(api.posts.getPostById, { id: id as any })
+  const post: any = await fetchQuery(api.posts.getPostById, { id: id as any }, { token })
 
   if (!post) {
     notFound()

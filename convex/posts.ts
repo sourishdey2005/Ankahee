@@ -1,10 +1,9 @@
-import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const createPost = mutation({
   args: {
     content: v.string(),
-    authorId: v.string(),
     mood: v.optional(v.string()),
     storageId: v.optional(v.id("_storage")),
     parentId: v.optional(v.string()),
@@ -13,6 +12,10 @@ export const createPost = mutation({
     pollOptionTwo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const authorId = await getAuthUserId(ctx);
+    if (authorId === null) {
+      throw new Error("Not authenticated");
+    }
     let imageUrl;
     if (args.storageId) {
       imageUrl = await ctx.storage.getUrl(args.storageId);
@@ -206,11 +209,13 @@ export const deletePost = mutation({
 });
 
 export const getArchivedPosts = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return [];
     const posts = await ctx.db
       .query("posts")
-      .withIndex("by_authorId", (q) => q.eq("authorId", args.userId))
+      .withIndex("by_authorId", (q) => q.eq("authorId", userId))
       .filter((q) => q.lt(q.field("expiresAt"), Date.now()))
       .order("desc")
       .collect();
@@ -232,11 +237,13 @@ export const getArchivedPosts = query({
 });
 
 export const getBookmarkedPosts = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return [];
     const bookmarks = await ctx.db
       .query("bookmarks")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const posts = await Promise.all(

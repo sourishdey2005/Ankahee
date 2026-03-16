@@ -11,7 +11,7 @@ import { useUser } from '@/hooks/use-user'
 
 export default function RoomsPage() {
   const { userId } = useUser()
-  const rooms = useQuery(api.rooms.getRooms, userId ? { userId } : "skip")
+  const rooms = useQuery(api.rooms.getRooms)
 
   const allRooms = rooms || []
   const publicRooms = allRooms.filter(r => !r.isDM)

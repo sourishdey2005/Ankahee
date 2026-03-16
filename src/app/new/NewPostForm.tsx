@@ -56,7 +56,7 @@ import { ImageUpload } from '@/components/ImageUpload'
 import { useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 
-export default function NewPostForm({ userId, promptText, parentId }: { userId: string, promptText?: string, parentId?: string }) {
+export default function NewPostForm({ promptText, parentId }: { promptText?: string, parentId?: string }) {
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -111,7 +111,6 @@ export default function NewPostForm({ userId, promptText, parentId }: { userId: 
       try {
         await createConvexPost({
           content: values.content,
-          authorId: userId,
           mood: values.mood,
           storageId: storageId as any,
           parentId: parentId,

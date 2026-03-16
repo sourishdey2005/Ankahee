@@ -1,15 +1,19 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const createRoom = mutation({
   args: {
     name: v.string(),
-    createdBy: v.string(),
     isDM: v.boolean(),
     dmKey: v.optional(v.string()),
     storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
     let imageUrl;
     if (args.storageId) {
       imageUrl = await ctx.storage.getUrl(args.storageId);
@@ -19,7 +23,7 @@ export const createRoom = mutation({
 
     const roomId = await ctx.db.insert("rooms", {
       name: args.name,
-      createdBy: args.createdBy,
+      createdBy: userId,
       isDM: args.isDM,
       dmKey: args.dmKey,
       imageUrl: imageUrl ?? undefined,
@@ -30,7 +34,7 @@ export const createRoom = mutation({
 
     await ctx.db.insert("roomMembers", {
       roomId,
-      userId: args.createdBy,
+      userId: userId,
       createdAt: now,
     });
 
@@ -39,11 +43,13 @@ export const createRoom = mutation({
 });
 
 export const getRooms = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return [];
     const memberRooms = await ctx.db
       .query("roomMembers")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     
     const roomIds = memberRooms.map(m => m.roomId);
@@ -56,13 +62,16 @@ export const getRooms = query({
 export const sendMessage = mutation({
   args: {
     roomId: v.id("rooms"),
-    authorId: v.string(),
     content: v.string(),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
     return await ctx.db.insert("roomMessages", {
       roomId: args.roomId,
-      authorId: args.authorId,
+      authorId: userId,
       content: args.content,
       createdAt: Date.now(),
     });
@@ -79,13 +88,17 @@ export const getMessages = query({
       .collect();
   },
 });
+
 export const getOrCreateDM = mutation({
   args: {
-    userA: v.string(),
     userB: v.string(),
   },
   handler: async (ctx, args) => {
-    const dmKey = [args.userA, args.userB].sort().join("_");
+    const userA = await getAuthUserId(ctx);
+    if (userA === null) {
+      throw new Error("Not authenticated");
+    }
+    const dmKey = [userA, args.userB].sort().join("_");
     
     const existing = await ctx.db
       .query("rooms")
@@ -96,7 +109,7 @@ export const getOrCreateDM = mutation({
     
     const roomId = await ctx.db.insert("rooms", {
       name: `DM_${dmKey}`,
-      createdBy: args.userA,
+      createdBy: userA,
       isDM: true,
       dmKey: dmKey,
       expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // DM lasts 30 days
@@ -105,7 +118,7 @@ export const getOrCreateDM = mutation({
     
     await ctx.db.insert("roomMembers", {
       roomId,
-      userId: args.userA,
+      userId: userA,
       createdAt: Date.now(),
     });
     
@@ -116,5 +129,68 @@ export const getOrCreateDM = mutation({
     });
     
     return roomId;
+  },
+});
+
+export const getRoomMembers = query({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("roomMembers")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+  },
+});
+
+export const joinRoom = mutation({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+    const existing = await ctx.db
+      .query("roomMembers")
+      .withIndex("by_room_user", (q) => 
+        q.eq("roomId", args.roomId).eq("userId", userId)
+      )
+      .unique();
+    if (existing) return;
+    await ctx.db.insert("roomMembers", {
+      roomId: args.roomId,
+      userId,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const leaveRoom = mutation({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+    const existing = await ctx.db
+      .query("roomMembers")
+      .withIndex("by_room_user", (q) => 
+        q.eq("roomId", args.roomId).eq("userId", userId)
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+  },
+});
+
+export const getRoomById = query({
+  args: { id: v.id("rooms") },
+  handler: async (ctx, args) => {
+    try {
+      const room = await ctx.db.get(args.id);
+      return room;
+    } catch (e) {
+      return null;
+    }
   },
 });

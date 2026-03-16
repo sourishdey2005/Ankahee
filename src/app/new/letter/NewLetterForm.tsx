@@ -51,7 +51,6 @@ export default function NewLetterForm() {
       try {
         await createConvexLetter({
           content: values.content,
-          authorId: userId,
           storageId: storageId as any,
         });
         

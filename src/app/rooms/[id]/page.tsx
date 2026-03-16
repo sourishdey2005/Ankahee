@@ -50,10 +50,6 @@ export default function RoomPage({ params }: { params: { id: string } }) {
       <div className="border rounded-lg overflow-hidden mx-4 h-[calc(100vh-18rem)] sm:h-[calc(100vh-13rem)]">
         <RoomClient
           room={{ ...room, id: room._id } as any}
-          user={null as any} 
-          initialMessages={[]}
-          initialMembers={[]}
-          isMember={true}
         />
       </div>
     </div>
