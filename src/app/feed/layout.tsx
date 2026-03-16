@@ -1,5 +1,3 @@
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Archive, MessagesSquare, Mail, BookOpen, Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import SignOutButton from '@/components/SignOutButton'
-import DeleteAccountButton from '@/components/DeleteAccountButton'
 import Image from 'next/image'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -22,12 +19,6 @@ export default async function FeedLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { userId } = await auth()
-
-  if (!userId) {
-    redirect('/login')
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Loader2, Send, LogIn, LogOut } from 'lucide-react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 const messageSchema = z.object({
     content: z.string().min(1, 'Message cannot be empty.'),
@@ -31,7 +31,7 @@ export default function RoomClient({
     initialMembers?: any[],
     isMember?: boolean,
 }) {
-    const { userId } = useAuth()
+    const { userId } = useUser()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
     const scrollAreaRef = useRef<HTMLDivElement>(null)

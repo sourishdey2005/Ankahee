@@ -16,14 +16,14 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Pencil, Loader2, MessageSquarePlus } from 'lucide-react'
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 const formSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty.').max(280, 'Cannot exceed 280 characters.'),
 })
 
 export default function EditComment({ comment, user: initialUser }: { comment: any, user: any }) {
-  const { userId } = useAuth()
+  const { userId } = useUser()
   const [isEditing, setIsEditing] = useState(false)
   const [content, setContent] = useState(comment.content)
   const [isPending, startTransition] = useTransition()

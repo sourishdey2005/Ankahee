@@ -1,12 +1,22 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import {
+  convexAuthNextjsMiddleware,
+  createRouteMatcher,
+  nextjsMiddlewareRedirect,
+} from "@convex-dev/auth/nextjs/server";
 
-export default clerkMiddleware();
+const isLoginPage = createRouteMatcher(["/login"]);
+
+export default convexAuthNextjsMiddleware((request, { isAuthenticated }) => {
+  if (!isLoginPage(request) && !isAuthenticated) {
+    return nextjsMiddlewareRedirect(request, "/login");
+  }
+  if (isLoginPage(request) && isAuthenticated) {
+    return nextjsMiddlewareRedirect(request, "/feed");
+  }
+});
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
-  ],
+  // The following matcher runs middleware on all routes
+  // except static assets.
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
 };

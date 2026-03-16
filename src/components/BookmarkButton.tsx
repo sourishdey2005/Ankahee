@@ -7,11 +7,11 @@ import { Loader2, Bookmark } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 export default function BookmarkButton({ postId, isBookmarked: initialIsBookmarked }: { postId: any, isBookmarked: boolean }) {
   const { toast } = useToast()
-  const { userId } = useAuth()
+  const { userId } = useUser()
   const [isPending, startTransition] = useTransition()
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
   const toggleBookmark = useMutation(api.bookmarks.toggleBookmark)

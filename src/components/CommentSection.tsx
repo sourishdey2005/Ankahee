@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import EditComment from './EditComment'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 const commentSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty.'),
@@ -31,7 +31,7 @@ export default function CommentSection({
   initialComments: any[],
   user: any
 }) {
-  const { userId } = useAuth()
+  const { userId } = useUser()
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
   const addComment = useMutation(api.comments.addComment)

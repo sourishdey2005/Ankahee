@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button'
 import { MailPlus, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import UnsentLetterCard from '@/components/UnsentLetterCard'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 export default function LettersPage() {
-  const { userId } = useAuth()
+  const { userId } = useUser()
   const letters = useQuery(api.letters.getLetters, userId ? { authorId: userId } : "skip")
 
   return (

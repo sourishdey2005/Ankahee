@@ -11,7 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Loader2 } from 'lucide-react'
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { useUser } from '@/hooks/use-user'
 
 const answerSchema = z.object({
   word: z.string().trim().min(1, "Answer can't be empty.").max(30, "Word is too long."),
@@ -21,7 +23,7 @@ const answerSchema = z.object({
 });
 
 export default function VoidQuestion({ postId, initialAnswers, user }: { postId: any, initialAnswers: any[], user: any }) {
-    const { userId } = useAuth()
+    const { userId } = useUser()
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
     const [isMounted, setIsMounted] = useState(false);

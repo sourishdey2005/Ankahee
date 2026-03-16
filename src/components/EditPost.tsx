@@ -22,14 +22,14 @@ import VoidQuestion from './VoidQuestion'
 import BookmarkButton from './BookmarkButton'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 const formSchema = z.object({
   content: z.string().min(10, 'Must be at least 10 characters.').max(500, 'Cannot exceed 500 characters.'),
 })
 
 export default function EditPost({ post: initialPost, user: initialUser }: { post: any; user: any }) {
-  const { userId } = useAuth()
+  const { userId } = useUser()
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()

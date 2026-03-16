@@ -13,10 +13,10 @@ import {
 import { cn } from '@/lib/utils'
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 export default function Echoes({ post }: { post: any }) {
-  const { userId } = useAuth()
+  const { userId } = useUser()
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
   const toggleReaction = useMutation(api.reactions.toggleReaction)

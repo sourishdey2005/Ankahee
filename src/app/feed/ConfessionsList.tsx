@@ -5,7 +5,7 @@ import ConfessionCard from '@/components/ConfessionCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { useUser } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 const PostSkeleton = () => (
     <div className="space-y-4 rounded-lg border bg-card/50 p-6 backdrop-blur-sm">

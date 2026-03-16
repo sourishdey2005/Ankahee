@@ -1,17 +1,17 @@
 'use client'
 
-import { useClerk } from '@clerk/nextjs'
+import { useAuthActions } from '@convex-dev/auth/react'
 import { LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { DropdownMenuItem } from './ui/dropdown-menu'
 
 export default function SignOutButton() {
-  const { signOut } = useClerk()
+  const { signOut } = useAuthActions()
   const router = useRouter()
 
   const handleSignOut = async () => {
     await signOut()
-    router.push('/')
+    router.push('/login')
   }
 
   return (

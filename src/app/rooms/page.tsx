@@ -7,10 +7,10 @@ import { Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import RoomCard from '@/components/RoomCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 export default function RoomsPage() {
-  const { userId } = useAuth()
+  const { userId } = useUser()
   const rooms = useQuery(api.rooms.getRooms, userId ? { userId } : "skip")
 
   const allRooms = rooms || []

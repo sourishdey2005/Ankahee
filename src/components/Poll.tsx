@@ -7,10 +7,10 @@ import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useAuth } from '@clerk/nextjs'
+import { useUser } from '@/hooks/use-user'
 
 export default function Poll({ poll, user }: { poll: any, user: any }) {
-    const { userId } = useAuth()
+    const { userId } = useUser()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
     const voteInPoll = useMutation(api.polls.voteInPoll)
