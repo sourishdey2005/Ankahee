@@ -25,7 +25,7 @@ export const createPost = mutation({
 
     const postId = await ctx.db.insert("posts", {
       content: args.content,
-      authorId: args.authorId,
+      authorId: authorId,
       mood: args.mood,
       imageUrl: imageUrl ?? undefined,
       storageId: args.storageId,
