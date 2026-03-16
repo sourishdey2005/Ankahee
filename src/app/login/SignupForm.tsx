@@ -61,7 +61,7 @@ export default function SignupForm() {
       } catch (err: any) {
         toast({
           title: "Sign Up Failed",
-          description: "An account with this email might already exist.",
+          description: err.message || "An unexpected error occurred. Please try again.",
           variant: "destructive",
         });
       }

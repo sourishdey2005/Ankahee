@@ -109,11 +109,4 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_room", ["roomId"]),
 
-  users: defineTable({
-    tokenIdentifier: v.string(),
-    name: v.string(),
-    email: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
-    createdAt: v.number(),
-  }).index("by_token", ["tokenIdentifier"]),
 });
