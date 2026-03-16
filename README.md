@@ -35,12 +35,16 @@ Ankahee is built with a modern, performant, and scalable technology stack.
 
 -   **Framework**: [Next.js](https://nextjs.org/) (App Router, Server Components)
 -   **Language**: [TypeScript](https://www.typescriptlang.org/)
--   **Database & Backend**: [Supabase](https://supabase.io/) (Postgres, Auth, Realtime, Storage)
+-   **Database & Backend**: [Convex](https://convex.dev/) (Real-time database and functions)
+-   **Authentication**: [Clerk](https://clerk.com/) (Managed user authentication)
 -   **Generative AI**: [Google Gemini](https://deepmind.google.com/technologies/gemini/) via [Genkit](https://firebase.google.com/docs/genkit)
 -   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 -   **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
 -   **Animation**: [Framer Motion](https://www.framer.com/motion/)
 -   **Icons**: [Lucide React](https://lucide.dev/)
+
+> [!NOTE]
+> For more details on the authentication setup, see the **Clerk Setup Guide** in the project metrics/documentation.
 
 ---
 

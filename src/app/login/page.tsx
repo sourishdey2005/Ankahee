@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import {
   Card,
@@ -10,10 +12,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import LoginForm from './LoginForm'
 import SignupForm from './SignupForm'
 import Image from 'next/image'
+import { useSignIn, useSignUp } from '@clerk/nextjs'
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
+  const { isLoaded: signInLoaded } = useSignIn()
+  const { isLoaded: signUpLoaded } = useSignUp()
+
+  const isLoaded = signInLoaded && signUpLoaded
+
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 overflow-hidden">
+      {/* Loading Overlay */}
+      {!isLoaded && (
+        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-xl animate-in fade-in duration-500">
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse"></div>
+            <div className="relative flex flex-col items-center">
+              <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+              <h2 className="text-xl font-headline font-bold text-white tracking-widest animate-pulse">
+                WHISPERING TO THE VOID...
+              </h2>
+              <p className="text-muted-foreground text-sm mt-2">Preparing your digital sanctuary</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Enhanced background */}
       <div className="absolute inset-0 z-0 opacity-50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(124,58,237,0.1),transparent_70%)]"></div>

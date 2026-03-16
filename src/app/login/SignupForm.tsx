@@ -53,15 +53,6 @@ export default function SignupForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Signup onSubmit triggered. isLoaded:", isLoaded, "isPending:", isPending);
-    if (!isLoaded) {
-      toast({
-        title: 'Authentication Not Ready',
-        description: 'Clerk is still loading. Please wait a moment.',
-      })
-      return
-    }
-
     startTransition(async () => {
       try {
         await signUp.create({
@@ -86,9 +77,7 @@ export default function SignupForm() {
   }
 
   async function onVerify(e: React.FormEvent) {
-    e.preventDefault()
-    if (!isLoaded) return
-
+    // Clerk loading state is handled by the page-level overlay
     startTransition(async () => {
       try {
         const completeSignUp = await signUp.attemptEmailAddressVerification({

@@ -42,15 +42,6 @@ export default function LoginForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Login onSubmit triggered. isLoaded:", isLoaded, "isPending:", isPending);
-    if (!isLoaded) {
-      toast({
-        title: 'Authentication Not Ready',
-        description: 'Clerk is still loading. Please wait a moment.',
-      })
-      return
-    }
-
     startTransition(async () => {
       try {
         const result = await signIn.create({
