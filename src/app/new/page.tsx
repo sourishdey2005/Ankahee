@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { getAuthUserId } from '@convex-dev/auth/nextjs/server'
 import { redirect } from 'next/navigation'
 import NewPostForm from './NewPostForm'
 import { Button } from '@/components/ui/button'
@@ -8,11 +8,11 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function NewPostPage({ searchParams }: { searchParams: Promise<{ prompt?: string, parent_id?: string }> }) {
-  const { userId } = await auth()
+  const userId = await getAuthUserId()
   const resolvedSearchParams = await searchParams
 
   if (!userId) {
-    redirect('/feed')
+    redirect('/login')
   }
 
   const promptText = resolvedSearchParams.prompt || ''

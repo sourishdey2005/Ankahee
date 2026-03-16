@@ -25,11 +25,9 @@ const commentSchema = z.object({
 export default function CommentSection({
   postId,
   initialComments,
-  user: initialUser,
 }: {
   postId: any,
   initialComments: any[],
-  user: any
 }) {
   const { userId } = useUser()
   const [isPending, startTransition] = useTransition()
@@ -108,7 +106,7 @@ export default function CommentSection({
       <div className="space-y-6">
         {comments.length > 0 ? (
           comments.map((comment: any) => (
-            <EditComment key={comment._id} comment={comment} user={initialUser} />
+            <EditComment key={comment._id} comment={comment} />
           ))
         ) : (
           <p className="text-muted-foreground text-center py-8">No comments yet. Be the first to reply.</p>

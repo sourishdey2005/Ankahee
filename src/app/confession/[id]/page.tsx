@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { getAuthUserId } from '@convex-dev/auth/nextjs/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Plus } from 'lucide-react'
@@ -14,10 +14,10 @@ export const dynamic = 'force-dynamic'
 
 export default async function ConfessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { userId, user } = await auth()
+  const userId = await getAuthUserId()
 
   if (!userId) {
-    redirect('/feed')
+    redirect('/login')
   }
 
   // Fetch the main post with enriched details via Convex
@@ -44,11 +44,11 @@ export default async function ConfessionPage({ params }: { params: Promise<{ id:
       {parentPost && (
         <div className="mb-8">
           <p className="text-sm font-semibold mb-2 text-muted-foreground">In reply to:</p>
-          <ConfessionCard post={parentPost} user={user} />
+          <ConfessionCard post={parentPost} />
         </div>
       )}
 
-      <EditPost post={post} user={user} />
+      <EditPost post={post} />
 
       <div className="my-8 flex justify-center">
         <Link href={`/new?parent_id=${post._id}`}>
@@ -65,14 +65,14 @@ export default async function ConfessionPage({ params }: { params: Promise<{ id:
           <h3 className="text-xl font-headline font-bold pt-4">Replies in this chain:</h3>
           <div className="space-y-4">
             {childPosts.map((child: any) => (
-              <ConfessionCard key={child._id} post={child} user={user} />
+              <ConfessionCard key={child._id} post={child} />
             ))}
           </div>
         </div>
       )}
 
       <Separator className="my-8" />
-      <CommentSection postId={post._id} initialComments={initialComments} user={user} />
+      <CommentSection postId={post._id} initialComments={initialComments} />
     </div>
   )
 }

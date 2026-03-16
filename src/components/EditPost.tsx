@@ -28,7 +28,7 @@ const formSchema = z.object({
   content: z.string().min(10, 'Must be at least 10 characters.').max(500, 'Cannot exceed 500 characters.'),
 })
 
-export default function EditPost({ post: initialPost, user: initialUser }: { post: any; user: any }) {
+export default function EditPost({ post: initialPost }: { post: any }) {
   const { userId } = useUser()
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -112,8 +112,8 @@ export default function EditPost({ post: initialPost, user: initialUser }: { pos
         ) : (
           <p className="text-lg text-foreground/90 whitespace-pre-wrap">{post.content}</p>
         )}
-        {poll && !isVoidQuestion && <Poll poll={poll} user={initialUser} />}
-        {isVoidQuestion && <VoidQuestion postId={post._id} initialAnswers={post.void_answers || []} user={initialUser} />}
+        {poll && !isVoidQuestion && <Poll poll={poll} />}
+        {isVoidQuestion && <VoidQuestion postId={post._id} initialAnswers={post.void_answers || []} />}
       </CardContent>
       <CardFooter className="flex justify-between items-center text-muted-foreground">
         <div className="flex items-center space-x-4">

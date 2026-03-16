@@ -22,7 +22,7 @@ const formSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty.').max(280, 'Cannot exceed 280 characters.'),
 })
 
-export default function EditComment({ comment, user: initialUser }: { comment: any, user: any }) {
+export default function EditComment({ comment }: { comment: any }) {
   const { userId } = useUser()
   const [isEditing, setIsEditing] = useState(false)
   const [content, setContent] = useState(comment.content)

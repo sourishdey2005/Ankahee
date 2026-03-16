@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { getAuthUserId } from '@convex-dev/auth/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -10,9 +10,9 @@ import { api } from '../../../../convex/_generated/api'
 export const dynamic = 'force-dynamic'
 
 export default async function BookmarksPage() {
-  const { userId } = await auth()
+  const userId = await getAuthUserId()
   if (!userId) {
-    redirect('/feed')
+    redirect('/login')
   }
 
   const posts = await fetchQuery(api.posts.getBookmarkedPosts, { userId }) || [];

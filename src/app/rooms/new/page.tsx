@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { getAuthUserId } from '@convex-dev/auth/nextjs/server'
 import { redirect } from 'next/navigation'
 import NewRoomForm from './NewRoomForm'
 import { Button } from '@/components/ui/button'
@@ -6,10 +6,10 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function NewRoomPage() {
-  const { userId } = await auth()
+  const userId = await getAuthUserId()
 
   if (!userId) {
-    redirect('/feed')
+    redirect('/login')
   }
 
   return (

@@ -12,10 +12,13 @@ import VoidQuestion from './VoidQuestion'
 import BookmarkButton from './BookmarkButton'
 import { useMemo } from 'react'
 import Image from 'next/image'
+import { useUser } from '@/hooks/use-user'
 
 type PostWithDetails = any;
 
-export default function ConfessionCard({ post, user }: { post: PostWithDetails, user: any }) {
+export default function ConfessionCard({ post, user: propUser }: { post: PostWithDetails, user?: any }) {
+  const { user: authUser } = useUser()
+  const user = propUser || authUser
   const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
   const commentCount = Array.isArray(post.comments) ? post.comments.length : 0;
 

@@ -9,7 +9,7 @@ import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { useUser } from '@/hooks/use-user'
 
-export default function Poll({ poll, user }: { poll: any, user: any }) {
+export default function Poll({ poll }: { poll: any }) {
     const { userId } = useUser()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
