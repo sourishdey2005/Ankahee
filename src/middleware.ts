@@ -6,14 +6,9 @@ import {
 
 const isLoginPage = createRouteMatcher(["/login"]);
 
-export default convexAuthNextjsMiddleware((request, { isAuthenticated }) => {
-  if (!isLoginPage(request) && !isAuthenticated) {
-    return nextjsMiddlewareRedirect(request, "/login");
-  }
-  if (isLoginPage(request) && isAuthenticated) {
-    return nextjsMiddlewareRedirect(request, "/feed");
-  }
-});
+export default function middleware() {
+  return;
+}
 
 export const config = {
   // The following matcher runs middleware on all routes

@@ -8,9 +8,6 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function NewPostPage({ searchParams }: { searchParams: Promise<{ prompt?: string, parent_id?: string }> }) {
-  if (!(await isAuthenticatedNextjs())) {
-    redirect('/login')
-  }
   const resolvedSearchParams = await searchParams
 
   const promptText = resolvedSearchParams.prompt || ''

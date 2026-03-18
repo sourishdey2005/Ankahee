@@ -53,8 +53,8 @@ const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) =
 }
 
 import { ImageUpload } from '@/components/ImageUpload'
-import { useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { createPost } from '@/app/actions/posts'
+import { useUser } from '@/hooks/use-user'
 
 export default function NewPostForm({ promptText, parentId }: { promptText?: string, parentId?: string }) {
   const router = useRouter()
@@ -63,9 +63,8 @@ export default function NewPostForm({ promptText, parentId }: { promptText?: str
   const [suggestedMood, setSuggestedMood] = useState<string | null>(null)
   const [isSuggesting, setIsSuggesting] = useState(false)
   const [creationMode, setCreationMode] = useState<null | 'poll' | 'void'>(null)
-  const [storageId, setStorageId] = useState<string | undefined>()
-
-  const createConvexPost = useMutation(api.posts.createPost)
+  const [imageUrl, setImageUrl] = useState<string | undefined>()
+  const { user } = useUser()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -105,23 +104,29 @@ export default function NewPostForm({ promptText, parentId }: { promptText?: str
   }, [contentValue, debouncedSuggest])
 
   const onSubmit = async (values: FormValues) => {
-    setIsSuggesting(false); // Stop AI while submitting
+    if (!user) {
+      toast({ title: 'Error', description: 'You must be logged in to post.', variant: 'destructive' })
+      return;
+    }
+    
+    setIsSuggesting(false); 
     
     startTransition(async () => {
       try {
-        await createConvexPost({
+        const newPost = await createPost({
           content: values.content,
           mood: values.mood,
-          storageId: storageId as any,
-          parentId: parentId,
+          imageUrl: imageUrl, 
+          parentId: parentId ? parseInt(parentId) : undefined,
           isVoidQuestion: creationMode === 'void',
           pollOptionOne: values.pollOptionOne,
           pollOptionTwo: values.pollOptionTwo,
+          authorId: user.id, // Current Clerk/Auth user ID
         });
 
         toast({
           title: 'Success',
-          description: 'Your confession has been shared in real-time.',
+          description: 'Your confession has been shared persistently.',
         })
         router.push(parentId ? `/confession/${parentId}` : '/feed')
       } catch (error: any) {
@@ -270,7 +275,7 @@ export default function NewPostForm({ promptText, parentId }: { promptText?: str
 
         <div className="space-y-4">
           <FormLabel>Attach an Image (Optional)</FormLabel>
-          <ImageUpload onUpload={(id) => setStorageId(id)} />
+          <ImageUpload onUpload={(url) => setImageUrl(url)} />
         </div>
 
 

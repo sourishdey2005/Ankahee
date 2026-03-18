@@ -1,7 +1,7 @@
 'use client'
 
-import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useState, useEffect } from 'react'
+import { getLetters } from '@/app/actions/letters'
 import { Button } from '@/components/ui/button'
 import { MailPlus, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -10,14 +10,30 @@ import { useUser } from '@/hooks/use-user'
 
 export default function LettersPage() {
   const { userId } = useUser()
-  const letters = useQuery(api.letters.getLetters, userId ? { authorId: userId } : "skip")
+  const [letters, setLetters] = useState<any[] | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchLetters() {
+      if (!userId) return;
+      try {
+        const data = await getLetters(userId);
+        setLetters(data);
+      } catch (err) {
+        console.error('Failed to fetch letters:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchLetters();
+  }, [userId]);
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
       <div className="flex justify-between items-center mb-8 px-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-headline font-bold">Unsent Letters</h1>
-          <p className="text-muted-foreground text-sm">A space for words left unspoken. Letters expire after 1 day.</p>
+          <p className="text-muted-foreground text-sm">A space for words left unspoken. Letters expire after 72 hours.</p>
         </div>
         <Link href="/new/letter">
           <Button size="sm">
@@ -27,16 +43,16 @@ export default function LettersPage() {
         </Link>
       </div>
 
-      {!userId ? (
-        <div className="text-center py-20">Please log in to see your letters.</div>
-      ) : !letters ? (
+      {!userId && !isLoading ? (
+        <div className="text-center py-20">Please wait for user to load...</div>
+      ) : isLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : letters.length > 0 ? (
+      ) : (letters && letters.length > 0) ? (
         <div className="space-y-4 px-4">
-          {letters.map((letter) => (
-            <UnsentLetterCard key={letter._id} letter={letter} />
+          {letters.map((letter: any) => (
+            <UnsentLetterCard key={letter.id} letter={letter} />
           ))}
         </div>
       ) : (

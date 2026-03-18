@@ -25,18 +25,15 @@ const formSchema = z.object({
 })
 
 import { ImageUpload } from '@/components/ImageUpload'
-import { useMutation } from 'convex/react'
-import { api } from '../../../../convex/_generated/api'
 import { useState } from 'react'
+import { createLetter } from '@/app/actions/letters'
 
 export default function NewLetterForm() {
   const { userId } = useUser()
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
-  const [storageId, setStorageId] = useState<string | undefined>()
-
-  const createConvexLetter = useMutation(api.letters.createLetter)
+  const [imageUrl, setImageUrl] = useState<string | undefined>()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,17 +43,21 @@ export default function NewLetterForm() {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (!userId) return;
+    if (!userId) {
+      toast({ title: 'User not ready', description: 'Please wait a moment...', variant: 'destructive' });
+      return;
+    }
     startTransition(async () => {
       try {
-        await createConvexLetter({
+        await createLetter({
           content: values.content,
-          storageId: storageId as any,
+          authorId: userId,
+          imageUrl: imageUrl,
         });
         
         toast({
           title: 'Success',
-          description: 'Your letter has been posted in real-time.',
+          description: 'Your letter has been posted in the void (SQLite Edition).',
         })
         router.push('/letters')
       } catch (error: any) {
@@ -95,7 +96,7 @@ export default function NewLetterForm() {
 
         <div className="space-y-4">
           <FormLabel>Attach a Memory (Optional Image)</FormLabel>
-          <ImageUpload onUpload={(id) => setStorageId(id)} />
+          <ImageUpload onUpload={(url) => setImageUrl(url)} />
         </div>
 
         <Button

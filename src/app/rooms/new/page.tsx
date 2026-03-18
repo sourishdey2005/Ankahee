@@ -6,9 +6,6 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function NewRoomPage() {
-  if (!(await isAuthenticatedNextjs())) {
-    redirect('/login')
-  }
 
   return (
     <div className="container mx-auto max-w-2xl py-8">

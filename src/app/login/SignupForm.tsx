@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
+import { signInAction } from "@/app/actions/auth";
 
 const formSchema = z
   .object({
@@ -31,7 +31,6 @@ const formSchema = z
   });
 
 export default function SignupForm() {
-  const { signIn } = useAuthActions();
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
@@ -48,20 +47,18 @@ export default function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        await signIn("password", {
-          email: values.email,
-          password: values.password,
-          flow: "signUp",
-        });
-        toast({
-          title: "Account Created",
-          description: "Welcome to the digital sanctuary.",
-        });
-        router.push("/feed");
+        const result = await signInAction(values);
+        if (result.success) {
+          toast({
+            title: "Account Created",
+            description: "Welcome to the Ankahee.",
+          });
+          router.push("/feed");
+        }
       } catch (err: any) {
         toast({
           title: "Sign Up Failed",
-          description: err.message || "An unexpected error occurred. Please try again.",
+          description: err.message || "An unexpected error occurred while saving to SQLite.",
           variant: "destructive",
         });
       }

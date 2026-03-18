@@ -1,7 +1,6 @@
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import Countdown from './Countdown'
 import { Clock } from 'lucide-react'
-import Image from 'next/image'
 
 export default function UnsentLetterCard({ letter }: { letter: any }) {
   const expiresAt = letter.expiresAt || (letter._creationTime + (3 * 24 * 60 * 60 * 1000));
@@ -10,12 +9,13 @@ export default function UnsentLetterCard({ letter }: { letter: any }) {
     <Card className="bg-card/50 backdrop-blur-sm overflow-hidden border-primary/10">
       {letter.imageUrl && (
         <div className="relative aspect-auto w-full max-h-[400px] overflow-hidden">
-          <Image
+          <img
             src={letter.imageUrl}
             alt="Letter memory"
-            width={800}
-            height={400}
             className="w-full object-contain bg-muted/20"
+            onError={(e) => {
+                e.currentTarget.style.display = 'none';
+            }}
           />
         </div>
       )}

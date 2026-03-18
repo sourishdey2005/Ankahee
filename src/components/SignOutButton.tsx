@@ -1,16 +1,15 @@
 'use client'
 
-import { useAuthActions } from '@convex-dev/auth/react'
+import { signOutAction } from '@/app/actions/auth'
 import { LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { DropdownMenuItem } from './ui/dropdown-menu'
 
 export default function SignOutButton() {
-  const { signOut } = useAuthActions()
   const router = useRouter()
 
   const handleSignOut = async () => {
-    await signOut()
+    await signOutAction()
     router.push('/login')
   }
 

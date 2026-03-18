@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
+import { signInAction } from "@/app/actions/auth";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address."),
@@ -25,7 +25,6 @@ const formSchema = z.object({
 });
 
 export default function LoginForm() {
-  const { signIn } = useAuthActions();
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
@@ -41,20 +40,18 @@ export default function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        await signIn("password", {
-          email: values.email,
-          password: values.password,
-          flow: "signIn",
-        });
-        toast({
-          title: "Welcome Back",
-          description: "Successfully signed into the void.",
-        });
-        router.push("/feed");
+        const result = await signInAction(values);
+        if (result.success) {
+          toast({
+            title: "Welcome Back",
+            description: "Successfully signed into the void using SQLite.",
+          });
+          router.push("/feed");
+        }
       } catch (err: any) {
         toast({
           title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
+          description: "Invalid credentials recorded in SQLite.",
           variant: "destructive",
         });
       }

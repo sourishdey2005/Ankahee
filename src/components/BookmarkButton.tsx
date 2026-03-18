@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Bookmark } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { toggleBookmark } from '@/app/actions/interactions'
 import { useUser } from '@/hooks/use-user'
 
 export default function BookmarkButton({ postId, isBookmarked: initialIsBookmarked }: { postId: any, isBookmarked: boolean }) {
@@ -14,7 +13,6 @@ export default function BookmarkButton({ postId, isBookmarked: initialIsBookmark
   const { userId } = useUser()
   const [isPending, startTransition] = useTransition()
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked)
-  const toggleBookmark = useMutation(api.bookmarks.toggleBookmark)
 
   const handleToggleBookmark = () => {
     if (!userId) {
@@ -31,7 +29,7 @@ export default function BookmarkButton({ postId, isBookmarked: initialIsBookmark
       setIsBookmarked(newBookmarkState) // Optimistic update
 
       try {
-        await toggleBookmark({ postId, userId })
+        await toggleBookmark(postId, userId)
       } catch (err: any) {
         setIsBookmarked(!newBookmarkState) // Revert on error
         toast({

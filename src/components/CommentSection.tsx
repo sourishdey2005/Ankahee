@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useMemo } from 'react'
+import { useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -13,9 +13,7 @@ import { Separator } from '@/components/ui/separator'
 import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import EditComment from './EditComment'
-import { useMutation, useQuery } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { addComment } from '@/app/actions/interactions'
 import { useUser } from '@/hooks/use-user'
 
 const commentSchema = z.object({
@@ -32,11 +30,8 @@ export default function CommentSection({
   const { userId } = useUser()
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
-  const addComment = useMutation(api.comments.addComment)
   
-  // Use real-time query for comments
-  const convexComments = useQuery(api.comments.getCommentsByPost, { postId })
-  const comments = convexComments || initialComments || []
+  const comments = initialComments || []
 
   const form = useForm<z.infer<typeof commentSchema>>({
     resolver: zodResolver(commentSchema),
@@ -51,13 +46,14 @@ export default function CommentSection({
 
     startTransition(async () => {
       try {
-        await addComment({
+        await addComment(
           postId,
           userId,
-          content: values.content,
-          username: 'Anonymous',
-        })
+          'Anonymous',
+          values.content,
+        )
         form.reset()
+        toast({ title: 'Comment posted', description: 'Your whisper has been heard.' })
       } catch (err: any) {
         toast({ title: 'Error posting comment', description: err.message || 'Could not post comment.', variant: 'destructive' })
       }
@@ -106,7 +102,21 @@ export default function CommentSection({
       <div className="space-y-6">
         {comments.length > 0 ? (
           comments.map((comment: any) => (
-            <EditComment key={comment._id} comment={comment} />
+            <div key={comment.id} className="flex gap-4 p-4 rounded-lg bg-card/50 border border-white/5">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={generateAvatarDataUri(comment.authorId)} />
+                <AvatarFallback />
+              </Avatar>
+              <div className="flex-1 space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-primary">{comment.username}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(comment.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed">{comment.content}</p>
+              </div>
+            </div>
           ))
         ) : (
           <p className="text-muted-foreground text-center py-8">No comments yet. Be the first to reply.</p>

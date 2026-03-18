@@ -9,8 +9,7 @@ import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Loader2 } from 'lucide-react'
-import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { submitVoidAnswer } from '@/app/actions/interactions'
 import { useUser } from '@/hooks/use-user'
 
 const answerSchema = z.object({
@@ -25,7 +24,6 @@ export default function VoidQuestion({ postId, initialAnswers }: { postId: any, 
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
     const [isMounted, setIsMounted] = useState(false);
-    const addVoidAnswer = useMutation(api.void_answers.addVoidAnswer)
 
     useEffect(() => {
       setIsMounted(true);
@@ -75,11 +73,11 @@ export default function VoidQuestion({ postId, initialAnswers }: { postId: any, 
 
         startTransition(async () => {
             try {
-                await addVoidAnswer({ 
+                await submitVoidAnswer(
                     postId, 
                     userId,
-                    word: values.word 
-                });
+                    values.word 
+                );
                 form.reset();
             } catch (err: any) {
                 toast({

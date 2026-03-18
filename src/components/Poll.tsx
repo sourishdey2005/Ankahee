@@ -5,17 +5,15 @@ import { Button } from './ui/button'
 import { Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
-import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { voteInPoll } from '@/app/actions/interactions'
 import { useUser } from '@/hooks/use-user'
 
 export default function Poll({ poll }: { poll: any }) {
     const { userId } = useUser()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
-    const voteInPoll = useMutation(api.polls.voteInPoll)
 
-    const pollVotes = poll.pollVotes || []
+    const pollVotes = poll.votes || []
 
     const userVote = useMemo(() => {
         if (!userId) return null
@@ -23,13 +21,22 @@ export default function Poll({ poll }: { poll: any }) {
     }, [pollVotes, userId])
 
     const totalVotes = pollVotes.length
-    const optionOneVotes = pollVotes.filter((v: any) => v.selectedOption === 1).length
+    const optionOneVotes = pollVotes.filter((v: any) => v.optionIndex === 0).length
     const optionTwoVotes = totalVotes - optionOneVotes
 
     const optionOnePercentage = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0
     const optionTwoPercentage = totalVotes > 0 ? 100 - optionOnePercentage : 0
 
-    const handleVote = (option: 1 | 2) => {
+    // Parse options from JSON string
+    const options = useMemo(() => {
+        try {
+            return JSON.parse(poll.options);
+        } catch (e) {
+            return ["Option 1", "Option 2"];
+        }
+    }, [poll.options]);
+
+    const handleVote = (optionIdx: number) => {
         if (!userId) {
             toast({
                 title: "Authentication required",
@@ -41,11 +48,12 @@ export default function Poll({ poll }: { poll: any }) {
 
         startTransition(async () => {
             try {
-                await voteInPoll({ 
-                    pollId: poll._id, 
+                await voteInPoll(
+                    poll.id, 
                     userId,
-                    optionIndex: option - 1
-                })
+                    optionIdx,
+                    poll.postId
+                )
                 toast({
                     title: "Success",
                     description: "Your vote has been cast."
@@ -70,14 +78,14 @@ export default function Poll({ poll }: { poll: any }) {
                     <div className="relative h-8 w-full rounded-md overflow-hidden bg-secondary">
                         <div className="absolute h-full bg-primary/50 transition-all" style={{ width: `${optionOnePercentage}%` }}></div>
                         <div className="absolute inset-0 flex justify-between items-center px-3 text-sm">
-                            <span className={cn("font-medium", userVote?.selectedOption === 1 && "text-primary-foreground font-bold")}>{poll.optionOneText}</span>
+                            <span className={cn("font-medium", userVote?.optionIndex === 0 && "text-primary-foreground font-bold")}>{options[0]}</span>
                             <span className="font-bold">{optionOnePercentage}%</span>
                         </div>
                     </div>
                      <div className="relative h-8 w-full rounded-md overflow-hidden bg-secondary">
                         <div className="absolute h-full bg-accent transition-all" style={{ width: `${optionTwoPercentage}%` }}></div>
                          <div className="absolute inset-0 flex justify-between items-center px-3 text-sm">
-                            <span className={cn("font-medium", userVote?.selectedOption === 2 && "text-accent-foreground font-bold")}>{poll.optionTwoText}</span>
+                            <span className={cn("font-medium", userVote?.optionIndex === 1 && "text-accent-foreground font-bold")}>{options[1]}</span>
                             <span className="font-bold">{optionTwoPercentage}%</span>
                         </div>
                     </div>
@@ -86,13 +94,13 @@ export default function Poll({ poll }: { poll: any }) {
             ) : (
                 // Voting view
                 <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" onClick={() => handleVote(0)} disabled={isPending}>
+                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {options[0]}
+                    </Button>
                     <Button variant="outline" onClick={() => handleVote(1)} disabled={isPending}>
                         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {poll.optionOneText}
-                    </Button>
-                    <Button variant="outline" onClick={() => handleVote(2)} disabled={isPending}>
-                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {poll.optionTwoText}
+                        {options[1]}
                     </Button>
                 </div>
             )}

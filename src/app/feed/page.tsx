@@ -9,13 +9,11 @@ import { reflectionPrompts } from '@/lib/prompts'
 import { Card, CardContent } from '@/components/ui/card'
 import { stopwords } from '@/lib/stopwords'
 import CommunityWordCloud from '@/components/CommunityWordCloud'
-import { ConvexHttpClient } from "convex/browser"
-import { api } from '../../../convex/_generated/api'
+import { db, posts } from '@/db'
+import { eq, desc, and, gt } from 'drizzle-orm'
 
-export const revalidate = 0
-
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null
+import { purgeExpiredAction } from '@/app/actions/purge'
+export const revalidate = 60
 
 const processPostsForWordCloud = (posts: any[]) => {
   if (!posts?.length) return []
@@ -46,18 +44,37 @@ export default async function FeedPage({
 }: {
   searchParams: Promise<{ mood?: string; sort?: string }>
 }) {
+  // Purge expired items on every feed view (cached according to revalidate)
+  await purgeExpiredAction();
+  
   try {
     const resolvedParams = await searchParams
     const mood = resolvedParams?.mood
     const sort = resolvedParams?.sort
 
-    if (!convexUrl || !convex) {
-       throw new Error("NEXT_PUBLIC_CONVEX_URL is missing or invalid");
-    }
+    // Fetch posts for word cloud from SQLite
+    // Filter by mood if provided, and only get non-expired posts
+    const now = new Date();
+    const whereClause = mood 
+      ? and(eq(posts.mood, mood), gt(posts.expiresAt, now))
+      : gt(posts.expiresAt, now);
 
-    // Fetch posts for word cloud from Convex
-    const postsForWordCloud = await convex.query(api.posts.getPosts, { mood })
-    const wordCloudData = processPostsForWordCloud(postsForWordCloud)
+    const postsData = await db.query.posts.findMany({
+      where: whereClause,
+      with: {
+        comments: true,
+        reactions: true,
+        polls: {
+          with: {
+            votes: true,
+          }
+        },
+        bookmarks: true,
+        voidAnswers: true,
+      },
+      orderBy: [desc(posts.createdAt)],
+    });
+    const wordCloudData = processPostsForWordCloud(postsData)
 
     // Daily Prompt Logic
     const getDayOfYear = (date: Date) => {
@@ -81,7 +98,7 @@ export default async function FeedPage({
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-headline font-bold">The Void</h1>
             <div className="flex gap-2">
-               <Link href="/bookmarks">
+               <Link href="/account/bookmarks">
                  <Button variant="ghost" size="icon" className="rounded-full">
                    <Heart className="h-5 w-5" />
                  </Button>
@@ -208,8 +225,8 @@ export default async function FeedPage({
         </div>
 
         <ConfessionsList
+          posts={postsData}
           sort={sort}
-          mood={mood}
         />
 
         <Link href="/new">

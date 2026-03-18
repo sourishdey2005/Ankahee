@@ -11,18 +11,15 @@ import Poll from './Poll'
 import VoidQuestion from './VoidQuestion'
 import BookmarkButton from './BookmarkButton'
 import { useMemo } from 'react'
-import Image from 'next/image'
 import { useUser } from '@/hooks/use-user'
 
-type PostWithDetails = any;
-
-export default function ConfessionCard({ post, user: propUser }: { post: PostWithDetails, user?: any }) {
+export default function ConfessionCard({ post, user: propUser }: { post: any, user?: any }) {
   const { user: authUser } = useUser()
   const user = propUser || authUser
   const moodColor = post.mood ? moodColors[post.mood as MoodTag] || 'bg-secondary' : 'bg-secondary';
   const commentCount = Array.isArray(post.comments) ? post.comments.length : 0;
 
-  const expires_at = post.expiresAt || (post._creationTime ? post._creationTime + (24 * 60 * 60 * 1000) : Date.now() + (24 * 60 * 60 * 1000));
+  const expires_at = post.expiresAt ? new Date(post.expiresAt).getTime() : Date.now() + (24 * 60 * 60 * 1000);
   const isExpiringSoon = useMemo(() => {
     const timeLeft = expires_at - Date.now();
     return timeLeft > 0 && timeLeft < (60 * 60 * 1000);
@@ -37,7 +34,7 @@ export default function ConfessionCard({ post, user: propUser }: { post: PostWit
   }, [post.bookmarks, user]);
 
   return (
-    <Link href={`/confession/${post._id}`} className="block">
+    <Link href={`/confession/${post.id}`} className="block">
       <Card className={cn(
         "hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-sm",
         isExpiringSoon && "opacity-70 hover:opacity-100"
@@ -58,23 +55,26 @@ export default function ConfessionCard({ post, user: propUser }: { post: PostWit
         <CardContent className="space-y-4">
           {post.imageUrl && (
             <div className="relative aspect-video w-full overflow-hidden rounded-lg mb-4">
-              <Image
+              <img
                 src={post.imageUrl}
                 alt="Confession image"
-                fill
-                className="object-cover"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                    console.error('Image load failed');
+                    e.currentTarget.style.display = 'none';
+                }}
               />
             </div>
           )}
           <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
           {poll && !isVoidQuestion && user && (
             <div onClick={(e) => e.preventDefault()}>
-                <Poll poll={poll} user={user} />
+                <Poll poll={poll} />
             </div>
           )}
           {isVoidQuestion && user && (
             <div onClick={(e) => e.preventDefault()}>
-                <VoidQuestion postId={post._id} initialAnswers={post.void_answers || []} user={user} />
+                <VoidQuestion postId={post.id} initialAnswers={post.void_answers || []} />
             </div>
           )}
         </CardContent>
@@ -87,7 +87,7 @@ export default function ConfessionCard({ post, user: propUser }: { post: PostWit
             </div>
           </div>
           <div className="flex items-center space-x-2 text-sm">
-            {user && <BookmarkButton postId={post._id} isBookmarked={isBookmarked} />}
+            {user && <BookmarkButton postId={post.id} isBookmarked={isBookmarked} />}
           </div>
         </CardFooter>
       </Card>

@@ -25,18 +25,15 @@ const formSchema = z.object({
 })
 
 import { ImageUpload } from '@/components/ImageUpload'
-import { useMutation } from 'convex/react'
-import { api } from '../../../../convex/_generated/api'
 import { useState } from 'react'
+import { createRoom } from '@/app/actions/rooms'
 
 export default function NewRoomForm() {
   const { userId } = useUser()
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
-  const [storageId, setStorageId] = useState<string | undefined>()
-
-  const createConvexRoom = useMutation(api.rooms.createRoom)
+  const [imageUrl, setImageUrl] = useState<string | undefined>()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,20 +43,24 @@ export default function NewRoomForm() {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (!userId) return;
+    if (!userId) {
+        toast({ title: 'User not ready', description: 'Please wait...', variant: 'destructive' });
+        return;
+    }
     startTransition(async () => {
       try {
-        const roomId = await createConvexRoom({
+        const room = await createRoom({
           name: values.name,
+          createdBy: userId,
           isDM: false,
-          storageId: storageId as any,
+          imageUrl: imageUrl,
         });
 
         toast({
           title: 'Success',
-          description: 'Your room has been created in real-time.',
+          description: 'Your room has been created in the void.',
         })
-        router.push(`/rooms/${roomId}`)
+        router.push(`/rooms/${room.id}`)
       } catch (error: any) {
         toast({
           title: 'Error',
@@ -89,7 +90,7 @@ export default function NewRoomForm() {
 
         <div className="space-y-4">
           <FormLabel>Room Cover Image (Optional)</FormLabel>
-          <ImageUpload onUpload={(id) => setStorageId(id)} />
+          <ImageUpload onUpload={(url) => setImageUrl(url)} />
         </div>
 
         <Button

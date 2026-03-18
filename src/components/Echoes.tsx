@@ -11,15 +11,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from '@/lib/utils'
-import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { toggleReaction } from '@/app/actions/interactions'
 import { useUser } from '@/hooks/use-user'
 
 export default function Echoes({ post }: { post: any }) {
   const { userId } = useUser()
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
-  const toggleReaction = useMutation(api.reactions.toggleReaction)
 
   const reactions = post.reactions || []
 
@@ -54,11 +52,11 @@ export default function Echoes({ post }: { post: any }) {
 
     startTransition(async () => {
       try {
-        await toggleReaction({
-          postId: post._id,
-          authorId: userId,
-          reaction: reaction
-        })
+        await toggleReaction(
+          post.id,
+          userId,
+          reaction
+        )
       } catch (err: any) {
         toast({
           title: 'Error',

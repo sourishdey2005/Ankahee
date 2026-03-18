@@ -1,19 +1,33 @@
 'use client'
 
-import { useQuery } from 'convex/react'
-import { api } from '../../../../convex/_generated/api'
-import { notFound, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { getRoomById } from '@/app/actions/rooms'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Users, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Countdown from '@/components/Countdown'
 import RoomClient from './RoomClient'
-import { useId } from 'react'
 
 export default function RoomPage({ params }: { params: { id: string } }) {
-  const room = useQuery(api.rooms.getRoomById, { id: params.id as any });
+  const [room, setRoom] = useState<any | null>(undefined)
+  const [isLoading, setIsLoading] = useState(true)
 
-  if (room === undefined) {
+  useEffect(() => {
+    async function fetchRoom() {
+      try {
+        const data = await getRoomById(parseInt(params.id));
+        setRoom(data);
+      } catch (err) {
+        console.error('Failed to fetch room:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchRoom();
+  }, [params.id]);
+
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -25,10 +39,8 @@ export default function RoomPage({ params }: { params: { id: string } }) {
     return notFound();
   }
 
-  const expiresAt = (room as any).expiresAt || (room._creationTime + (48 * 60 * 60 * 1000));
-  const isDM = (room as any).isDM;
-  const pageTitle = isDM ? 'Direct Message' : (room as any).name;
-  const breadcrumbText = 'Back to Chats';
+  const expires_at = room.expiresAt || new Date();
+  const pageTitle = room.name;
 
   return (
     <div className="container mx-auto max-w-6xl py-8">
@@ -36,20 +48,20 @@ export default function RoomPage({ params }: { params: { id: string } }) {
         <Link href="/rooms">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {breadcrumbText}
+            Back to Chats
           </Button>
         </Link>
         <div className="w-full text-left sm:w-auto sm:text-right">
           <h1 className="text-2xl font-headline font-bold">{pageTitle}</h1>
           <p className="text-sm text-muted-foreground flex items-center justify-start sm:justify-end gap-2">
-            Expires <Countdown expiresAt={expiresAt.toString()} />
+            Expires <Countdown expiresAt={expires_at.toString()} />
           </p>
         </div>
       </div>
 
       <div className="border rounded-lg overflow-hidden mx-4 h-[calc(100vh-18rem)] sm:h-[calc(100vh-13rem)]">
         <RoomClient
-          room={{ ...room, id: room._id } as any}
+          room={room}
         />
       </div>
     </div>

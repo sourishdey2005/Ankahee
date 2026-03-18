@@ -1,54 +1,35 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import { Button } from "./ui/button";
-import { ImageIcon, X, Loader2 } from "lucide-react";
+import { ImageIcon, X, Loader2, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 
-export function ImageUpload({ onUpload }: { onUpload: (storageId: string | undefined) => void }) {
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+export function ImageUpload({ onUpload }: { onUpload: (url: string | undefined) => void }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedImage(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedImage) return;
-    
-    setIsUploading(true);
-    try {
-      const postUrl = await generateUploadUrl();
       
-      const result = await fetch(postUrl, {
-        method: "POST",
-        headers: { "Content-Type": selectedImage.type },
-        body: selectedImage,
-      });
-      
-      const { storageId } = await result.json();
-      onUpload(storageId);
-      // We don't clear state here, we let the parent handle success flow
-    } catch (error) {
-      console.error("Upload failed", error);
-    } finally {
-      setIsUploading(false);
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        onUpload(reader.result as string);
+        setIsProcessing(false);
+      };
+      reader.onerror = () => {
+        setIsProcessing(false);
+      };
     }
   };
 
   const clearSelection = () => {
-    setSelectedImage(null);
     setPreviewUrl(null);
     onUpload(undefined);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -76,11 +57,10 @@ export function ImageUpload({ onUpload }: { onUpload: (storageId: string | undef
         </Button>
       ) : (
         <div className="relative aspect-video rounded-lg overflow-hidden border">
-          <Image
+          <img
             src={previewUrl}
             alt="Upload preview"
-            fill
-            className="object-cover"
+            className="w-full h-full object-cover"
           />
           <button
             onClick={clearSelection}
@@ -90,15 +70,17 @@ export function ImageUpload({ onUpload }: { onUpload: (storageId: string | undef
           </button>
           
           <div className="absolute bottom-2 left-2 right-2">
-            <Button 
-              size="sm" 
-              className="w-full bg-background/80 hover:bg-background text-foreground backdrop-blur-sm"
-              onClick={handleUpload}
-              disabled={isUploading}
-            >
-              {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {isUploading ? "Uploading..." : "Confirm Image"}
-            </Button>
+            {isProcessing ? (
+                <div className="flex items-center justify-center gap-2 py-2 px-4 bg-background/80 backdrop-blur-md rounded-md">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-xs">Processing...</span>
+                </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 py-2 px-4 bg-green-500/20 backdrop-blur-md rounded-md border border-green-500/50">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span className="text-xs font-bold text-green-500">Image Attached</span>
+              </div>
+            )}
           </div>
         </div>
       )}

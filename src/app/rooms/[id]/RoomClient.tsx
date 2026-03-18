@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useRef, useMemo } from 'react'
+import { useState, useEffect, useTransition, useRef, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -13,9 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Send, LogIn, LogOut } from 'lucide-react'
-import { useMutation, useQuery } from 'convex/react'
-import { api } from '../../../../convex/_generated/api'
+import { Loader2, Send, LogIn } from 'lucide-react'
+import { joinRoom, sendRoomMessage, getRoomMessages, getRoomMembers } from '@/app/actions/rooms'
 import { useUser } from '@/hooks/use-user'
 
 const messageSchema = z.object({
@@ -32,14 +31,27 @@ export default function RoomClient({
     const { toast } = useToast()
     const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-    // Convex hooks
-    const messages = useQuery(api.rooms.getMessages, { roomId: room._id }) || []
-    const members = useQuery(api.rooms.getRoomMembers, { roomId: room._id }) || []
+    const [messages, setMessages] = useState<any[]>([])
+    const [members, setMembers] = useState<any[]>([])
     const isMember = useMemo(() => members.some(m => m.userId === userId), [members, userId])
 
-    const sendMessage = useMutation(api.rooms.sendMessage)
-    const joinRoom = useMutation(api.rooms.joinRoom)
-    const leaveRoom = useMutation(api.rooms.leaveRoom)
+    useEffect(() => {
+        const fetchAll = async () => {
+            try {
+                const [msgs, mems] = await Promise.all([
+                    getRoomMessages(room.id),
+                    getRoomMembers(room.id)
+                ]);
+                setMessages(msgs);
+                setMembers(mems);
+            } catch (err) {
+                console.error('Room fetch error:', err);
+            }
+        };
+        fetchAll();
+        const timer = setInterval(fetchAll, 3000); // Polling every 3s as fallback for real-time
+        return () => clearInterval(timer);
+    }, [room.id]);
 
     const form = useForm<z.infer<typeof messageSchema>>({
         resolver: zodResolver(messageSchema),
@@ -50,22 +62,10 @@ export default function RoomClient({
         if (!userId) return;
         startTransition(async () => {
             try {
-                await joinRoom({ roomId: room._id })
+                await joinRoom(room.id, userId)
                 toast({ title: 'Success', description: 'You have joined the room.' })
             } catch (err: any) {
                 toast({ title: 'Error', description: err.message || 'Could not join room.', variant: 'destructive' })
-            }
-        })
-    }
-
-    const handleLeave = () => {
-        if (!userId) return;
-        startTransition(async () => {
-            try {
-                await leaveRoom({ roomId: room._id })
-                toast({ title: 'Success', description: 'You have left the room.' })
-            } catch (err: any) {
-                toast({ title: 'Error', description: err.message || 'Could not leave room.', variant: 'destructive' })
             }
         })
     }
@@ -76,7 +76,7 @@ export default function RoomClient({
         form.reset()
         startTransition(async () => {
             try {
-                await sendMessage({ roomId: room._id, content })
+                await sendRoomMessage(room.id, userId, content)
             } catch (err: any) {
                 toast({
                     title: 'Failed to send message',
@@ -92,11 +92,11 @@ export default function RoomClient({
             <div className="flex-1 flex flex-col">
                 <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                     <div className="space-y-6">
-                        {messages.map((msg: any) => {
+                        {[...messages].reverse().map((msg: any) => {
                             const commenterColor = generateHslColorFromString(msg.authorId, 50, 60);
                             const avatarUri = generateAvatarDataUri(msg.authorId);
                             return (
-                                <div key={msg._id} className="flex items-start gap-4 group">
+                                <div key={msg.id} className="flex items-start gap-4 group">
                                     <Avatar className="h-10 w-10">
                                         <AvatarImage src={avatarUri} />
                                         <AvatarFallback />
@@ -157,7 +157,7 @@ export default function RoomClient({
                                 const memberAvatarUri = generateAvatarDataUri(member.userId);
                                 const isCurrentUser = member.userId === userId;
                                 return (
-                                    <div key={member._id} className="flex items-center gap-2">
+                                    <div key={member.id} className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={memberAvatarUri} />
                                             <AvatarFallback />
@@ -171,12 +171,6 @@ export default function RoomClient({
                         </div>
                     </ScrollArea>
                 </div>
-                {isMember && (
-                    <Button variant="outline" onClick={handleLeave} disabled={isPending}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Leave Room
-                    </Button>
-                )}
             </aside>
         </div>
     )
