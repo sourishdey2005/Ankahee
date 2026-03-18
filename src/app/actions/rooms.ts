@@ -85,36 +85,45 @@ export async function getRoomMembers(roomId: number) {
 }
 
 export async function getOrCreateDMAction(userA: string, userB: string) {
+  if (!userA || !userB) throw new Error('Missing user IDs');
   const dmKey = [userA, userB].sort().join(':');
   
-  // 1. Check if existing DM room exists
-  const [existing] = await db.select().from(rooms).where(
-    and(eq(rooms.isDM, true), eq(rooms.dmKey, dmKey))
-  ).limit(1);
-  
-  if (existing) {
-    // Check if expired? Actually our queries handle gt(expiresAt, now)
-    return existing;
+  try {
+    // 1. Check if existing DM room exists
+    const [existing] = await db.select().from(rooms).where(
+      and(eq(rooms.isDM, true), eq(rooms.dmKey, dmKey))
+    ).limit(1);
+    
+    if (existing) {
+      return { id: existing.id };
+    }
+    
+    // 2. Create new DM room
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 12); // DMs expire in 12 hours
+    
+    const [newRoom] = await db.insert(rooms).values({
+      name: `Private Chat`,
+      createdBy: userA,
+      isDM: true,
+      dmKey,
+      expiresAt,
+    }).returning();
+    
+    // Add both members
+    try {
+        await db.insert(roomMembers).values([
+            { roomId: newRoom.id, userId: userA },
+            { roomId: newRoom.id, userId: userB },
+        ]);
+    } catch (e) {
+        console.warn('Member insertion warning (likely duplicate):', e);
+    }
+    
+    revalidatePath('/rooms');
+    return { id: newRoom.id };
+  } catch (err) {
+    console.error('Critical DM Action Error:', err);
+    throw err;
   }
-  
-  // 2. Create new DM room
-  const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 12); // DMs expire in 12 hours
-  
-  const [newRoom] = await db.insert(rooms).values({
-    name: `Private Chat`,
-    createdBy: userA,
-    isDM: true,
-    dmKey,
-    expiresAt,
-  }).returning();
-  
-  // Add both members
-  await db.insert(roomMembers).values([
-    { roomId: newRoom.id, userId: userA },
-    { roomId: newRoom.id, userId: userB },
-  ]);
-  
-  revalidatePath('/rooms');
-  return newRoom;
 }

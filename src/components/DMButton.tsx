@@ -41,11 +41,19 @@ export function DMButton({
 
     setIsPending(true);
     try {
-      const room = await getOrCreateDMAction(user.id, targetUserId);
-      router.push(`/rooms/${room.id}`);
-    } catch (err) {
+      const result = await getOrCreateDMAction(user.id, targetUserId);
+      if (result && result.id) {
+        router.push(`/rooms/${result.id}`);
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (err: any) {
       console.error('DM Error:', err);
-      toast({ title: "Error", description: "Failed to open private chat.", variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: err.message || "Failed to open private chat.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsPending(false);
     }
