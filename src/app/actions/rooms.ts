@@ -62,7 +62,7 @@ export async function joinRoom(roomId: number, userId: string) {
 export async function getRoomMessages(roomId: number) {
   return await db.select().from(roomMessages).where(
     eq(roomMessages.roomId, roomId)
-  ).orderBy(desc(roomMessages.createdAt));
+  ).orderBy(desc(roomMessages.id));
 }
 
 export async function sendRoomMessage(roomId: number, authorId: string, content: string) {

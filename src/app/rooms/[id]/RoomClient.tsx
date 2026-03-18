@@ -30,12 +30,29 @@ export default function RoomClient({
     const { userId } = useUser()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
-    const scrollAreaRef = useRef<HTMLDivElement>(null)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
 
     const [messages, setMessages] = useState<any[]>([])
     const [members, setMembers] = useState<any[]>([])
 
-    // DM Special: If it's a DM and the current user's ID is in the DM key, they are a member
+    // Auto-scroll to bottom of chat
+    const scrollToBottom = (instant = false) => {
+        if (scrollContainerRef.current) {
+            const scrollElement = scrollContainerRef.current.querySelector('[data-radix-scroll-area-viewport]');
+            if (scrollElement) {
+                scrollElement.scrollTo({
+                    top: scrollElement.scrollHeight,
+                    behavior: instant ? 'auto' : 'smooth'
+                });
+            }
+        }
+    }
+
+    // Scroll when messages update
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages.length]);
+
     const isMember = useMemo(() => {
         if (!userId) return false;
         if (room.isDM && room.dmKey) {
@@ -51,14 +68,15 @@ export default function RoomClient({
                     getRoomMessages(room.id),
                     getRoomMembers(room.id)
                 ]);
-                setMessages(msgs);
-                setMembers(mems);
+                // Only update if we have new messages or members
+                setMessages(prev => (JSON.stringify(prev) !== JSON.stringify(msgs) ? msgs : prev));
+                setMembers(prev => (JSON.stringify(prev) !== JSON.stringify(mems) ? mems : prev));
             } catch (err) {
                 console.error('Room fetch error:', err);
             }
         };
         fetchAll();
-        const timer = setInterval(fetchAll, 3000); // Polling every 3s as fallback for real-time
+        const timer = setInterval(fetchAll, 3000); // Polling every 3s
         return () => clearInterval(timer);
     }, [room.id]);
 
@@ -83,24 +101,38 @@ export default function RoomClient({
         if (!userId) return;
         const content = values.content
         form.reset()
+
+        // 🚀 Optimistic update: show message immediately
+        const optimisticMsg = {
+           id: Date.now(), // temporary
+           authorId: userId,
+           content,
+           createdAt: new Date().toISOString(),
+           isPending: true
+        };
+        setMessages(prev => [optimisticMsg, ...prev]);
+
         startTransition(async () => {
             try {
-                await sendRoomMessage(room.id, userId, content)
+                await sendRoomMessage(room.id, userId, content);
+                // The next poll will replace this optimistic message with real one
             } catch (err: any) {
                 toast({
                     title: 'Failed to send message',
                     description: err.message || 'Could not send message.',
                     variant: 'destructive',
                 })
+                // Remove the failed message
+                setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
             }
         })
     }
 
     return (
         <div className="flex h-full min-h-[500px] bg-background">
-            <div className="flex-1 flex flex-col border-r">
-                <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-                    <div className="space-y-6">
+            <div className="flex-1 flex flex-col border-r relative h-full overflow-hidden">
+                <ScrollArea className="flex-1 p-4" ref={scrollContainerRef}>
+                    <div className="space-y-6 pb-20">
                         {messages.length === 0 && (
                              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
                                 <Send className="h-12 w-12 mb-4" />
@@ -113,7 +145,10 @@ export default function RoomClient({
                             const isMe = msg.authorId === userId;
 
                             return (
-                                <div key={msg.id} className="flex items-start gap-4 group">
+                                <div key={msg.id} className={cn(
+                                    "flex items-start gap-4 group transition-opacity",
+                                    msg.isPending && "opacity-50"
+                                )}>
                                     <Avatar className="h-10 w-10">
                                         <AvatarImage src={avatarUri} />
                                         <AvatarFallback />
@@ -139,7 +174,7 @@ export default function RoomClient({
                     </div>
                 </ScrollArea>
                 
-                <div className="p-4 border-t bg-card/30">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-card/80 backdrop-blur-md">
                     {isMember ? (
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-4">
@@ -149,19 +184,19 @@ export default function RoomClient({
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
                                             <FormControl>
-                                                <Input autoComplete="off" placeholder="Speak your mind..." {...field} className="bg-background border-primary/20 focus:border-primary" />
+                                                <Input autoComplete="off" placeholder="Speak your mind..." {...field} className="bg-background border-primary/20 focus:border-primary h-10" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                <Button type="submit" size="icon" disabled={isPending} className="bg-primary hover:bg-primary/90">
+                                <Button type="submit" size="icon" disabled={isPending} className="bg-primary hover:bg-primary/90 h-10 w-10">
                                     {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                 </Button>
                             </form>
                         </Form>
                     ) : (
-                        <div className="flex items-center justify-center py-2">
+                        <div className="flex items-center justify-center py-2 h-10">
                              <Button onClick={handleJoin} disabled={isPending} variant="secondary" className="w-full">
                                 <LogIn className="mr-2 h-4 w-4" />
                                 Join Room to Chat
@@ -201,4 +236,8 @@ export default function RoomClient({
             </aside>
         </div>
     )
+}
+
+function cn(...inputs: any[]) {
+    return inputs.filter(Boolean).join(' ');
 }
