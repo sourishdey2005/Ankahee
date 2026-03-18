@@ -33,11 +33,22 @@ export async function createRoom(values: {
   return newRoom;
 }
 
-export async function getRooms() {
+export async function getRooms(userId?: string) {
   const now = new Date();
-  return await db.select().from(rooms).where(
+  
+  // Fetch all rooms that haven't expired
+  const allRooms = await db.select().from(rooms).where(
     gt(rooms.expiresAt, now)
   ).orderBy(desc(rooms.createdAt));
+  
+  if (!userId) {
+    return allRooms.filter(r => !r.isDM);
+  }
+  
+  // For signed-in users, show public rooms + DMs they are in
+  const userRoomIds = (await db.select().from(roomMembers).where(eq(roomMembers.userId, userId))).map(m => m.roomId);
+  
+  return allRooms.filter(r => !r.isDM || userRoomIds.includes(r.id));
 }
 
 export async function joinRoom(roomId: number, userId: string) {
@@ -71,4 +82,39 @@ export async function getRoomById(id: number) {
 
 export async function getRoomMembers(roomId: number) {
   return await db.select().from(roomMembers).where(eq(roomMembers.roomId, roomId));
+}
+
+export async function getOrCreateDMAction(userA: string, userB: string) {
+  const dmKey = [userA, userB].sort().join(':');
+  
+  // 1. Check if existing DM room exists
+  const [existing] = await db.select().from(rooms).where(
+    and(eq(rooms.isDM, true), eq(rooms.dmKey, dmKey))
+  ).limit(1);
+  
+  if (existing) {
+    // Check if expired? Actually our queries handle gt(expiresAt, now)
+    return existing;
+  }
+  
+  // 2. Create new DM room
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 12); // DMs expire in 12 hours
+  
+  const [newRoom] = await db.insert(rooms).values({
+    name: `Private Chat`,
+    createdBy: userA,
+    isDM: true,
+    dmKey,
+    expiresAt,
+  }).returning();
+  
+  // Add both members
+  await db.insert(roomMembers).values([
+    { roomId: newRoom.id, userId: userA },
+    { roomId: newRoom.id, userId: userB },
+  ]);
+  
+  revalidatePath('/rooms');
+  return newRoom;
 }

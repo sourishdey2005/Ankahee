@@ -1,21 +1,31 @@
-import { convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ArchivedPostCard from '@/components/ArchivedPostCard'
-import { fetchQuery } from 'convex/nextjs'
-import { api } from '../../../../convex/_generated/api'
+import { cookies } from 'next/headers'
+import { db, posts } from '@/db'
+import { eq, desc, and, lte } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ArchivePage() {
-  const token = await convexAuthNextjsToken()
-  if (!token) {
+  const cookieStore = await cookies()
+  const userId = cookieStore.get('ankahee_session')?.value
+  
+  if (!userId) {
     redirect('/login')
   }
 
-  const archivedPosts = await fetchQuery(api.posts.getArchivedPosts, {}, { token }) || [];
+  const now = new Date();
+  const archivedPosts = await db.query.posts.findMany({
+    where: and(eq(posts.authorId, userId), lte(posts.expiresAt, now)),
+    with: {
+        comments: true,
+        reactions: true,
+    },
+    orderBy: [desc(posts.createdAt)]
+  }) || [];
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
@@ -35,7 +45,7 @@ export default async function ArchivePage() {
         {archivedPosts.length > 0 ? (
           <div className="space-y-4">
             {archivedPosts.map((post: any) => (
-              <ArchivedPostCard key={post._id} post={post} />
+              <ArchivedPostCard key={post.id} post={post} />
             ))}
           </div>
         ) : (

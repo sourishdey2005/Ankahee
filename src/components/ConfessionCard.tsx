@@ -12,6 +12,7 @@ import VoidQuestion from './VoidQuestion'
 import BookmarkButton from './BookmarkButton'
 import { useMemo } from 'react'
 import { useUser } from '@/hooks/use-user'
+import { DMButton } from './DMButton'
 
 export default function ConfessionCard({ post, user: propUser }: { post: any, user?: any }) {
   const { user: authUser } = useUser()
@@ -57,10 +58,9 @@ export default function ConfessionCard({ post, user: propUser }: { post: any, us
             <div className="relative aspect-video w-full overflow-hidden rounded-lg mb-4">
               <img
                 src={post.imageUrl}
-                alt="Confession image"
+                alt="Confession"
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                    console.error('Image load failed');
                     e.currentTarget.style.display = 'none';
                 }}
               />
@@ -68,13 +68,13 @@ export default function ConfessionCard({ post, user: propUser }: { post: any, us
           )}
           <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
           {poll && !isVoidQuestion && user && (
-            <div onClick={(e) => e.preventDefault()}>
+            <div onClick={(e) => e.preventDefault()} onKeyDown={(e) => e.stopPropagation()}>
                 <Poll poll={poll} />
             </div>
           )}
           {isVoidQuestion && user && (
-            <div onClick={(e) => e.preventDefault()}>
-                <VoidQuestion postId={post.id} initialAnswers={post.void_answers || []} />
+            <div onClick={(e) => e.preventDefault()} onKeyDown={(e) => e.stopPropagation()}>
+                <VoidQuestion postId={post.id} initialAnswers={post.voidAnswers || []} />
             </div>
           )}
         </CardContent>
@@ -85,6 +85,11 @@ export default function ConfessionCard({ post, user: propUser }: { post: any, us
               <MessageSquare className="h-4 w-4" />
               <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
             </div>
+            {post.authorId && user && user.id !== post.authorId && (
+              <div onClick={(e) => e.preventDefault()} onKeyDown={(e) => e.stopPropagation()}>
+                 <DMButton targetUserId={post.authorId} size="xs" variant="ghost" label="" />
+              </div>
+            )}
           </div>
           <div className="flex items-center space-x-2 text-sm">
             {user && <BookmarkButton postId={post.id} isBookmarked={isBookmarked} />}

@@ -1,21 +1,40 @@
-import { convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ConfessionCard from '@/components/ConfessionCard'
-import { fetchQuery } from 'convex/nextjs'
-import { api } from '../../../../convex/_generated/api'
+import { cookies } from 'next/headers'
+import { db, bookmarks, posts } from '@/db'
+import { eq, desc, and, gt, inArray } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
 export default async function BookmarksPage() {
-  const token = await convexAuthNextjsToken()
-  if (!token) {
+  const cookieStore = await cookies()
+  const userId = cookieStore.get('ankahee_session')?.value
+  
+  if (!userId) {
     redirect('/login')
   }
   
-  const posts = await fetchQuery(api.posts.getBookmarkedPosts, {}, { token }) || [];
+  // Fetch bookmarked posts via SQLite
+  const userBookmarks = await db.select().from(bookmarks).where(eq(bookmarks.userId, userId));
+  const postIds = userBookmarks.map(b => b.postId);
+  
+  let bookmarkedPosts: any[] = [];
+  if (postIds.length > 0) {
+    const now = new Date();
+    bookmarkedPosts = await db.query.posts.findMany({
+      where: and(inArray(posts.id, postIds), gt(posts.expiresAt, now)),
+      with: {
+        comments: true,
+        reactions: true,
+        polls: true,
+        bookmarks: true,
+      },
+      orderBy: [desc(posts.createdAt)]
+    });
+  }
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
@@ -32,10 +51,10 @@ export default async function BookmarksPage() {
           <p className="text-muted-foreground">A private list of your saved confessions. Bookmarks are removed when a post expires.</p>
         </div>
 
-        {posts.length > 0 ? (
+        {bookmarkedPosts.length > 0 ? (
           <div className="space-y-4">
-            {posts.map((post: any) => (
-              <ConfessionCard key={post._id} post={post} />
+            {bookmarkedPosts.map((post: any) => (
+              <ConfessionCard key={post.id} post={post} />
             ))}
           </div>
         ) : (

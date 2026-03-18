@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Loader2, Send, LogIn } from 'lucide-react'
 import { joinRoom, sendRoomMessage, getRoomMessages, getRoomMembers } from '@/app/actions/rooms'
 import { useUser } from '@/hooks/use-user'
+import { DMButton } from '@/components/DMButton'
 
 const messageSchema = z.object({
     content: z.string().min(1, 'Message cannot be empty.'),
@@ -88,13 +89,15 @@ export default function RoomClient({
     }
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full min-h-[600px]">
             <div className="flex-1 flex flex-col">
                 <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                     <div className="space-y-6">
                         {[...messages].reverse().map((msg: any) => {
                             const commenterColor = generateHslColorFromString(msg.authorId, 50, 60);
                             const avatarUri = generateAvatarDataUri(msg.authorId);
+                            const isMe = msg.authorId === userId;
+
                             return (
                                 <div key={msg.id} className="flex items-start gap-4 group">
                                     <Avatar className="h-10 w-10">
@@ -103,11 +106,16 @@ export default function RoomClient({
                                     </Avatar>
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 text-sm">
-                                            <span className="font-semibold" style={{ color: commenterColor }}>Anonymous</span>
+                                            <span className="font-semibold" style={{ color: commenterColor }}>
+                                                Anonymous {isMe && '(You)'}
+                                            </span>
                                             <span className="text-muted-foreground">·</span>
-                                            <span className="text-muted-foreground">
+                                            <span className="text-muted-foreground mr-2">
                                                 {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                                             </span>
+                                            {!isMe && userId && (
+                                                <DMButton targetUserId={msg.authorId} size="xs" variant="ghost" label="" />
+                                            )}
                                         </div>
                                         <p className="text-foreground/90 mt-1">{msg.content}</p>
                                     </div>
@@ -157,14 +165,19 @@ export default function RoomClient({
                                 const memberAvatarUri = generateAvatarDataUri(member.userId);
                                 const isCurrentUser = member.userId === userId;
                                 return (
-                                    <div key={member.id} className="flex items-center gap-2">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={memberAvatarUri} />
-                                            <AvatarFallback />
-                                        </Avatar>
-                                        <span className={`text-sm font-medium ${isCurrentUser ? 'text-primary' : ''}`}>
-                                            Anonymous {isCurrentUser && '(You)'}
-                                        </span>
+                                    <div key={member.id} className="flex items-center gap-2 justify-between group">
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={memberAvatarUri} />
+                                                <AvatarFallback />
+                                            </Avatar>
+                                            <span className={`text-sm font-medium ${isCurrentUser ? 'text-primary' : ''}`}>
+                                                Anon {isCurrentUser && '(You)'}
+                                            </span>
+                                        </div>
+                                        {!isCurrentUser && userId && (
+                                            <DMButton targetUserId={member.userId} size="xs" variant="ghost" label="" />
+                                        )}
                                     </div>
                                 )
                             })}
