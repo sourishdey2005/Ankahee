@@ -98,32 +98,31 @@ export async function getOrCreateDMAction(userA: string, userB: string) {
       return { id: existing.id };
     }
     
-    // 2. Create new DM room
+    // 2. Create new DM room in a transaction
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 12); // DMs expire in 12 hours
+    expiresAt.setHours(expiresAt.getHours() + 12);
     
-    const [newRoom] = await db.insert(rooms).values({
-      name: `Private Chat`,
-      createdBy: userA,
-      isDM: true,
-      dmKey,
-      expiresAt,
-    }).returning();
-    
-    // Add both members
-    try {
-        await db.insert(roomMembers).values([
-            { roomId: newRoom.id, userId: userA },
-            { roomId: newRoom.id, userId: userB },
-        ]);
-    } catch (e) {
-        console.warn('Member insertion warning (likely duplicate):', e);
-    }
+    const result = await db.transaction(async (tx) => {
+      const [newRoom] = await tx.insert(rooms).values({
+        name: `Private Chat`,
+        createdBy: userA,
+        isDM: true,
+        dmKey,
+        expiresAt,
+      }).returning();
+      
+      await tx.insert(roomMembers).values([
+        { roomId: newRoom.id, userId: userA },
+        { roomId: newRoom.id, userId: userB },
+      ]);
+      
+      return newRoom;
+    });
     
     revalidatePath('/rooms');
-    return { id: newRoom.id };
-  } catch (err) {
+    return { id: result.id };
+  } catch (err: any) {
     console.error('Critical DM Action Error:', err);
-    throw err;
+    throw new Error(err.message || 'Failed to create private chat session.');
   }
 }

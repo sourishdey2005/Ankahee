@@ -34,7 +34,15 @@ export default function RoomClient({
 
     const [messages, setMessages] = useState<any[]>([])
     const [members, setMembers] = useState<any[]>([])
-    const isMember = useMemo(() => members.some(m => m.userId === userId), [members, userId])
+
+    // DM Special: If it's a DM and the current user's ID is in the DM key, they are a member
+    const isMember = useMemo(() => {
+        if (!userId) return false;
+        if (room.isDM && room.dmKey) {
+            return room.dmKey.split(':').includes(userId);
+        }
+        return members.some(m => m.userId === userId);
+    }, [members, userId, room.isDM, room.dmKey])
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -89,10 +97,16 @@ export default function RoomClient({
     }
 
     return (
-        <div className="flex h-full min-h-[600px]">
-            <div className="flex-1 flex flex-col">
+        <div className="flex h-full min-h-[500px] bg-background">
+            <div className="flex-1 flex flex-col border-r">
                 <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                     <div className="space-y-6">
+                        {messages.length === 0 && (
+                             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
+                                <Send className="h-12 w-12 mb-4" />
+                                <p>Begin your conversation in the void...</p>
+                             </div>
+                        )}
                         {[...messages].reverse().map((msg: any) => {
                             const commenterColor = generateHslColorFromString(msg.authorId, 50, 60);
                             const avatarUri = generateAvatarDataUri(msg.authorId);
@@ -124,8 +138,9 @@ export default function RoomClient({
                         })}
                     </div>
                 </ScrollArea>
-                {isMember ? (
-                    <div className="p-4 border-t">
+                
+                <div className="p-4 border-t bg-card/30">
+                    {isMember ? (
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-4">
                                 <FormField
@@ -134,44 +149,43 @@ export default function RoomClient({
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
                                             <FormControl>
-                                                <Input autoComplete="off" placeholder="Speak your mind..." {...field} />
+                                                <Input autoComplete="off" placeholder="Speak your mind..." {...field} className="bg-background border-primary/20 focus:border-primary" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                <Button type="submit" size="icon" disabled={isPending}>
+                                <Button type="submit" size="icon" disabled={isPending} className="bg-primary hover:bg-primary/90">
                                     {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                 </Button>
                             </form>
                         </Form>
-                    </div>
-                ) : (
-                    <div className="p-4 border-t flex items-center justify-center">
-                        <Button onClick={handleJoin} disabled={isPending}>
-                            <LogIn className="mr-2 h-4 w-4" />
-                            Join Room to Chat
-                        </Button>
-                    </div>
-                )}
+                    ) : (
+                        <div className="flex items-center justify-center py-2">
+                             <Button onClick={handleJoin} disabled={isPending} variant="secondary" className="w-full">
+                                <LogIn className="mr-2 h-4 w-4" />
+                                Join Room to Chat
+                            </Button>
+                        </div>
+                    )}
+                </div>
             </div>
-            <aside className="hidden md:flex w-64 border-l p-4 flex-col space-y-4">
+            <aside className="hidden md:flex w-64 p-4 flex-col space-y-4">
                 <div>
-                    <h3 className="text-lg font-semibold mb-2">Members ({members.length})</h3>
-                    <ScrollArea className="h-64">
-                        <div className="space-y-2">
+                    <h3 className="text-lg font-headline font-bold mb-4">In this Void ({members.length})</h3>
+                    <ScrollArea className="h-[400px]">
+                        <div className="space-y-3">
                             {members.map((member: any) => {
-                                const memberColor = generateHslColorFromString(member.userId, 50, 60);
                                 const memberAvatarUri = generateAvatarDataUri(member.userId);
                                 const isCurrentUser = member.userId === userId;
                                 return (
-                                    <div key={member.id} className="flex items-center gap-2 justify-between group">
+                                    <div key={member.userId} className="flex items-center gap-3 justify-between group">
                                         <div className="flex items-center gap-2">
-                                            <Avatar className="h-8 w-8">
+                                            <Avatar className="h-8 w-8 border border-white/10">
                                                 <AvatarImage src={memberAvatarUri} />
                                                 <AvatarFallback />
                                             </Avatar>
-                                            <span className={`text-sm font-medium ${isCurrentUser ? 'text-primary' : ''}`}>
+                                            <span className={`text-sm font-medium ${isCurrentUser ? 'text-primary' : 'text-foreground/70'}`}>
                                                 Anon {isCurrentUser && '(You)'}
                                             </span>
                                         </div>
