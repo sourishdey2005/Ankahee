@@ -44,14 +44,14 @@ export default function LoginForm() {
         if (result.success) {
           toast({
             title: "Welcome Back",
-            description: "Successfully signed into the void using SQLite.",
+            description: "Welcome back to the Ankahee.",
           });
           router.push("/feed");
         }
       } catch (err: any) {
         toast({
           title: "Login Failed",
-          description: "Invalid credentials recorded in SQLite.",
+          description: "Invalid credentials.",
           variant: "destructive",
         });
       }
