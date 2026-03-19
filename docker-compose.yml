@@ -1,0 +1,15 @@
+services:
+  ankahee:
+    build: .
+    ports:
+      - "9002:9002"
+    env_file:
+      - .env.local
+    environment:
+      - PORT=9002
+      - TURSO_DATABASE_URL=file:/app/data/local.db
+    volumes:
+      - ankahee_data:/app/data
+
+volumes:
+  ankahee_data:

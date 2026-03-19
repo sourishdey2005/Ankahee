@@ -1,6 +1,6 @@
 'use server';
 
-import { db, posts, letters, rooms, roomMessages, comments, reactions, polls, pollVotes, bookmarks, voidAnswers } from '@/db';
+import { db, posts, letters, rooms, stories } from '@/db';
 import { lte } from 'drizzle-orm';
 
 /**
@@ -12,18 +12,25 @@ export async function purgeExpiredAction() {
   
   try {
     // 1. Delete expired posts
-    // Note: SQLite foreign keys with ON DELETE CASCADE will handle related data 
-    // IF foreign keys are enabled. My migration script uses CASCADE.
     await db.delete(posts).where(lte(posts.expiresAt, now));
     
     // 2. Delete expired letters 
     await db.delete(letters).where(lte(letters.expiresAt, now));
     
     // 3. Delete expired rooms
-    await db.delete(rooms).where(lte(rooms.expiresAt, now));
-    
-    // 4. Cleanup orphaned room messages (if needed)
-    // Actually, CASCADE should handle this if defined correctly.
+    // We wrap individual deletes in try/catch to prevent one table error from breaking everything
+    try {
+      await db.delete(rooms).where(lte(rooms.expiresAt, now));
+    } catch (e) {
+      console.warn("Could not purge rooms, table may not exist yet:", e);
+    }
+
+    // 4. Delete expired stories
+    try {
+      await db.delete(stories).where(lte(stories.expiresAt, now));
+    } catch (e) {
+      console.warn("Could not purge stories, table may not exist yet:", e);
+    }
     
     return { success: true };
   } catch (err) {
@@ -31,3 +38,4 @@ export async function purgeExpiredAction() {
     return { success: false, error: err };
   }
 }
+

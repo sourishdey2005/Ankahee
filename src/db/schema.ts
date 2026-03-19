@@ -204,5 +204,7 @@ export const stories = sqliteTable('stories', {
   authorId: text('author_id').notNull(),
   authorName: text('author_name').notNull(),
   imageUrl: text('image_url'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
 });
+
