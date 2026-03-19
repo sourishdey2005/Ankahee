@@ -28,53 +28,21 @@ async function main() {
   try {
     console.log('Verifying tables exist and fixing schema issues...');
     
-    // Create stories table
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS "stories" (
-        "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-        "text" text NOT NULL,
-        "author_id" text NOT NULL,
-        "author_name" text NOT NULL,
-        "image_url" text,
-        "expires_at" integer NOT NULL,
-        "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL
-      );
-    `);
-    
-    // Create rooms table
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS "rooms" (
-        "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-        "name" text NOT NULL,
-        "created_by" text NOT NULL,
-        "image_url" text,
-        "is_dm" integer DEFAULT 0,
-        "dm_key" text,
-        "expires_at" integer NOT NULL,
-        "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL
-      );
-    `);
+    // Create all missing tables for the local instance
+    await client.execute(`CREATE TABLE IF NOT EXISTS "users" ("id" text PRIMARY KEY NOT NULL, "username" text NOT NULL, "email" text NOT NULL, "password" text, "image_url" text, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "posts" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "content" text NOT NULL, "author_id" text, "mood" text, "image_url" text, "is_void_question" integer DEFAULT 0, "parent_id" integer, "expires_at" integer NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "comments" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "post_id" integer NOT NULL, "author_id" text NOT NULL, "username" text NOT NULL, "content" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "reactions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "post_id" integer NOT NULL, "author_id" text NOT NULL, "reaction" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "polls" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "post_id" integer NOT NULL, "question" text NOT NULL, "options" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "poll_votes" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "poll_id" integer NOT NULL, "user_id" text NOT NULL, "option_index" integer NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "void_answers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "post_id" integer NOT NULL, "user_id" text NOT NULL, "word" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "bookmarks" ("user_id" text NOT NULL, "post_id" integer NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL, PRIMARY KEY("user_id", "post_id"));`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "letters" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "content" text NOT NULL, "author_id" text NOT NULL, "image_url" text, "expires_at" integer NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "stories" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "text" text NOT NULL, "author_id" text NOT NULL, "author_name" text NOT NULL, "image_url" text, "expires_at" integer NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "rooms" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" text NOT NULL, "created_by" text NOT NULL, "image_url" text, "is_dm" integer DEFAULT 0, "dm_key" text, "expires_at" integer NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "room_members" ("room_id" integer NOT NULL, "user_id" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL, PRIMARY KEY("room_id", "user_id"));`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS "room_messages" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "room_id" integer NOT NULL, "author_id" text NOT NULL, "content" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
 
-    // Create room_members table (crucial for room visibility)
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS "room_members" (
-        "room_id" integer NOT NULL,
-        "user_id" text NOT NULL,
-        "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL,
-        PRIMARY KEY("room_id", "user_id")
-      );
-    `);
-
-    // Create room_messages table
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS "room_messages" (
-        "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-        "room_id" integer NOT NULL,
-        "author_id" text NOT NULL,
-        "content" text NOT NULL,
-        "created_at" integer DEFAULT (strftime('%s', 'now')) NOT NULL
-      );
-    `);
 
     console.log('Database initialization complete.');
   } catch (error) {
