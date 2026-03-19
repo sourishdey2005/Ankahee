@@ -8,7 +8,7 @@ export const users = sqliteTable('users', {
   email: text('email').notNull().unique(),
   password: text('password'),
   imageUrl: text('image_url'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -25,7 +25,7 @@ export const posts = sqliteTable('posts', {
   isVoidQuestion: integer('is_void_question', { mode: 'boolean' }).default(false),
   parentId: integer('parent_id'),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -47,7 +47,7 @@ export const comments = sqliteTable('comments', {
   authorId: text('author_id').notNull(),
   username: text('username').notNull(),
   content: text('content').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const commentsRelations = relations(comments, ({ one }) => ({
@@ -63,7 +63,7 @@ export const reactions = sqliteTable('reactions', {
   postId: integer('post_id').references(() => posts.id, { onDelete: 'cascade' }).notNull(),
   authorId: text('author_id').notNull(),
   reaction: text('reaction').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const reactionsRelations = relations(reactions, ({ one }) => ({
@@ -79,7 +79,7 @@ export const polls = sqliteTable('polls', {
   postId: integer('post_id').references(() => posts.id, { onDelete: 'cascade' }).notNull(),
   question: text('question').notNull(),
   options: text('options').notNull(), // JSON string array
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const pollsRelations = relations(polls, ({ one, many }) => ({
@@ -96,7 +96,7 @@ export const pollVotes = sqliteTable('poll_votes', {
   pollId: integer('poll_id').references(() => polls.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').notNull(),
   optionIndex: integer('option_index').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const pollVotesRelations = relations(pollVotes, ({ one }) => ({
@@ -112,7 +112,7 @@ export const voidAnswers = sqliteTable('void_answers', {
   postId: integer('post_id').references(() => posts.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').notNull(),
   word: text('word').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const voidAnswersRelations = relations(voidAnswers, ({ one }) => ({
@@ -126,7 +126,7 @@ export const voidAnswersRelations = relations(voidAnswers, ({ one }) => ({
 export const bookmarks = sqliteTable('bookmarks', {
   userId: text('user_id').notNull(),
   postId: integer('post_id').references(() => posts.id, { onDelete: 'cascade' }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.userId, table.postId] }),
 }));
@@ -145,7 +145,7 @@ export const letters = sqliteTable('letters', {
   authorId: text('author_id').notNull(),
   imageUrl: text('image_url'),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 // Rooms table
@@ -157,7 +157,7 @@ export const rooms = sqliteTable('rooms', {
   isDM: integer('is_dm', { mode: 'boolean' }).default(false),
   dmKey: text('dm_key'),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const roomsRelations = relations(rooms, ({ many }) => ({
@@ -169,7 +169,7 @@ export const roomsRelations = relations(rooms, ({ many }) => ({
 export const roomMembers = sqliteTable('room_members', {
   roomId: integer('room_id').references(() => rooms.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.roomId, table.userId] }),
 }));
@@ -187,7 +187,7 @@ export const roomMessages = sqliteTable('room_messages', {
   roomId: integer('room_id').references(() => rooms.id, { onDelete: 'cascade' }).notNull(),
   authorId: text('author_id').notNull(),
   content: text('content').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 
 export const roomMessagesRelations = relations(roomMessages, ({ one }) => ({
@@ -205,6 +205,6 @@ export const stories = sqliteTable('stories', {
   authorName: text('author_name').notNull(),
   imageUrl: text('image_url'),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 });
 

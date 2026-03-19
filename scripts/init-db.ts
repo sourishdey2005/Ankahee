@@ -37,7 +37,7 @@ async function main() {
         "author_name" text NOT NULL,
         "image_url" text,
         "expires_at" integer NOT NULL,
-        "created_at" integer DEFAULT (strftime('%s', 'now')) NOT NULL
+        "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL
       );
     `);
     
@@ -51,7 +51,7 @@ async function main() {
         "is_dm" integer DEFAULT 0,
         "dm_key" text,
         "expires_at" integer NOT NULL,
-        "created_at" integer DEFAULT (strftime('%s', 'now')) NOT NULL
+        "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL
       );
     `);
 
@@ -60,7 +60,7 @@ async function main() {
       CREATE TABLE IF NOT EXISTS "room_members" (
         "room_id" integer NOT NULL,
         "user_id" text NOT NULL,
-        "created_at" integer DEFAULT (strftime('%s', 'now')) NOT NULL,
+        "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL,
         PRIMARY KEY("room_id", "user_id")
       );
     `);
