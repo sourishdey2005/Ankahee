@@ -27,7 +27,7 @@ export default function RoomClient({
 }: {
     room: any,
 }) {
-    const { userId } = useUser()
+    const { userId, isLoading: isUserLoading } = useUser()
     const [isPending, startTransition] = useTransition()
     const { toast } = useToast()
     const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -42,6 +42,15 @@ export default function RoomClient({
         return (
             <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">Room not found</p>
+            </div>
+        );
+    }
+
+    // Show loading while user ID is being initialized
+    if (isUserLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading...</p>
             </div>
         );
     }
@@ -98,12 +107,16 @@ export default function RoomClient({
         defaultValues: { content: '' },
     })
 
-    const handleJoin = () => {
+    const handleJoin = async () => {
         if (!userId) return;
         startTransition(async () => {
             try {
                 await joinRoom(roomId, userId)
                 toast({ title: 'Success', description: 'You have joined the room.' })
+
+                // Immediately refresh members list to show user as joined
+                const mems = await getRoomMembers(roomId);
+                setMembers(mems);
             } catch (err: any) {
                 toast({ title: 'Error', description: err.message || 'Could not join room.', variant: 'destructive' })
             }
