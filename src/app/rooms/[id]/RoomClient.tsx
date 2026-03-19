@@ -36,25 +36,19 @@ export default function RoomClient({
     const [members, setMembers] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
+    const form = useForm<z.infer<typeof messageSchema>>({
+        resolver: zodResolver(messageSchema),
+        defaultValues: { content: '' },
+    })
+
+    const isMember = useMemo(() => {
+        if (!userId) return false;
+        return members.some(m => m.userId === userId);
+    }, [members, userId]);
+
     // Defensive check for room
     const roomId = room?.id;
-    if (!roomId) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Room not found</p>
-            </div>
-        );
-    }
-
-    // Show loading while user ID is being initialized
-    if (isUserLoading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Loading...</p>
-            </div>
-        );
-    }
-
+    
     // Auto-scroll to bottom of chat
     const scrollToBottom = (instant = false) => {
         if (scrollContainerRef.current) {
@@ -68,16 +62,28 @@ export default function RoomClient({
         }
     }
 
+    // Defensive returns AFTER all main hooks are declared
+    if (!roomId) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Room not found</p>
+            </div>
+        );
+    }
+
+    if (isUserLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading...</p>
+            </div>
+        );
+    }
+
+
     // Scroll when messages update
     useEffect(() => {
         scrollToBottom();
     }, [messages.length]);
-
-    const isMember = useMemo(() => {
-        if (!userId) return false;
-        return members.some(m => m.userId === userId);
-    }, [members, userId]);
-
 
 
     useEffect(() => {
@@ -102,10 +108,6 @@ export default function RoomClient({
         return () => clearInterval(timer);
     }, [roomId]);
 
-    const form = useForm<z.infer<typeof messageSchema>>({
-        resolver: zodResolver(messageSchema),
-        defaultValues: { content: '' },
-    })
 
     const handleJoin = async () => {
         if (!userId) return;
