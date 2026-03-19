@@ -76,9 +76,11 @@ export async function sendRoomMessage(roomId: number, authorId: string, content:
 }
 
 export async function getRoomById(id: number) {
+  if (isNaN(id)) return null;
   const [room] = await db.select().from(rooms).where(eq(rooms.id, id)).limit(1);
   return room || null;
 }
+
 
 export async function getRoomMembers(roomId: number) {
   return await db.select().from(roomMembers).where(eq(roomMembers.roomId, roomId));
