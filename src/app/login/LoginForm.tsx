@@ -18,6 +18,16 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { signInAction } from "@/app/actions/auth";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import ResetPasswordForm from "./ResetPasswordForm";
+import { useState } from "react";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address."),
@@ -37,6 +47,8 @@ export default function LoginForm() {
     },
   });
 
+  const [resetOpen, setResetOpen] = useState(false);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
@@ -51,7 +63,7 @@ export default function LoginForm() {
       } catch (err: any) {
         toast({
           title: "Login Failed",
-          description: "Invalid credentials.",
+          description: err.message || "Invalid credentials.",
           variant: "destructive",
         });
       }
@@ -87,7 +99,26 @@ export default function LoginForm() {
             </FormItem>
           )}
         />
+        <div className="flex justify-end">
+          <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+            <DialogTrigger asChild>
+              <Button variant="link" size="sm" className="px-0 text-muted-foreground hover:text-primary">
+                Forgot password?
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Reset Password</DialogTitle>
+                <DialogDescription>
+                  Enter your email and a new password. No email verification needed in this sanctuary.
+                </DialogDescription>
+              </DialogHeader>
+              <ResetPasswordForm onSuccess={() => setResetOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
         <Button
+
           type="submit"
           className="w-full font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground"
           disabled={isPending}

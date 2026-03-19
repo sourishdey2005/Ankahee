@@ -16,49 +16,40 @@ import { Button } from "@/components/ui/button";
 import { useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { signUpAction } from "@/app/actions/auth";
+import { resetPasswordAction } from "@/app/actions/auth";
 
-const formSchema = z
-  .object({
-    email: z.string().email("Invalid email address."),
-    password: z.string().min(6, "Password must be at least 6 characters."),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+const formSchema = z.object({
+  email: z.string().email("Invalid email address."),
+  newPassword: z.string().min(6, "New password must be at least 6 characters."),
+});
 
-export default function SignupForm() {
+export default function ResetPasswordForm({ onSuccess }: Readonly<{ onSuccess?: () => void }>) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      password: "",
-      confirmPassword: "",
+      newPassword: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        const result = await signUpAction(values);
+        const result = await resetPasswordAction(values);
         if (result.success) {
           toast({
-            title: "Account Created",
-            description: "Welcome to the Ankahee.",
+            title: "Success",
+            description: "Your password has been reset. You can now login.",
           });
-          router.push("/feed");
+          onSuccess?.();
         }
       } catch (err: any) {
         toast({
-          title: "Sign Up Failed",
-          description: err.message || "An unexpected error occurred.",
+          title: "Reset Failed",
+          description: err.message || "Could not reset password.",
           variant: "destructive",
         });
       }
@@ -83,23 +74,10 @@ export default function SignupForm() {
         />
         <FormField
           control={form.control}
-          name="password"
+          name="newPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
+              <FormLabel>New Password</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
@@ -109,11 +87,11 @@ export default function SignupForm() {
         />
         <Button
           type="submit"
-          className="w-full font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground"
+          className="w-full font-semibold"
           disabled={isPending}
         >
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Sign Up
+          Reset Password
         </Button>
       </form>
     </Form>
