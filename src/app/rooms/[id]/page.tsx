@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/button'
 import Countdown from '@/components/Countdown'
 import RoomClient from './RoomClient'
 
-export default async function RoomPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
+export default async function RoomPage({
+  params
+}: {
+  params: Promise<{ id: string }>
 }) {
   const { id } = await params;
   const roomId = parseInt(id);
-  
+
   if (isNaN(roomId)) {
     notFound();
   }
@@ -24,8 +24,13 @@ export default async function RoomPage({
     notFound();
   }
 
-  const expires_at = room.expiresAt || new Date();
-  const pageTitle = room.name;
+  // Handle expiresAt - getRoomById now returns ISO string
+  const expiresAtValue = room.expiresAt as unknown;
+  const expiresAtDate = expiresAtValue instanceof Date
+    ? expiresAtValue
+    : new Date(expiresAtValue as string | number);
+
+  const pageTitle = room.name || 'Chat Room';
 
   return (
     <div className="container mx-auto max-w-6xl py-3 sm:py-8 h-screen sm:h-auto flex flex-col">
@@ -39,7 +44,7 @@ export default async function RoomPage({
         <div className="w-full text-left sm:w-auto sm:text-right">
           <h1 className="text-2xl font-headline font-bold">{pageTitle}</h1>
           <p className="text-sm text-muted-foreground flex items-center justify-start sm:justify-end gap-2">
-            Expires <Countdown expiresAt={expires_at.toString()} />
+            Expires <Countdown expiresAt={expiresAtDate.toISOString()} />
           </p>
         </div>
       </div>

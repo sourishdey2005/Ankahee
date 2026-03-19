@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { formatDistanceToNow } from 'date-fns'
-import { generateHslColorFromString, generateAvatarDataUri } from '@/lib/utils'
+import { generateHslColorFromString, generateAvatarDataUri, cn } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,6 +34,17 @@ export default function RoomClient({
 
     const [messages, setMessages] = useState<any[]>([])
     const [members, setMembers] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Defensive check for room
+    const roomId = room?.id;
+    if (!roomId) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Room not found</p>
+            </div>
+        );
+    }
 
     // Auto-scroll to bottom of chat
     const scrollToBottom = (instant = false) => {
@@ -63,21 +74,24 @@ export default function RoomClient({
     useEffect(() => {
         const fetchAll = async () => {
             try {
+                setIsLoading(true);
                 const [msgs, mems] = await Promise.all([
-                    getRoomMessages(room.id),
-                    getRoomMembers(room.id)
+                    getRoomMessages(roomId),
+                    getRoomMembers(roomId)
                 ]);
                 // Only update if we have new messages or members
                 setMessages(prev => (JSON.stringify(prev) !== JSON.stringify(msgs) ? msgs : prev));
                 setMembers(prev => (JSON.stringify(prev) !== JSON.stringify(mems) ? mems : prev));
             } catch (err) {
                 console.error('Room fetch error:', err);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchAll();
         const timer = setInterval(fetchAll, 3000); // Polling every 3s
         return () => clearInterval(timer);
-    }, [room.id]);
+    }, [roomId]);
 
     const form = useForm<z.infer<typeof messageSchema>>({
         resolver: zodResolver(messageSchema),
@@ -88,7 +102,7 @@ export default function RoomClient({
         if (!userId) return;
         startTransition(async () => {
             try {
-                await joinRoom(room.id, userId)
+                await joinRoom(roomId, userId)
                 toast({ title: 'Success', description: 'You have joined the room.' })
             } catch (err: any) {
                 toast({ title: 'Error', description: err.message || 'Could not join room.', variant: 'destructive' })
@@ -103,17 +117,17 @@ export default function RoomClient({
 
         // 🚀 Optimistic update: show message immediately
         const optimisticMsg = {
-           id: Date.now(), // temporary
-           authorId: userId,
-           content,
-           createdAt: new Date().toISOString(),
-           isPending: true
+            id: Date.now(), // temporary
+            authorId: userId,
+            content,
+            createdAt: new Date().toISOString(),
+            isPending: true
         };
         setMessages(prev => [optimisticMsg, ...prev]);
 
         startTransition(async () => {
             try {
-                await sendRoomMessage(room.id, userId, content);
+                await sendRoomMessage(roomId, userId, content);
                 // The next poll will replace this optimistic message with real one
             } catch (err: any) {
                 toast({
@@ -132,11 +146,17 @@ export default function RoomClient({
             <div className="flex-1 flex flex-col border-r relative h-full overflow-hidden">
                 <ScrollArea className="flex-1 p-4" ref={scrollContainerRef}>
                     <div className="space-y-6 pb-20">
-                        {messages.length === 0 && (
-                             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
+                        {isLoading && messages.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
+                                <Loader2 className="h-8 w-8 animate-spin mb-4" />
+                                <p>Loading messages...</p>
+                            </div>
+                        )}
+                        {!isLoading && messages.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
                                 <Send className="h-12 w-12 mb-4" />
                                 <p>Begin your conversation in the void...</p>
-                             </div>
+                            </div>
                         )}
                         {[...messages].reverse().map((msg: any) => {
                             const commenterColor = generateHslColorFromString(msg.authorId, 50, 60);
@@ -158,19 +178,19 @@ export default function RoomClient({
                                                 Anonymous {isMe && '(You)'}
                                             </span>
                                             <span className="text-muted-foreground">·</span>
-                                                <span className="text-muted-foreground mr-2">
-                                                    {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
-                                                </span>
-                                            </div>
-                                            <p className="text-foreground/90 mt-1">{msg.content}</p>
+                                            <span className="text-muted-foreground mr-2">
+                                                {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+                                            </span>
                                         </div>
+                                        <p className="text-foreground/90 mt-1">{msg.content}</p>
                                     </div>
+                                </div>
 
                             )
                         })}
                     </div>
                 </ScrollArea>
-                
+
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-card/80 backdrop-blur-md">
                     {isMember ? (
                         <Form {...form}>
@@ -194,7 +214,7 @@ export default function RoomClient({
                         </Form>
                     ) : (
                         <div className="flex items-center justify-center py-2 h-10">
-                             <Button onClick={handleJoin} disabled={isPending} variant="secondary" className="w-full">
+                            <Button onClick={handleJoin} disabled={isPending} variant="secondary" className="w-full">
                                 <LogIn className="mr-2 h-4 w-4" />
                                 Join Room to Chat
                             </Button>
@@ -233,6 +253,4 @@ export default function RoomClient({
     )
 }
 
-function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(' ');
-}
+
