@@ -8,17 +8,22 @@ import * as path from 'path';
 async function main() {
   // Try to read .env.local manually to bypass process.env caching
   let urlFromEnv = '';
+  let tokenFromEnv = '';
   try {
      const envLocal = fs.readFileSync(path.resolve(process.cwd(), '.env.local'), 'utf8');
-     const match = envLocal.match(/^TURSO_DATABASE_URL="?([^"\n\r]+)"?/m);
-     if (match) urlFromEnv = match[1].trim();
+     const matchUrl = envLocal.match(/^TURSO_DATABASE_URL="?([^"\n\r]+)"?/m);
+     if (matchUrl) urlFromEnv = matchUrl[1].trim();
+     
+     const matchToken = envLocal.match(/^TURSO_AUTH_TOKEN="?([^"\n\r]+)"?/m);
+     if (matchToken) tokenFromEnv = matchToken[1].trim();
   } catch (e) {}
 
-
   const url = urlFromEnv || process.env.TURSO_DATABASE_URL || 'file:local.db';
+  const authToken = tokenFromEnv || process.env.TURSO_AUTH_TOKEN;
   console.log(`Using database at: ${url}`);
   
-  const client = createClient({ url });
+  const client = createClient({ url, authToken });
+
 
   try {
     console.log('Verifying tables exist and fixing schema issues...');
