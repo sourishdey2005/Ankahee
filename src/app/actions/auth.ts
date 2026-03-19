@@ -10,14 +10,29 @@ export async function signInAction(values: { email: string; password?: string })
     let [user] = await db.select().from(users).where(eq(users.email, values.email)).limit(1);
 
     if (!user) {
-      // Create new user for simplicity in this anonymous playground
+      if (!values.password) {
+        throw new Error('Password is required to create a new account.');
+      }
+      
+      // Create new user
       [user] = await db.insert(users).values({
         id: `u_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
         email: values.email,
         username: values.email.split('@')[0],
+        password: values.password, // In production, we'd hash this!
         imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${values.email}`,
       }).returning();
+    } else {
+      // User exists, verify password
+      if (!values.password) {
+         throw new Error('Verification required.');
+      }
+      if (user.password !== values.password) {
+        throw new Error('Invalid password. Access denied.');
+      }
     }
+
+
 
     // Set a session cookie (primitive)
     const cookieStore = await cookies();
