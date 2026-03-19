@@ -62,31 +62,13 @@ export default function RoomClient({
         }
     }
 
-    // Defensive returns AFTER all main hooks are declared
-    if (!roomId) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Room not found</p>
-            </div>
-        );
-    }
-
-    if (isUserLoading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Loading...</p>
-            </div>
-        );
-    }
-
-
     // Scroll when messages update
     useEffect(() => {
         scrollToBottom();
     }, [messages.length]);
 
-
     useEffect(() => {
+        if (!roomId) return;
         const fetchAll = async () => {
             try {
                 setIsLoading(true);
@@ -107,6 +89,24 @@ export default function RoomClient({
         const timer = setInterval(fetchAll, 3000); // Polling every 3s
         return () => clearInterval(timer);
     }, [roomId]);
+
+    // Defensive returns AFTER all main hooks are declared
+    if (!roomId) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Room not found</p>
+            </div>
+        );
+    }
+
+    if (isUserLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading...</p>
+            </div>
+        );
+    }
+
 
 
     const handleJoin = async () => {
