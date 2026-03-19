@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Loader2, Send, LogIn } from 'lucide-react'
 import { joinRoom, sendRoomMessage, getRoomMessages, getRoomMembers } from '@/app/actions/rooms'
 import { useUser } from '@/hooks/use-user'
-import { DMButton } from '@/components/DMButton'
+
 
 const messageSchema = z.object({
     content: z.string().min(1, 'Message cannot be empty.'),
@@ -55,11 +55,10 @@ export default function RoomClient({
 
     const isMember = useMemo(() => {
         if (!userId) return false;
-        if (room.isDM && room.dmKey) {
-            return room.dmKey.split(':').includes(userId);
-        }
         return members.some(m => m.userId === userId);
-    }, [members, userId, room.isDM, room.dmKey])
+    }, [members, userId]);
+
+
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -159,16 +158,14 @@ export default function RoomClient({
                                                 Anonymous {isMe && '(You)'}
                                             </span>
                                             <span className="text-muted-foreground">·</span>
-                                            <span className="text-muted-foreground mr-2">
-                                                {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
-                                            </span>
-                                            {!isMe && userId && (
-                                                <DMButton targetUserId={msg.authorId} size="xs" variant="ghost" label="" />
-                                            )}
+                                                <span className="text-muted-foreground mr-2">
+                                                    {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+                                                </span>
+                                            </div>
+                                            <p className="text-foreground/90 mt-1">{msg.content}</p>
                                         </div>
-                                        <p className="text-foreground/90 mt-1">{msg.content}</p>
                                     </div>
-                                </div>
+
                             )
                         })}
                     </div>
@@ -224,10 +221,8 @@ export default function RoomClient({
                                                 Anon {isCurrentUser && '(You)'}
                                             </span>
                                         </div>
-                                        {!isCurrentUser && userId && (
-                                            <DMButton targetUserId={member.userId} size="xs" variant="ghost" label="" />
-                                        )}
                                     </div>
+
                                 )
                             })}
                         </div>
