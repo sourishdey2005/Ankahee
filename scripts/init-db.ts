@@ -26,11 +26,19 @@ async function main() {
 
 
   try {
-    console.log('Verifying tables exist and fixing schema issues...');
+    console.log('Synchronizing database schema (Drop and Recreate to fix mismatches)...');
     
+    // Explicitly DROP inconsistent tables and recreate them
+    const tablesToReset = ['room_members', 'room_messages', 'rooms', 'stories'];
+    for (const table of tablesToReset) {
+      console.log(`Resetting table: ${table}`);
+      await client.execute(`DROP TABLE IF EXISTS "${table}";`);
+    }
+
     // Create all missing tables for the local instance
     await client.execute(`CREATE TABLE IF NOT EXISTS "users" ("id" text PRIMARY KEY NOT NULL, "username" text NOT NULL, "email" text NOT NULL, "password" text, "image_url" text, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
     await client.execute(`CREATE TABLE IF NOT EXISTS "posts" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "content" text NOT NULL, "author_id" text, "mood" text, "image_url" text, "is_void_question" integer DEFAULT 0, "parent_id" integer, "expires_at" integer NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
+
     await client.execute(`CREATE TABLE IF NOT EXISTS "comments" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "post_id" integer NOT NULL, "author_id" text NOT NULL, "username" text NOT NULL, "content" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
     await client.execute(`CREATE TABLE IF NOT EXISTS "reactions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "post_id" integer NOT NULL, "author_id" text NOT NULL, "reaction" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
     await client.execute(`CREATE TABLE IF NOT EXISTS "polls" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "post_id" integer NOT NULL, "question" text NOT NULL, "options" text NOT NULL, "created_at" integer DEFAULT (strftime('%s', 'now') * 1000) NOT NULL);`);
