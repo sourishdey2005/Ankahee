@@ -11,6 +11,7 @@ import { createStoryAction, getStoriesAction } from "@/app/actions/stories";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useUser } from "@/hooks/use-user";
 
 export default function StoriesPage() {
   const [stories, setStories] = useState<any[]>([]);
@@ -20,17 +21,26 @@ export default function StoriesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
   const { toast } = useToast();
+  const { user: currentUser, userId } = useUser();
 
-  const fetchStories = useCallback(async () => {
+  const fetchStories = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     const result = await getStoriesAction();
     if (result.success) {
       setStories(result.data || []);
     }
-    setLoading(false);
+    if (isInitial) setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchStories();
+    fetchStories(true);
+    
+    // Real-time polling every 15 seconds
+    const interval = setInterval(() => {
+      fetchStories();
+    }, 15000);
+    
+    return () => clearInterval(interval);
   }, [fetchStories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,8 +51,8 @@ export default function StoriesPage() {
     try {
       const result = await createStoryAction({
         text,
-        authorId: "anonymous-" + Math.random().toString(36).substr(2, 9),
-        authorName: "Anonymous Soul",
+        authorId: userId || "anonymous-" + Math.random().toString(36).substr(2, 9),
+        authorName: currentUser?.username || "Anonymous Soul",
         imageUrl: imageUrl,
       });
 

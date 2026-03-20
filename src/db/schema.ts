@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core';
 import { sql, relations } from 'drizzle-orm';
 
 // Users table
@@ -9,7 +9,9 @@ export const users = sqliteTable('users', {
   password: text('password'),
   imageUrl: text('image_url'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
-});
+}, (table) => ({
+  emailIdx: index('email_idx').on(table.email),
+}));
 
 export const usersRelations = relations(users, ({ many }) => ({
   posts: many(posts),
@@ -26,7 +28,10 @@ export const posts = sqliteTable('posts', {
   parentId: integer('parent_id'),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
-});
+}, (table) => ({
+  expiresIdx: index('posts_expires_idx').on(table.expiresAt),
+  authorIdx: index('posts_author_idx').on(table.authorId),
+}));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
   author: one(users, {
@@ -48,7 +53,9 @@ export const comments = sqliteTable('comments', {
   username: text('username').notNull(),
   content: text('content').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
-});
+}, (table) => ({
+  postIdx: index('comments_post_idx').on(table.postId),
+}));
 
 export const commentsRelations = relations(comments, ({ one }) => ({
   post: one(posts, {
@@ -64,7 +71,9 @@ export const reactions = sqliteTable('reactions', {
   authorId: text('author_id').notNull(),
   reaction: text('reaction').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
-});
+}, (table) => ({
+  postIdx: index('reactions_post_idx').on(table.postId),
+}));
 
 export const reactionsRelations = relations(reactions, ({ one }) => ({
   post: one(posts, {
@@ -129,6 +138,7 @@ export const bookmarks = sqliteTable('bookmarks', {
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.userId, table.postId] }),
+  userPostIdx: index('bookmarks_user_post_idx').on(table.userId, table.postId),
 }));
 
 export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
@@ -146,7 +156,9 @@ export const letters = sqliteTable('letters', {
   imageUrl: text('image_url'),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
-});
+}, (table) => ({
+  expiresIdx: index('letters_expires_idx').on(table.expiresAt),
+}));
 
 // Rooms table
 export const rooms = sqliteTable('rooms', {
@@ -188,7 +200,9 @@ export const roomMessages = sqliteTable('room_messages', {
   authorId: text('author_id').notNull(),
   content: text('content').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
-});
+}, (table) => ({
+  roomIdx: index('room_messages_room_idx').on(table.roomId),
+}));
 
 export const roomMessagesRelations = relations(roomMessages, ({ one }) => ({
   room: one(rooms, {
@@ -206,5 +220,7 @@ export const stories = sqliteTable('stories', {
   imageUrl: text('image_url'),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`((strftime('%s', 'now')) * 1000)`).notNull(),
-});
+}, (table) => ({
+  expiresIdx: index('stories_expires_idx').on(table.expiresAt),
+}));
 
