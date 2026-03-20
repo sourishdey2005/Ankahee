@@ -40,7 +40,7 @@ export default function RoomsPage() {
   )
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="container mx-auto px-4 pt-32 pb-8 max-w-5xl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="space-y-2">
           <h1 className="text-4xl font-headline font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
@@ -66,58 +66,61 @@ export default function RoomsPage() {
         />
       </div>
 
-      {isLoading ? (
+      {isLoading && (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-muted-foreground animate-pulse">Scanning the void for signals...</p>
         </div>
-      ) : (filteredPublic.length > 0 || dmRooms.length > 0) ? (
-        <div className="space-y-12">
+      )}
 
+      {!isLoading && (filteredPublic.length > 0 || dmRooms.length > 0) && (
+        <div className="space-y-12">
           {filteredPublic.length > 0 && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-headline font-bold flex items-center gap-2">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-headline font-bold flex items-center gap-2">
                 <Users className="h-6 w-6 text-primary" />
                 Public Rooms
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPublic.map((room) => (
-                <Link key={room.id} href={`/rooms/${room.id}`}>
-                  <Card className="h-full hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-md group relative overflow-hidden">
-                    {room.imageUrl && (
-                      <div className="relative h-32 w-full">
-                        <Image src={room.imageUrl} alt={room.name} fill className="object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent"></div>
-                      </div>
-                    )}
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-xl font-headline truncate">{room.name}</CardTitle>
-                        <Badge variant="secondary" className="bg-primary/10 text-primary">Live</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          <span>Anonymous Room</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredPublic.map((room) => (
+                  <Link key={room.id} href={`/rooms/${room.id}`}>
+                    <Card className="h-full hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur-md group relative overflow-hidden">
+                      {room.imageUrl && (
+                        <div className="relative h-32 w-full">
+                          <Image src={room.imageUrl} alt={room.name} fill className="object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent"></div>
                         </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="border-t border-white/5 pt-4">
+                      )}
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-xl font-headline truncate">{room.name}</CardTitle>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary">Live</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            <span>Anonymous Room</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="border-t border-white/5 pt-4">
                         <Button variant="ghost" className="w-full justify-between group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                            Enter Room
-                            <MessageSquare className="h-4 w-4 ml-2" />
+                          Enter Room
+                          <MessageSquare className="h-4 w-4 ml-2" />
                         </Button>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              ))}
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {!isLoading && filteredPublic.length === 0 && dmRooms.length === 0 && (
         <div className="text-center py-20 rounded-2xl bg-card/30 border border-white/5 backdrop-blur-lg">
           <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
           <h2 className="text-2xl font-headline font-bold mb-2">No signals found</h2>

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import Navbar from "@/components/Navbar";
 
 export default function RootLayout({
   children,
@@ -22,7 +23,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body bg-background antialiased">
+      <body className="font-body bg-[#030303] text-foreground antialiased selection:bg-primary/30 selection:text-white">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -30,7 +31,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider>
-            {children}
+            <Navbar />
+            <main className="min-h-screen relative">
+              {children}
+            </main>
             <Toaster />
           </ConvexClientProvider>
         </ThemeProvider>

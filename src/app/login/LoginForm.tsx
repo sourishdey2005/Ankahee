@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import ResetPasswordForm from "./ResetPasswordForm";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address."),
@@ -56,9 +57,10 @@ export default function LoginForm() {
         if (result.success) {
           toast({
             title: "Welcome Back",
-            description: "Welcome back to the Ankahee.",
+            description: "Accessing your sanctuary...",
           });
-          router.push("/feed");
+          // Use hard redirect to ensure session cookie is picked up by all components
+          window.location.href = "/feed";
         }
       } catch (err: any) {
         toast({
@@ -72,15 +74,19 @@ export default function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-muted-foreground">Email</FormLabel>
               <FormControl>
-                <Input placeholder="you@example.com" {...field} />
+                <Input 
+                  placeholder="name@example.com" 
+                  {...field} 
+                  className="bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all h-12"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,41 +97,54 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-muted-foreground">Password</FormLabel>
+                <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="link" size="sm" className="px-0 text-xs text-muted-foreground/60 hover:text-primary h-auto py-0">
+                      Forgot password?
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] bg-[#0A0A0A] border-white/10">
+                    <DialogHeader>
+                      <DialogTitle>Reset Password</DialogTitle>
+                      <DialogDescription className="text-muted-foreground">
+                        Enter your email and a new password. No email verification needed in this sanctuary.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <ResetPasswordForm onSuccess={() => setResetOpen(false)} />
+                  </DialogContent>
+                </Dialog>
+              </div>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  {...field} 
+                  className="bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all h-12"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="flex justify-end">
-          <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-            <DialogTrigger asChild>
-              <Button variant="link" size="sm" className="px-0 text-muted-foreground hover:text-primary">
-                Forgot password?
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Reset Password</DialogTitle>
-                <DialogDescription>
-                  Enter your email and a new password. No email verification needed in this sanctuary.
-                </DialogDescription>
-              </DialogHeader>
-              <ResetPasswordForm onSuccess={() => setResetOpen(false)} />
-            </DialogContent>
-          </Dialog>
-        </div>
-        <Button
-
-          type="submit"
-          className="w-full font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground"
-          disabled={isPending}
+        
+        <motion.div
+           whileHover={{ scale: 1.01 }}
+           whileTap={{ scale: 0.98 }}
         >
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Login
-        </Button>
+          <Button
+            type="submit"
+            className="w-full font-bold h-12 text-base bg-gradient-to-r from-primary to-orange-400 hover:from-primary/90 hover:to-orange-400/90 text-primary-foreground shadow-[0_0_20px_rgba(255,153,51,0.2)]"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              "Login"
+            )}
+          </Button>
+        </motion.div>
       </form>
     </Form>
   );

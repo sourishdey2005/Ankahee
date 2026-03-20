@@ -37,7 +37,7 @@ export default async function BookmarksPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <div className="container mx-auto max-w-2xl pt-32 pb-16">
       <Link href="/feed" className="mb-8 inline-block">
         <Button variant="ghost">
           <ArrowLeft className="mr-2 h-4 w-4" />

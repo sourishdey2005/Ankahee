@@ -29,7 +29,7 @@ export default function LettersPage() {
   }, [userId]);
 
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <div className="container mx-auto max-w-2xl pt-32 pb-16 px-4">
       <div className="flex justify-between items-center mb-8 px-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-headline font-bold">Unsent Letters</h1>

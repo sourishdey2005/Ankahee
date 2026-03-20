@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { signUpAction } from "@/app/actions/auth";
+import { motion } from "framer-motion";
 
 const formSchema = z
   .object({
@@ -50,14 +51,14 @@ export default function SignupForm() {
         const result = await signUpAction(values);
         if (result.success) {
           toast({
-            title: "Account Created",
-            description: "Welcome to the Ankahee.",
+            title: "Identity Created",
+            description: "Welcome to your new sanctuary.",
           });
-          router.push("/feed");
+          window.location.href = "/feed";
         }
       } catch (err: any) {
         toast({
-          title: "Sign Up Failed",
+          title: "Setup Failed",
           description: err.message || "An unexpected error occurred.",
           variant: "destructive",
         });
@@ -67,15 +68,19 @@ export default function SignupForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-muted-foreground">Shadow Email</FormLabel>
               <FormControl>
-                <Input placeholder="you@example.com" {...field} />
+                <Input 
+                  placeholder="name@example.com" 
+                  {...field} 
+                  className="bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all h-12"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -86,9 +91,14 @@ export default function SignupForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-muted-foreground">Secret Key</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  {...field} 
+                  className="bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all h-12"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -99,22 +109,35 @@ export default function SignupForm() {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
+              <FormLabel className="text-muted-foreground">Confirm Key</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  {...field} 
+                  className="bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all h-12"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          className="w-full font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground"
-          disabled={isPending}
+        <motion.div
+           whileHover={{ scale: 1.01 }}
+           whileTap={{ scale: 0.98 }}
         >
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Sign Up
-        </Button>
+          <Button
+            type="submit"
+            className="w-full font-bold h-12 text-base bg-gradient-to-r from-purple-600 to-primary hover:from-purple-600/90 hover:to-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(124,58,237,0.2)]"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              "Initialize Account"
+            )}
+          </Button>
+        </motion.div>
       </form>
     </Form>
   );

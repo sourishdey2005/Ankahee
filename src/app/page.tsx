@@ -74,34 +74,11 @@ export default function Home() {
         />
       </div>
 
-      {/* Persistent Navigation */}
-      <motion.nav
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-          className="relative z-50 container mx-auto px-6 py-6 flex justify-between items-center"
-        >
-        <Link href="/" className="flex items-center space-x-3 group shrink-0 cursor-pointer">
-          <motion.div
-            whileHover={{ scale: 1.1, rotate: -5 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-500"
-          >
-            <Image src="https://res.cloudinary.com/dodhvvewu/image/upload/v1771867857/9f24ff89-ae84-41e9-8d46-e1f47d467017_xoroac.png" alt="Ankahee Logo" width={32} height={32} className="rounded-lg" />
-          </motion.div>
-          <span className="font-headline font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">Ankahee</span>
-        </Link>
-        <Link href="/login">
-            <Button variant="ghost" className="text-muted-foreground hover:text-white hover:bg-white/5 px-6 font-medium transition-all">
-              Login
-            </Button>
-        </Link>
-      </motion.nav>
 
       {/* High-Fidelity Hero Section */}
       <motion.main
         style={{ opacity, scale: springScale, y }}
-        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-24 max-w-5xl mx-auto"
+        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-40 pb-24 max-w-5xl mx-auto"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}

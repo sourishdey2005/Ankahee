@@ -1,5 +1,3 @@
-import { isAuthenticatedNextjs } from '@convex-dev/auth/nextjs/server'
-import { redirect } from 'next/navigation'
 import NewPostForm from './NewPostForm'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -7,14 +5,14 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-export default async function NewPostPage({ searchParams }: { searchParams: Promise<{ prompt?: string, parent_id?: string }> }) {
+export default async function NewPostPage({ searchParams }: Readonly<{ searchParams: Promise<{ prompt?: string, parent_id?: string }> }>) {
   const resolvedSearchParams = await searchParams
 
   const promptText = resolvedSearchParams.prompt || ''
   const parentId = resolvedSearchParams.parent_id
 
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <div className="container mx-auto max-w-2xl pt-32 pb-8 px-4">
       <Link href={parentId ? `/confession/${parentId}` : '/feed'} className="mb-8 inline-block">
         <Button variant="ghost">
           <ArrowLeft className="mr-2 h-4 w-4" />

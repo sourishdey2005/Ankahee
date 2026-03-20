@@ -39,13 +39,19 @@ const processPostsForWordCloud = (posts: any[]) => {
     .slice(0, 50)
 }
 
+import LiveActivity from '@/components/LiveActivity'
+
 export default async function FeedPage({
   searchParams,
 }: {
   searchParams: Promise<{ mood?: string; sort?: string }>
 }) {
-  // Purge expired items on every feed view (cached according to revalidate)
-  await purgeExpiredAction();
+  // Try to purge expired items, but don't let it crash the whole page if it fails
+  try {
+    await purgeExpiredAction();
+  } catch (err: any) {
+    console.warn("FeedPage: Purge failed softly:", err.message);
+  }
   
   try {
     const resolvedParams = await searchParams
@@ -53,7 +59,6 @@ export default async function FeedPage({
     const sort = resolvedParams?.sort
 
     // Fetch posts for word cloud from SQLite
-    // Filter by mood if provided, and only get non-expired posts
     const now = new Date();
     const whereClause = mood 
       ? and(eq(posts.mood, mood), gt(posts.expiresAt, now))
@@ -93,17 +98,21 @@ export default async function FeedPage({
       reflectionPrompts[dayOfYear % reflectionPrompts.length]
 
     return (
-      <div className="container mx-auto max-w-2xl py-8">
-        <div className="mb-8 space-y-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-headline font-bold">The Void</h1>
-            <div className="flex gap-2">
-               <Link href="/account/bookmarks">
-                 <Button variant="ghost" size="icon" className="rounded-full">
-                   <Heart className="h-5 w-5" />
-                 </Button>
-               </Link>
+      <div className="container mx-auto max-w-2xl pt-32 pb-8 px-4">
+        <div className="mb-8 space-y-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h1 className="text-4xl font-headline font-bold tracking-tight">The Void</h1>
+              <div className="flex gap-2">
+                 <Link href="/account/bookmarks">
+                   <Button variant="ghost" size="icon" className="rounded-full bg-white/5 border border-white/10">
+                     <Heart className="h-5 w-5" />
+                   </Button>
+                 </Link>
+              </div>
             </div>
+            
+            <LiveActivity />
           </div>
 
           {wordCloudData.length > 0 && (
@@ -116,16 +125,19 @@ export default async function FeedPage({
             href={`/new?prompt=${encodeURIComponent(
               dailyPrompt
             )}`}
-            className="block"
+            className="block group"
           >
-            <Card className="hover:border-primary/50 transition-colors cursor-pointer bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-4 flex items-start gap-4">
-                <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+            <Card className="border-white/10 bg-white/[0.03] backdrop-blur-md hover:border-primary/50 transition-all duration-300 cursor-pointer overflow-hidden relative shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <CardContent className="p-6 flex items-start gap-5">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
+                  <Lightbulb className="h-6 w-6" />
+                </div>
                 <div>
-                  <p className="font-semibold text-foreground/90">
-                    Daily Prompt
+                  <p className="font-bold text-lg text-foreground/90 group-hover:text-primary transition-colors">
+                    Daily Reflection
                   </p>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground leading-relaxed">
                     {dailyPrompt}
                   </p>
                 </div>

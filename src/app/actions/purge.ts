@@ -1,41 +1,40 @@
 'use server';
 
 import { db, posts, letters, rooms, stories } from '@/db';
-import { lte } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 /**
  * Permanently deletes all expired content from the database.
- * This should be called occasionally to keep the database light.
+ * Higher reliability than standard delete when dealing with LibSQL timestamps.
  */
 export async function purgeExpiredAction() {
-  const now = new Date();
+  const nowMs = Date.now();
   
   try {
-    // 1. Delete expired posts
-    await db.delete(posts).where(lte(posts.expiresAt, now));
-    
-    // 2. Delete expired letters 
-    await db.delete(letters).where(lte(letters.expiresAt, now));
-    
-    // 3. Delete expired rooms
-    // We wrap individual deletes in try/catch to prevent one table error from breaking everything
-    try {
-      await db.delete(rooms).where(lte(rooms.expiresAt, now));
-    } catch (e) {
-      console.warn("Could not purge rooms, table may not exist yet:", e);
+    const purgeActions = [
+      { name: 'posts', table: posts, col: posts.expiresAt },
+      { name: 'letters', table: letters, col: letters.expiresAt },
+      { name: 'rooms', table: rooms, col: rooms.expiresAt },
+      { name: 'stories', table: stories, col: stories.expiresAt },
+    ];
+
+    const results: any = {};
+
+    for (const action of purgeActions) {
+      try {
+        // We use sql raw with params to ensure consistent timestamp format (MS since epoch as number)
+        await db.run(sql`DELETE FROM ${action.table} WHERE ${action.col} <= ${nowMs}`);
+        results[action.name] = true;
+      } catch (e: any) {
+        // Catch table non-existence or other SQL issues gracefully
+        results[action.name] = false;
+        console.warn(`[Purge Warning] Skipping ${action.name}:`, e.message);
+      }
     }
 
-    // 4. Delete expired stories
-    try {
-      await db.delete(stories).where(lte(stories.expiresAt, now));
-    } catch (e) {
-      console.warn("Could not purge stories, table may not exist yet:", e);
-    }
-    
-    return { success: true };
-  } catch (err) {
-    console.error('Purge error:', err);
-    return { success: false, error: err };
+    return { success: true, results };
+  } catch (err: any) {
+    console.error('[Purge Critical] Block failure:', err.message);
+    return { success: false, error: err.message };
   }
 }
-

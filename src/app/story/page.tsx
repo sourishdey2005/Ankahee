@@ -83,7 +83,7 @@ export default function StoriesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050510] text-[#E0E0E0] selection:bg-primary/30 py-8 px-4">
+    <div className="min-h-screen bg-[#050510] text-[#E0E0E0] selection:bg-primary/30 pt-32 pb-16 px-4">
       <header className="mb-12 text-center">
         <motion.h1 
           initial={{ opacity: 0, y: -20 }}
