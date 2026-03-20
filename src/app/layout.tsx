@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import Navbar from "@/components/Navbar";
+import ScreenshotProtection from "@/components/ScreenshotProtection";
 
 export default function RootLayout({
   children,
@@ -31,8 +32,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider>
+            <ScreenshotProtection />
             <Navbar />
-            <main className="min-h-screen relative">
+            <main className="min-h-screen relative select-none">
               {children}
             </main>
             <Toaster />

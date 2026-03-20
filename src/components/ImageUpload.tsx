@@ -3,9 +3,9 @@
 import { useState, useRef } from "react";
 import { Button } from "./ui/button";
 import { ImageIcon, X, Loader2, CheckCircle2 } from "lucide-react";
-import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function ImageUpload({ onUpload }: { onUpload: (url: string | undefined) => void }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -101,17 +101,52 @@ export function ImageUpload({ onUpload }: { onUpload: (url: string | undefined) 
             <X className="h-4 w-4" />
           </button>
           
-          <div className="absolute bottom-2 left-2 right-2">
+          <div className="absolute inset-0 flex items-center justify-center p-4">
             {isProcessing ? (
-                <div className="flex items-center justify-center gap-2 py-2 px-4 bg-background/80 backdrop-blur-md rounded-md">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-xs">Processing...</span>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full max-w-[200px] flex flex-col items-center gap-3 py-6 px-10 bg-black/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden"
+              >
+                {/* Energy Pulse Background */}
+                <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0deg,rgba(124,58,237,0.1)_90deg,transparent_180deg)]"
+                />
+
+                <div className="relative">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <motion.div 
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute inset-0 bg-primary/20 blur-xl rounded-full"
+                    />
                 </div>
+                
+                <div className="space-y-1 text-center relative z-10">
+                    <p className="text-sm font-headline font-bold text-white tracking-widest uppercase">Inhaling Whisper</p>
+                    <p className="text-[10px] text-muted-foreground/60 uppercase tracking-[0.2em]">Converting to void frequency</p>
+                </div>
+
+                {/* Shimmer Progress bar */}
+                <div className="w-full h-1 bg-white/5 rounded-full mt-2 overflow-hidden relative">
+                    <motion.div 
+                        className="absolute inset-0 bg-primary"
+                        animate={{ x: ["-100%", "100%"] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                </div>
+              </motion.div>
             ) : (
-              <div className="flex items-center justify-center gap-2 py-2 px-4 bg-green-500/20 backdrop-blur-md rounded-md border border-green-500/50">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span className="text-xs font-bold text-green-500">Image Attached</span>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center gap-2 py-3 px-6 bg-green-500/20 backdrop-blur-xl rounded-full border border-green-500/30 shadow-lg"
+              >
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <span className="text-xs font-headline font-bold text-green-500 tracking-wider">VISUAL TRUTH ATTACHED</span>
+              </motion.div>
             )}
           </div>
         </div>
