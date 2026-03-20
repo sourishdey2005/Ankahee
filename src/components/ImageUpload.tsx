@@ -4,28 +4,60 @@ import { useState, useRef } from "react";
 import { Button } from "./ui/button";
 import { ImageIcon, X, Loader2, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
+import imageCompression from "browser-image-compression";
+import { useToast } from "@/hooks/use-toast";
 
 export function ImageUpload({ onUpload }: { onUpload: (url: string | undefined) => void }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { toast } = useToast();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      
+      if (file.size > 20 * 1024 * 1024) {
+        toast({
+            title: "Overload Detected",
+            description: "The void cannot consume files larger than 20MB.",
+            variant: "destructive"
+        });
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      setPreviewUrl(URL.createObjectURL(file));
       setIsProcessing(true);
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        onUpload(reader.result as string);
+      
+      try {
+        const options = {
+          maxSizeMB: 0.8,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          initialQuality: 0.8
+        };
+
+        const compressedFile = await imageCompression(file, options);
+        const reader = new FileReader();
+        reader.readAsDataURL(compressedFile);
+        reader.onload = () => {
+          onUpload(reader.result as string);
+          setIsProcessing(false);
+          toast({
+            title: "Whisper Visualized",
+            description: `Compressed ${ (file.size / (1024*1024)).toFixed(1) }MB to ${ (compressedFile.size / (1024*1024)).toFixed(1) }MB for the void.`,
+          });
+        };
+      } catch (error) {
+        console.error("Compression error:", error);
+        toast({
+            title: "Distortion Error",
+            description: "Failed to compress the visual truth.",
+            variant: "destructive"
+        });
         setIsProcessing(false);
-      };
-      reader.onerror = () => {
-        setIsProcessing(false);
-      };
+      }
     }
   };
 

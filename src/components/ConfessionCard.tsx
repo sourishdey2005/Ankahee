@@ -30,11 +30,15 @@ export default function ConfessionCard({
     : "bg-secondary";
   const commentCount = Array.isArray(post.comments) ? post.comments.length : 0;
 
-  const expires_at = post.expiresAt
-    ? new Date(post.expiresAt).getTime()
-    : Date.now() + 24 * 60 * 60 * 1000;
-    
-  const createdAt = post.createdAt ? new Date(post.createdAt).getTime() : Date.now();
+  const getSafeTimestamp = (dateSource: any) => {
+    if (!dateSource) return null;
+    const d = new Date(dateSource);
+    return isNaN(d.getTime()) ? null : d.getTime();
+  };
+
+  const expires_at = getSafeTimestamp(post.expiresAt) ?? (Date.now() + 24 * 60 * 60 * 1000);
+  const createdAt = getSafeTimestamp(post.createdAt) ?? Date.now();
+  
   const totalDuration = 24 * 60 * 60 * 1000;
   const timeLeft = expires_at - Date.now();
   const lifeProgress = Math.max(0, Math.min(100, (timeLeft / totalDuration) * 100));

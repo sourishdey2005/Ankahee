@@ -14,7 +14,10 @@ export default function Countdown({ expiresAt }: { expiresAt: string }) {
 
     const updateCountdown = () => {
       try {
-        const expires = new Date(expiresAt)
+        const expires = !isNaN(Number(expiresAt)) 
+          ? new Date(Number(expiresAt)) 
+          : new Date(expiresAt);
+
         if (isNaN(expires.getTime())) {
           setTimeLeft('Invalid date');
           return;
