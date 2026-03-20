@@ -55,11 +55,17 @@ export default function SignupForm() {
             description: "Welcome to your new sanctuary.",
           });
           window.location.href = "/feed";
+        } else {
+          toast({
+            title: "Setup Failed",
+            description: result.error || "The void cannot manifest this identity.",
+            variant: "destructive",
+          });
         }
       } catch (err: any) {
         toast({
-          title: "Setup Failed",
-          description: err.message || "An unexpected error occurred.",
+          title: "Manifestation Error",
+          description: "Something blocked your entry into the void.",
           variant: "destructive",
         });
       }

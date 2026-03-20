@@ -61,11 +61,17 @@ export default function LoginForm() {
           });
           // Use hard redirect to ensure session cookie is picked up by all components
           window.location.href = "/feed";
+        } else {
+          toast({
+            title: "Identity Check Failed",
+            description: result.error || "The void does not recognize these credentials.",
+            variant: "destructive",
+          });
         }
       } catch (err: any) {
         toast({
-          title: "Login Failed",
-          description: err.message || "Invalid credentials.",
+          title: "System Error",
+          description: "A glitch in the void occurred. Please try again.",
           variant: "destructive",
         });
       }

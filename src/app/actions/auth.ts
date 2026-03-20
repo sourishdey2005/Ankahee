@@ -4,78 +4,84 @@ import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 import { hashSync, compareSync } from 'bcrypt-ts'
+import { v4 as uuidv4 } from 'uuid'
 
 export async function signInAction(values: { email: string; password?: string }) {
   try {
+    if (!values.email || !values.password) {
+      return { success: false, error: 'Email and password are required.' };
+    }
+
     const [user] = await db.select().from(users).where(eq(users.email, values.email)).limit(1);
 
     if (!user) {
-      throw new Error('User not found. Please sign up.');
+      return { success: false, error: 'Identity not found. Join the void first.' };
     }
 
-    if (!values.password) {
-      throw new Error('Password is required.');
-    }
-
-    // Secure password check
     const isMatched = compareSync(values.password, user.password || '');
     if (!isMatched) {
-      // In a real app, we'd want to avoid leaking if the user exists but the password is wrong
-      // but the above check for !user already leaks it. Let's keep it simple for now as requested.
-      throw new Error('Invalid credentials.');
+      return { success: false, error: 'Visual pattern (password) does not match our records.' };
     }
 
-    // Set session cookie
     const cookieStore = await cookies();
     cookieStore.set('ankahee_session', user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });
 
-    return { success: true, user: { id: user.id, username: user.username, email: user.email, imageUrl: user.imageUrl } };
+    return { 
+      success: true, 
+      user: { id: user.id, username: user.username, email: user.email, imageUrl: user.imageUrl } 
+    };
   } catch (err: any) {
     console.error('Sign In Error:', err);
-    throw err;
+    return { success: false, error: 'The void is currently unstable. Try again soon.' };
   }
 }
 
 export async function signUpAction(values: { email: string; password?: string }) {
   try {
+    if (!values.email || !values.password) {
+      return { success: false, error: 'All fields are required to manifest in the void.' };
+    }
+
     const [existing] = await db.select().from(users).where(eq(users.email, values.email)).limit(1);
     if (existing) {
-      throw new Error('Email already registered. Please login.');
+      return { success: false, error: 'This email is already linked to an identity. Login instead.' };
     }
 
-    if (!values.password) {
-      throw new Error('Password is required.');
-    }
-
-    // Hash the password before storing
     const hashedPassword = hashSync(values.password, 10);
+    const userId = `u_${uuidv4().replace(/-/g, '').slice(0, 12)}`;
 
     const [user] = await db.insert(users).values({
-      id: `u_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+      id: userId,
       email: values.email,
       username: values.email.split('@')[0],
       password: hashedPassword,
       imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${values.email}`,
     }).returning();
 
-    // Log them in immediately after signup
+    const finalUser = user || { id: userId, username: values.email.split('@')[0], email: values.email };
+
     const cookieStore = await cookies();
-    cookieStore.set('ankahee_session', user.id, {
+    cookieStore.set('ankahee_session', finalUser.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 60 * 60 * 24 * 30,
     });
 
-    return { success: true, user: { id: user.id, username: user.username, email: user.email, imageUrl: user.imageUrl } };
+    return { 
+      success: true, 
+      user: { id: finalUser.id, username: finalUser.username, email: finalUser.email } 
+    };
   } catch (err: any) {
     console.error('Sign Up Error:', err);
-    throw err;
+    return { success: false, error: 'Manifestation failed. The void rejects this request currently.' };
   }
 }
 
@@ -83,11 +89,11 @@ export async function resetPasswordAction(values: { email: string; newPassword?:
   try {
     const [user] = await db.select().from(users).where(eq(users.email, values.email)).limit(1);
     if (!user) {
-      throw new Error('No account found with that email.');
+      return { success: false, error: 'No account found with that email.' };
     }
 
     if (!values.newPassword) {
-      throw new Error('New password is required.');
+      return { success: false, error: 'New password is required.' };
     }
 
     const hashedPassword = hashSync(values.newPassword, 10);
@@ -99,7 +105,7 @@ export async function resetPasswordAction(values: { email: string; newPassword?:
     return { success: true };
   } catch (err: any) {
     console.error('Reset Password Error:', err);
-    throw err;
+    return { success: false, error: 'Failed to reset. The void is holding onto the old key.' };
   }
 }
 
@@ -126,7 +132,12 @@ export async function getSessionUser() {
 }
 
 export async function signOutAction() {
-  const cookieStore = await cookies();
-  cookieStore.delete('ankahee_session');
-  return { success: true };
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete('ankahee_session');
+    return { success: true };
+  } catch (err) {
+    console.error('Sign Out Error:', err);
+    return { success: false };
+  }
 }
